@@ -1,0 +1,5 @@
+data/
+uploads/
+*.log
+.runtime/
+storage/

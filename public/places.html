@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sitios</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="theme-body list-body">
+    <div class="ambient-glow"></div>
+    <main class="app-shell">
+      <header class="top-strip inner-top">
+        <a class="icon-ghost icon-link" href="/" aria-label="Volver">←</a>
+        <h1 id="category-title">Sitios</h1>
+        <a class="icon-ghost icon-link" href="/clients.html" aria-label="Perfil">👤</a>
+      </header>
+
+      <p id="category-subtitle" class="subtitle"></p>
+      <section class="category-chips">
+        <a href="/places.html?category=moto" class="chip-filter">🏍️ Moto</a>
+        <a href="/places.html?category=carro" class="chip-filter">🚗 Carro</a>
+        <a href="/places.html?category=romantico" class="chip-filter">🍸 Romantico</a>
+        <a href="/places.html?category=bbb" class="chip-filter">🍔 BBB</a>
+      </section>
+
+      <section id="results" class="cards-grid"></section>
+
+      <nav class="bottom-nav">
+        <a class="nav-item" href="/">
+          <span>📍</span>
+          <strong>Inicio</strong>
+        </a>
+        <a class="nav-item active" href="/places.html?category=moto">
+          <span>🔥</span>
+          <strong>Trending</strong>
+        </a>
+        <a class="nav-item" href="/clients.html">
+          <span>🎬</span>
+          <strong>Publicar</strong>
+        </a>
+        <a class="nav-item" href="/clients.html">
+          <span>👤</span>
+          <strong>Perfil</strong>
+        </a>
+      </nav>
+
+      <aside class="ad-banner" aria-label="Publicidad">
+        <span class="ad-pill">Publicidad</span>
+        <p>Espacio para aliados de Parchar</p>
+        <button type="button" class="ad-cta">Anunciar</button>
+      </aside>
+    </main>
+
+    <script src="/places.js"></script>
+  </body>
+</html>
