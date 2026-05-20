@@ -16,135 +16,289 @@ function setMessage(element, text, isError = false) {
 async function extractVideoDuration(file) {
   return new Promise((resolve, reject) => {
     const tempVideo = document.createElement("video");
+
     tempVideo.preload = "metadata";
     tempVideo.muted = true;
     tempVideo.src = URL.createObjectURL(file);
+
     tempVideo.onloadedmetadata = () => {
       const seconds = tempVideo.duration;
+
       URL.revokeObjectURL(tempVideo.src);
+
       if (!Number.isFinite(seconds)) {
-        reject(new Error("No pudimos leer la duracion del video."));
+        reject(
+          new Error(
+            "No pudimos leer la duracion del video."
+          )
+        );
+
         return;
       }
+
       resolve(seconds);
     };
+
     tempVideo.onerror = () => {
       URL.revokeObjectURL(tempVideo.src);
-      reject(new Error("El archivo no parece un video valido."));
+
+      reject(
+        new Error(
+          "El archivo no parece un video valido."
+        )
+      );
     };
   });
 }
 
-videoInput?.addEventListener("change", async () => {
-  videoStatus.textContent = "";
-  videoDurationInput.value = "";
-  const file = videoInput.files?.[0];
-  if (!file) return;
+videoInput?.addEventListener(
+  "change",
+  async () => {
+    videoStatus.textContent = "";
 
-  try {
-    const seconds = await extractVideoDuration(file);
-    const rounded = Number(seconds.toFixed(2));
-    if (rounded < 10 || rounded > 13) {
-      videoInput.value = "";
+    videoDurationInput.value = "";
+
+    const file = videoInput.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const seconds =
+        await extractVideoDuration(file);
+
+      const rounded = Number(
+        seconds.toFixed(2)
+      );
+
+      if (
+        rounded < 10 ||
+        rounded > 13
+      ) {
+        videoInput.value = "";
+
+        setMessage(
+          videoStatus,
+          `Duracion invalida (${rounded}s). Debe durar entre 10 y 13 segundos.`,
+          true
+        );
+
+        return;
+      }
+
+      videoDurationInput.value =
+        String(rounded);
+
       setMessage(
         videoStatus,
-        `Duracion invalida (${rounded}s). Debe durar entre 10 y 13 segundos.`,
+        `Video validado: ${rounded}s.`,
+        false
+      );
+    } catch (error) {
+      videoInput.value = "";
+
+      setMessage(
+        videoStatus,
+        error.message,
         true
       );
+    }
+  }
+);
+
+useLocationButton?.addEventListener(
+  "click",
+  () => {
+    if (!navigator.geolocation) {
+      setMessage(
+        businessMessage,
+        "Tu navegador no permite geolocalizacion. Ingresa latitud y longitud manualmente.",
+        true
+      );
+
       return;
     }
 
-    videoDurationInput.value = String(rounded);
-    setMessage(videoStatus, `Video validado: ${rounded}s.`, false);
-  } catch (error) {
-    videoInput.value = "";
-    setMessage(videoStatus, error.message, true);
-  }
-});
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const latInput =
+          businessForm.querySelector(
+            "input[name='latitude']"
+          );
 
-useLocationButton?.addEventListener("click", () => {
-  if (!navigator.geolocation) {
-    setMessage(
-      businessMessage,
-      "Tu navegador no permite geolocalizacion. Ingresa latitud y longitud manualmente.",
-      true
+        const lngInput =
+          businessForm.querySelector(
+            "input[name='longitude']"
+          );
+
+        latInput.value =
+          position.coords.latitude.toFixed(
+            6
+          );
+
+        lngInput.value =
+          position.coords.longitude.toFixed(
+            6
+          );
+
+        setMessage(
+          businessMessage,
+          "Ubicacion cargada. Ahora completa y envia tu registro.",
+          false
+        );
+      },
+      () => {
+        setMessage(
+          businessMessage,
+          "No pudimos obtener tu ubicacion. Ingresa latitud y longitud manualmente.",
+          true
+        );
+      }
     );
-    return;
   }
+);
 
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      const latInput = businessForm.querySelector("input[name='latitude']");
-      const lngInput = businessForm.querySelector("input[name='longitude']");
-      latInput.value = position.coords.latitude.toFixed(6);
-      lngInput.value = position.coords.longitude.toFixed(6);
-      setMessage(
-        businessMessage,
-        "Ubicacion cargada. Ahora completa y envia tu registro.",
-        false
+userForm?.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    setMessage(
+      userMessage,
+      "Guardando usuario..."
+    );
+
+    const payload =
+      Object.fromEntries(
+        new FormData(userForm).entries()
       );
-    },
-    () => {
+
+    try {
+      const response = await fetch(
+        "/api/users/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo crear el usuario."
+        );
+      }
+
+      userForm.reset();
+
       setMessage(
-        businessMessage,
-        "No pudimos obtener tu ubicacion. Ingresa latitud y longitud manualmente.",
+        userMessage,
+        data.message ||
+          "Usuario creado."
+      );
+    } catch (error) {
+      setMessage(
+        userMessage,
+        error.message,
         true
       );
     }
-  );
-});
-
-userForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setMessage(userMessage, "Guardando usuario...");
-
-  const payload = Object.fromEntries(new FormData(userForm).entries());
-
-  try {
-    const response = await fetch("/api/users/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "No se pudo crear el usuario.");
-    userForm.reset();
-    setMessage(userMessage, data.message || "Usuario creado.");
-  } catch (error) {
-    setMessage(userMessage, error.message, true);
   }
-});
+);
 
-businessForm?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  setMessage(businessMessage, "Registrando negocio...");
+businessForm?.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
 
-  const formData = new FormData(businessForm);
-  const duration = Number(formData.get("videoDurationSeconds"));
-  if (!Number.isFinite(duration) || duration < 10 || duration > 13) {
     setMessage(
       businessMessage,
-      "Debes subir un video valido entre 10 y 13 segundos.",
-      true
+      "Registrando negocio..."
     );
-    return;
+
+    const formData = new FormData(
+      businessForm
+    );
+
+    const duration = Number(
+      formData.get(
+        "videoDurationSeconds"
+      )
+    );
+
+    if (
+      !Number.isFinite(duration) ||
+      duration < 10 ||
+      duration > 13
+    ) {
+      setMessage(
+        businessMessage,
+        "Debes subir un video valido entre 10 y 13 segundos.",
+        true
+      );
+
+      return;
+    }
+
+    try {
+      const payload =
+        Object.fromEntries(
+          formData.entries()
+        );
+
+      payload.videoPath = "";
+
+      payload.videoSeconds =
+        duration;
+
+      const response = await fetch(
+        "/api/businesses",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo registrar el negocio."
+        );
+      }
+
+      businessForm.reset();
+
+      videoDurationInput.value =
+        "";
+
+      videoStatus.textContent = "";
+
+      setMessage(
+        businessMessage,
+        data.message ||
+          "Negocio registrado."
+      );
+    } catch (error) {
+      setMessage(
+        businessMessage,
+        error.message,
+        true
+      );
+    }
   }
+);
 
-  try {
-    const response = await fetch("/api/businesses/register", {
-      method: "POST",
-      body: formData,
-    });
 
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "No se pudo registrar el negocio.");
-
-    businessForm.reset();
-    videoDurationInput.value = "";
-    videoStatus.textContent = "";
-    setMessage(businessMessage, data.message || "Negocio registrado.");
-  } catch (error) {
-    setMessage(businessMessage, error.message, true);
-  }
-});
