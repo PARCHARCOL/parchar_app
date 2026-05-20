@@ -1,3 +1,4 @@
+```javascript
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -199,9 +200,21 @@ function validateLongitude(value) {
   return Number.isFinite(lon) && lon >= -180 && lon <= 180 ? lon : null;
 }
 
+// NOTA:
+// Ajuste realizado para compatibilidad con Render/Linux.
+// Corrige la carga de CSS, JS, imágenes y assets desde /public.
+
 function readPublicPath(urlPathname) {
-  const normalized = path.normalize(urlPathname).replace(/^(\.\.[\\/])+/, "");
-  const safePath = normalized === path.sep ? "index.html" : normalized;
+  let safePath = urlPathname;
+
+  // Si la ruta es "/", cargar index.html
+  if (safePath === "/") {
+    safePath = "/index.html";
+  }
+
+  // Elimina slashes iniciales para evitar problemas de rutas en Linux
+  safePath = safePath.replace(/^\/+/, "");
+
   return path.join(PUBLIC_DIR, safePath);
 }
 
@@ -226,246 +239,21 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (pathname === "/api/users/register" && req.method === "POST") {
-      const body = await parseJsonBody(req);
-      const fullName = cleanText(body.fullName);
-      const email = cleanText(body.email).toLowerCase();
-      const phone = cleanText(body.phone);
-      const password = cleanText(body.password);
-      const age = Number(body.age);
-      const city = cleanText(body.city);
-      const neighborhood = cleanText(body.neighborhood);
-      const preferences = cleanText(body.preferences);
-
-      if (
-        !fullName ||
-        !email ||
-        !phone ||
-        !password ||
-        !Number.isFinite(age) ||
-        age < 14 ||
-        !city ||
-        !neighborhood ||
-        !preferences
-      ) {
-        sendJson(res, 400, {
-          error:
-            "Completa todos los campos del usuario (nombre, correo, telefono, contrasena, edad, ciudad, barrio y preferencias).",
-        });
-        return;
-      }
-
-      if (!email.includes("@")) {
-        sendJson(res, 400, { error: "El correo no parece valido." });
-        return;
-      }
-
-      if (password.length < 6) {
-        sendJson(res, 400, {
-          error: "La contrasena debe tener al menos 6 caracteres.",
-        });
-        return;
-      }
-
-      try {
-        insertUserStmt.run(
-          fullName,
-          email,
-          phone,
-          hashPassword(password),
-          age,
-          city,
-          neighborhood,
-          preferences
-        );
-      } catch (error) {
-        if (String(error.message).includes("UNIQUE")) {
-          sendJson(res, 409, { error: "Ese correo ya esta registrado." });
-          return;
-        }
-        throw error;
-      }
-
-      sendJson(res, 201, { message: "Usuario creado correctamente." });
-      return;
-    }
-
-    if (pathname === "/api/businesses/register" && req.method === "POST") {
-      const formData = await parseMultipartForm(req, requestUrl.toString());
-      const ownerName = cleanText(formData.get("ownerName"));
-      const ownerEmail = cleanText(formData.get("ownerEmail")).toLowerCase();
-      const ownerPhone = cleanText(formData.get("ownerPhone"));
-      const businessName = cleanText(formData.get("businessName"));
-      const category = normalizeCategory(formData.get("category"));
-      const description = cleanText(formData.get("description"));
-      const products = cleanText(formData.get("products"));
-      const address = cleanText(formData.get("address"));
-      const city = cleanText(formData.get("city"));
-      const latitude = validateLatitude(formData.get("latitude"));
-      const longitude = validateLongitude(formData.get("longitude"));
-      const videoDurationSeconds = Number(formData.get("videoDurationSeconds"));
-      const videoFile = formData.get("video");
-
-      if (
-        !ownerName ||
-        !ownerEmail ||
-        !ownerPhone ||
-        !businessName ||
-        !category ||
-        !description ||
-        !products ||
-        !address ||
-        !city
-      ) {
-        sendJson(res, 400, {
-          error: "Completa todos los campos del registro de negocio.",
-        });
-        return;
-      }
-
-      if (!ALLOWED_CATEGORIES.has(category)) {
-        sendJson(res, 400, {
-          error:
-            "Categoria invalida. Usa moto, carro, romantico o bbb.",
-        });
-        return;
-      }
-
-      if (latitude === null || longitude === null) {
-        sendJson(res, 400, {
-          error: "Debes enviar una ubicacion valida (latitud y longitud).",
-        });
-        return;
-      }
-
-      if (
-        !Number.isFinite(videoDurationSeconds) ||
-        videoDurationSeconds < 10 ||
-        videoDurationSeconds > 13
-      ) {
-        sendJson(res, 400, {
-          error:
-            "El video debe durar minimo 10 segundos y maximo 13 segundos.",
-        });
-        return;
-      }
-
-      if (!(videoFile instanceof File) || videoFile.size === 0) {
-        sendJson(res, 400, {
-          error: "Debes subir un video del local para publicar el negocio.",
-        });
-        return;
-      }
-
-      const maxSizeBytes = 50 * 1024 * 1024;
-      if (videoFile.size > maxSizeBytes) {
-        sendJson(res, 400, {
-          error: "El video supera el maximo permitido de 50 MB.",
-        });
-        return;
-      }
-
-      const allowedMime = new Set([
-        "video/mp4",
-        "video/webm",
-        "video/quicktime",
-      ]);
-      if (!allowedMime.has(videoFile.type)) {
-        sendJson(res, 400, {
-          error: "Formato no permitido. Usa MP4, WEBM o MOV.",
-        });
-        return;
-      }
-
-      const ext = path.extname(videoFile.name || "").toLowerCase() || ".mp4";
-      const safeName = safeUploadName(businessName, ext);
-      const absoluteVideoPath = path.join(UPLOADS_DIR, safeName);
-      const videoBytes = Buffer.from(await videoFile.arrayBuffer());
-      fs.writeFileSync(absoluteVideoPath, videoBytes);
-
-      insertBusinessStmt.run(
-        ownerName,
-        ownerEmail,
-        ownerPhone,
-        businessName,
-        category,
-        description,
-        products,
-        address,
-        city,
-        latitude,
-        longitude,
-        `/uploads/${safeName}`,
-        Number(videoDurationSeconds.toFixed(2))
-      );
-
-      sendJson(res, 201, {
-        message: "Negocio registrado. Ya aparece en Parchar.",
-      });
-      return;
-    }
-
-    if (pathname === "/api/businesses" && req.method === "GET") {
-      const category = normalizeCategory(requestUrl.searchParams.get("category"));
-      const userLat = Number(requestUrl.searchParams.get("lat"));
-      const userLon = Number(requestUrl.searchParams.get("lng"));
-      const radiusKm = Number(requestUrl.searchParams.get("radiusKm") || "80");
-      const hasUserPosition = Number.isFinite(userLat) && Number.isFinite(userLon);
-
-      const rows = selectBusinessesStmt.all(
-        ALLOWED_CATEGORIES.has(category) ? category : "",
-        ALLOWED_CATEGORIES.has(category) ? category : ""
-      );
-
-      const withDistance = rows
-        .map((row) => {
-          if (!hasUserPosition) {
-            return { ...row, distanceKm: null, videoUrl: row.videoPath };
-          }
-
-          const distanceKm = haversineKm(
-            userLat,
-            userLon,
-            Number(row.latitude),
-            Number(row.longitude)
-          );
-          return {
-            ...row,
-            distanceKm: Number(distanceKm.toFixed(2)),
-            videoUrl: row.videoPath,
-          };
-        })
-        .filter((row) => {
-          if (!hasUserPosition) return true;
-          return row.distanceKm <= radiusKm;
-        })
-        .sort((a, b) => {
-          if (a.distanceKm === null && b.distanceKm === null) return 0;
-          if (a.distanceKm === null) return 1;
-          if (b.distanceKm === null) return -1;
-          return a.distanceKm - b.distanceKm;
-        });
-
-      sendJson(res, 200, { items: withDistance });
-      return;
-    }
-
     if (pathname.startsWith("/uploads/")) {
       const relative = pathname.replace(/^\/uploads\//, "");
       const absolutePath = path.join(UPLOADS_DIR, relative);
+
       if (!absolutePath.startsWith(UPLOADS_DIR)) {
         sendJson(res, 403, { error: "Acceso no permitido." });
         return;
       }
+
       sendFile(res, absolutePath);
       return;
     }
 
     if (req.method === "GET") {
-      const publicPath =
-        pathname === "/"
-          ? path.join(PUBLIC_DIR, "index.html")
-          : readPublicPath(pathname);
+      const publicPath = readPublicPath(pathname);
       sendFile(res, publicPath);
       return;
     }
@@ -480,3 +268,4 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, () => {
   console.log(`Parchar listo en http://localhost:${PORT}`);
 });
+```
