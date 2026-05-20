@@ -368,7 +368,7 @@ const server = http.createServer(
         return;
       }
 
-      // LISTAR NEGOCIOS
+      // LISTAR NEGOCIOS PUBLICOS
       if (
         pathname === "/api/businesses" &&
         req.method === "GET"
@@ -432,6 +432,111 @@ const server = http.createServer(
 
         sendJson(res, 200, {
           items,
+        });
+
+        return;
+      }
+
+      // ADMIN - LISTAR PENDIENTES
+      if (
+        pathname ===
+          "/api/admin/businesses" &&
+        req.method === "GET"
+      ) {
+        const result =
+          await pool.query(`
+            SELECT *
+            FROM businesses
+            WHERE status = 'pendiente'
+            ORDER BY created_at DESC
+          `);
+
+        const items = result.rows.map(
+          (item) => ({
+            id: item.id,
+
+            ownerName:
+              item.owner_name,
+
+            ownerEmail:
+              item.owner_email,
+
+            ownerPhone:
+              item.owner_phone,
+
+            businessName:
+              item.business_name,
+
+            category:
+              item.category,
+
+            description:
+              item.description,
+
+            city:
+              item.city,
+
+            socialLink:
+              item.social_link,
+          })
+        );
+
+        sendJson(res, 200, {
+          items,
+        });
+
+        return;
+      }
+
+      // ADMIN - APROBAR
+      if (
+        pathname.match(
+          /^\/api\/admin\/businesses\/\d+\/approve$/
+        ) &&
+        req.method === "POST"
+      ) {
+        const id = pathname.split("/")[4];
+
+        await pool.query(
+          `
+          UPDATE businesses
+          SET status = 'aprobado'
+          WHERE id = $1
+        `,
+          [id]
+        );
+
+        sendJson(res, 200, {
+          ok: true,
+          message:
+            "Negocio aprobado",
+        });
+
+        return;
+      }
+
+      // ADMIN - RECHAZAR
+      if (
+        pathname.match(
+          /^\/api\/admin\/businesses\/\d+\/reject$/
+        ) &&
+        req.method === "POST"
+      ) {
+        const id = pathname.split("/")[4];
+
+        await pool.query(
+          `
+          UPDATE businesses
+          SET status = 'rechazado'
+          WHERE id = $1
+        `,
+          [id]
+        );
+
+        sendJson(res, 200, {
+          ok: true,
+          message:
+            "Negocio rechazado",
         });
 
         return;
