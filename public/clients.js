@@ -1,54 +1,105 @@
-const userForm = document.querySelector("#user-form");
-const businessForm = document.querySelector("#business-form");
-const userMessage = document.querySelector("#user-message");
-const businessMessage = document.querySelector("#business-message");
-const videoInput = document.querySelector("#video-input");
-const videoStatus = document.querySelector("#video-status");
-const videoDurationInput = document.querySelector("#video-duration-seconds");
-const useLocationButton = document.querySelector("#use-location");
 
-function setMessage(element, text, isError = false) {
+const userForm = document.querySelector("#user-form");
+
+const businessForm = document.querySelector(
+  "#business-form"
+);
+
+const userMessage = document.querySelector(
+  "#user-message"
+);
+
+const businessMessage =
+  document.querySelector(
+    "#business-message"
+  );
+
+const videoInput =
+  document.querySelector("#video-input");
+
+const videoStatus =
+  document.querySelector("#video-status");
+
+const videoDurationInput =
+  document.querySelector(
+    "#video-duration-seconds"
+  );
+
+const useLocationButton =
+  document.querySelector(
+    "#use-location"
+  );
+
+function setMessage(
+  element,
+  text,
+  isError = false
+) {
   element.textContent = text;
-  element.classList.toggle("error", isError);
-  element.classList.toggle("success", !isError);
+
+  element.classList.toggle(
+    "error",
+    isError
+  );
+
+  element.classList.toggle(
+    "success",
+    !isError
+  );
 }
 
-async function extractVideoDuration(file) {
-  return new Promise((resolve, reject) => {
-    const tempVideo = document.createElement("video");
+async function extractVideoDuration(
+  file
+) {
+  return new Promise(
+    (resolve, reject) => {
+      const tempVideo =
+        document.createElement("video");
 
-    tempVideo.preload = "metadata";
-    tempVideo.muted = true;
-    tempVideo.src = URL.createObjectURL(file);
+      tempVideo.preload = "metadata";
 
-    tempVideo.onloadedmetadata = () => {
-      const seconds = tempVideo.duration;
+      tempVideo.muted = true;
 
-      URL.revokeObjectURL(tempVideo.src);
+      tempVideo.src =
+        URL.createObjectURL(file);
 
-      if (!Number.isFinite(seconds)) {
-        reject(
-          new Error(
-            "No pudimos leer la duracion del video."
-          )
+      tempVideo.onloadedmetadata =
+        () => {
+          const seconds =
+            tempVideo.duration;
+
+          URL.revokeObjectURL(
+            tempVideo.src
+          );
+
+          if (
+            !Number.isFinite(seconds)
+          ) {
+            reject(
+              new Error(
+                "No pudimos leer la duracion del video."
+              )
+            );
+
+            return;
+          }
+
+          resolve(seconds);
+        };
+
+      tempVideo.onerror = () => {
+        URL.revokeObjectURL(
+          tempVideo.src
         );
 
-        return;
-      }
-
-      resolve(seconds);
-    };
-
-    tempVideo.onerror = () => {
-      URL.revokeObjectURL(tempVideo.src);
-
-      reject(
-        new Error(
-          "El archivo no parece un video valido."
-        )
-      );
-    };
-  });
+        reject(
+          new Error(
+            "El archivo no parece un video valido."
+          )
+        );
+      };
+    }
+  );
 }
 
 videoInput?.addEventListener(
@@ -58,13 +109,16 @@ videoInput?.addEventListener(
 
     videoDurationInput.value = "";
 
-    const file = videoInput.files?.[0];
+    const file =
+      videoInput.files?.[0];
 
     if (!file) return;
 
     try {
       const seconds =
-        await extractVideoDuration(file);
+        await extractVideoDuration(
+          file
+        );
 
       const rounded = Number(
         seconds.toFixed(2)
@@ -111,7 +165,7 @@ useLocationButton?.addEventListener(
     if (!navigator.geolocation) {
       setMessage(
         businessMessage,
-        "Tu navegador no permite geolocalizacion. Ingresa latitud y longitud manualmente.",
+        "Tu navegador no permite geolocalizacion.",
         true
       );
 
@@ -142,14 +196,14 @@ useLocationButton?.addEventListener(
 
         setMessage(
           businessMessage,
-          "Ubicacion cargada. Ahora completa y envia tu registro.",
+          "Ubicacion cargada correctamente.",
           false
         );
       },
       () => {
         setMessage(
           businessMessage,
-          "No pudimos obtener tu ubicacion. Ingresa latitud y longitud manualmente.",
+          "No pudimos obtener tu ubicacion.",
           true
         );
       }
@@ -177,11 +231,15 @@ userForm?.addEventListener(
         "/api/users/register",
         {
           method: "POST",
+
           headers: {
             "Content-Type":
               "application/json",
           },
-          body: JSON.stringify(payload),
+
+          body: JSON.stringify(
+            payload
+          ),
         }
       );
 
@@ -222,9 +280,10 @@ businessForm?.addEventListener(
       "Registrando negocio..."
     );
 
-    const formData = new FormData(
-      businessForm
-    );
+    const formData =
+      new FormData(
+        businessForm
+      );
 
     const duration = Number(
       formData.get(
@@ -261,11 +320,15 @@ businessForm?.addEventListener(
         "/api/businesses",
         {
           method: "POST",
+
           headers: {
             "Content-Type":
               "application/json",
           },
-          body: JSON.stringify(payload),
+
+          body: JSON.stringify(
+            payload
+          ),
         }
       );
 
@@ -288,8 +351,8 @@ businessForm?.addEventListener(
 
       setMessage(
         businessMessage,
-        data.message ||
-          "Negocio registrado."
+        "Negocio enviado para revision.",
+        false
       );
     } catch (error) {
       setMessage(
@@ -300,5 +363,4 @@ businessForm?.addEventListener(
     }
   }
 );
-
 
