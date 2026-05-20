@@ -1,15 +1,13 @@
-```json
 {
-  "name": "parchar",
-  "version": "1.0.0",
-  "description": "App para descubrir planes y registrar negocios con video obligatorio de 10 a 13 segundos.",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "pg": "^8.13.1"
-  },
-  "license": "MIT"
+"name": "parchar",
+"version": "1.0.0",
+"description": "App para descubrir planes y registrar negocios con video obligatorio de 10 a 13 segundos.",
+"main": "server.js",
+"scripts": {
+"start": "node server.js"
+},
+"dependencies": {
+"pg": "^8.13.1"
+},
+"license": "MIT"
 }
-```
