@@ -1,3 +1,4 @@
+
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -67,20 +68,37 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
+
       owner_name TEXT NOT NULL,
       owner_email TEXT NOT NULL,
       owner_phone TEXT NOT NULL,
+      owner_document TEXT,
+
       business_name TEXT NOT NULL,
+
       category TEXT NOT NULL,
+
       description TEXT NOT NULL,
       products TEXT NOT NULL,
+
       address TEXT NOT NULL,
       city TEXT NOT NULL,
+
       latitude DOUBLE PRECISION NOT NULL,
       longitude DOUBLE PRECISION NOT NULL,
+
+      social_link TEXT,
+
+      rut_document TEXT,
+      commerce_document TEXT,
+
+      legal_acceptance BOOLEAN DEFAULT false,
+
       video_path TEXT NOT NULL,
       video_seconds DOUBLE PRECISION NOT NULL,
+
       status TEXT DEFAULT 'pendiente',
+
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -189,6 +207,7 @@ const server = http.createServer(
         });
 
         res.end();
+
         return;
       }
 
@@ -283,6 +302,7 @@ const server = http.createServer(
             owner_name,
             owner_email,
             owner_phone,
+            owner_document,
             business_name,
             category,
             description,
@@ -291,31 +311,50 @@ const server = http.createServer(
             city,
             latitude,
             longitude,
+            social_link,
+            rut_document,
+            commerce_document,
+            legal_acceptance,
             video_path,
             video_seconds,
             status
           )
           VALUES (
-            $1,$2,$3,$4,$5,$6,$7,
-            $8,$9,$10,$11,$12,$13,$14
+            $1,$2,$3,$4,$5,$6,$7,$8,$9,
+            $10,$11,$12,$13,$14,$15,$16,
+            $17,$18,$19
           )
         `,
           [
             cleanText(body.ownerName),
             cleanText(body.ownerEmail),
             cleanText(body.ownerPhone),
+            cleanText(body.ownerDocument),
+
             cleanText(body.businessName),
+
             category,
+
             cleanText(body.description),
             cleanText(body.products),
+
             cleanText(body.address),
             cleanText(body.city),
+
             Number(body.latitude),
             Number(body.longitude),
+
+            cleanText(body.socialLink || ""),
+
+            cleanText(body.rutDocument || ""),
+            cleanText(body.commerceDocument || ""),
+
+            Boolean(body.legalAcceptance),
+
             cleanText(body.videoPath || ""),
-            Number(
-              body.videoSeconds || 10
-            ),
+
+            Number(body.videoSeconds || 10),
+
             "pendiente",
           ]
         );
@@ -342,7 +381,7 @@ const server = http.createServer(
         let query = `
           SELECT *
           FROM businesses
-          WHERE status = 'pendiente'
+          WHERE status = 'aprobado'
         `;
 
         const values = [];
