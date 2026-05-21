@@ -2,53 +2,132 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Clientes y negocios</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+
+    <title>
+      Clientes y negocios
+    </title>
+
+    <link
+      rel="stylesheet"
+      href="/styles.css"
+    />
   </head>
+
   <body class="theme-body clients-body">
     <div class="ambient-glow"></div>
+
     <main class="app-shell">
+
       <header class="top-strip inner-top">
-        <a class="icon-ghost icon-link" href="/" aria-label="Volver">←</a>
-        <h1>Clientes y negocios</h1>
-        <span class="icon-ghost">🏪</span>
+        <a
+          class="icon-ghost icon-link"
+          href="/"
+          aria-label="Volver"
+        >
+          ←
+        </a>
+
+        <h1>
+          Clientes y negocios
+        </h1>
+
+        <span class="icon-ghost">
+          🏪
+        </span>
       </header>
 
+      <!-- USER -->
+
       <section class="form-block glass-card">
-        <h2>Crear usuario</h2>
-        <p>Completa todos los datos para crear tu cuenta.</p>
-        <form id="user-form" class="form-grid">
+
+        <h2>
+          Crear usuario
+        </h2>
+
+        <p>
+          Completa todos los datos para crear tu cuenta.
+        </p>
+
+        <form
+          id="user-form"
+          class="form-grid"
+        >
+
           <label>
             Nombre completo
-            <input name="fullName" required />
+
+            <input
+              name="fullName"
+              required
+            />
           </label>
+
           <label>
             Correo
-            <input name="email" type="email" required />
+
+            <input
+              name="email"
+              type="email"
+              required
+            />
           </label>
+
           <label>
             Telefono
-            <input name="phone" required />
+
+            <input
+              name="phone"
+              required
+            />
           </label>
+
           <label>
             Contrasena
-            <input name="password" type="password" minlength="6" required />
+
+            <input
+              name="password"
+              type="password"
+              minlength="6"
+              required
+            />
           </label>
+
           <label>
             Edad
-            <input name="age" type="number" min="14" required />
+
+            <input
+              name="age"
+              type="number"
+              min="14"
+              required
+            />
           </label>
+
           <label>
             Ciudad
-            <input name="city" required />
+
+            <input
+              name="city"
+              required
+            />
           </label>
+
           <label>
             Barrio
-            <input name="neighborhood" required />
+
+            <input
+              name="neighborhood"
+              required
+            />
           </label>
+
           <label class="full-row">
             Preferencias de plan
+
             <textarea
               name="preferences"
               rows="3"
@@ -56,74 +135,217 @@
               required
             ></textarea>
           </label>
-          <button type="submit" class="submit-btn">Crear usuario</button>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Crear usuario
+          </button>
+
         </form>
-        <p id="user-message" class="feedback"></p>
+
+        <p
+          id="user-message"
+          class="feedback"
+        ></p>
+
       </section>
 
+      <!-- BUSINESS -->
+
       <section class="form-block glass-card">
-        <h2>Registrar tu negocio</h2>
+
+        <h2>
+          Registrar tu negocio
+        </h2>
+
         <p>
-          Si eres dueno del local, registralo y sube un video entre 10 y 13
-          segundos explicando que vendes y donde queda.
+          Todos los negocios pasan por validacion manual antes de ser publicados en Parchar.
         </p>
-        <form id="business-form" class="form-grid" enctype="multipart/form-data">
+
+        <form
+          id="business-form"
+          class="form-grid"
+          enctype="multipart/form-data"
+        >
+
           <label>
-            Nombre del dueno
-            <input name="ownerName" required />
+            Nombre del responsable
+
+            <input
+              name="ownerName"
+              required
+            />
           </label>
+
           <label>
-            Correo del dueno
-            <input name="ownerEmail" type="email" required />
+            Correo del responsable
+
+            <input
+              name="ownerEmail"
+              type="email"
+              required
+            />
           </label>
+
           <label>
-            Telefono del dueno
-            <input name="ownerPhone" required />
+            Telefono del responsable
+
+            <input
+              name="ownerPhone"
+              required
+            />
           </label>
+
           <label>
+            Cedula
+
+            <input
+              name="ownerDocument"
+              required
+            />
+          </label>
+
+          <label class="full-row">
             Nombre del negocio
-            <input name="businessName" required />
+
+            <input
+              name="businessName"
+              required
+            />
           </label>
+
           <label>
             Categoria
-            <select name="category" required>
-              <option value="">Selecciona</option>
-              <option value="moto">En moto</option>
-              <option value="carro">En carro</option>
-              <option value="romantico">Romantico</option>
-              <option value="bbb">BBB (Bueno Bonito y Barato)</option>
+
+            <select
+              name="category"
+              required
+            >
+              <option value="">
+                Selecciona
+              </option>
+
+              <option value="moto">
+                En moto
+              </option>
+
+              <option value="carro">
+                En carro
+              </option>
+
+              <option value="romantico">
+                Romantico
+              </option>
+
+              <option value="bbb">
+                BBB (Bueno Bonito y Barato)
+              </option>
             </select>
           </label>
+
           <label>
             Ciudad
-            <input name="city" required />
+
+            <input
+              name="city"
+              required
+            />
           </label>
+
           <label class="full-row">
             Direccion
-            <input name="address" required />
+
+            <input
+              name="address"
+              required
+            />
           </label>
+
+          <label class="full-row">
+            Instagram o Facebook
+
+            <input
+              name="socialLink"
+              placeholder="@tunegocio"
+            />
+          </label>
+
           <label class="full-row">
             Descripcion del local
-            <textarea name="description" rows="3" required></textarea>
+
+            <textarea
+              name="description"
+              rows="3"
+              required
+            ></textarea>
           </label>
+
           <label class="full-row">
             Que vendes / que ofreces
-            <textarea name="products" rows="3" required></textarea>
+
+            <textarea
+              name="products"
+              rows="3"
+              required
+            ></textarea>
           </label>
+
           <label>
             Latitud
-            <input name="latitude" type="number" step="0.000001" required />
+
+            <input
+              name="latitude"
+              type="number"
+              step="0.000001"
+              required
+            />
           </label>
+
           <label>
             Longitud
-            <input name="longitude" type="number" step="0.000001" required />
+
+            <input
+              name="longitude"
+              type="number"
+              step="0.000001"
+              required
+            />
           </label>
-          <button id="use-location" type="button" class="ghost-btn">
+
+          <button
+            id="use-location"
+            type="button"
+            class="ghost-btn"
+          >
             Usar mi ubicacion
           </button>
 
           <label class="full-row">
+            RUT del negocio
+
+            <input
+              name="rutDocument"
+              type="file"
+              accept=".pdf,image/*"
+              required
+            />
+          </label>
+
+          <label class="full-row">
+            Camara de comercio
+
+            <input
+              name="commerceDocument"
+              type="file"
+              accept=".pdf,image/*"
+            />
+          </label>
+
+          <label class="full-row">
             Video del local (10-13 segundos)
+
             <input
               id="video-input"
               name="video"
@@ -132,39 +354,143 @@
               required
             />
           </label>
-          <p id="video-status" class="status-muted full-row"></p>
-          <input id="video-duration-seconds" name="videoDurationSeconds" type="hidden" />
-          <button type="submit" class="submit-btn">Registrar negocio</button>
+
+          <p
+            id="video-status"
+            class="status-muted full-row"
+          ></p>
+
+          <input
+            id="video-duration-seconds"
+            name="videoDurationSeconds"
+            type="hidden"
+          />
+
+          <label class="full-row legal-check">
+
+            <input
+              type="checkbox"
+              name="legalAcceptance"
+              required
+            />
+
+            Declaro que soy propietario o representante autorizado del negocio y acepto el proceso de validacion de Parchar.
+
+          </label>
+
+          <div class="full-row moderation-box">
+
+            <strong>
+              🛡️ Validacion requerida
+            </strong>
+
+            <p>
+              Tu negocio quedara pendiente hasta ser aprobado por el equipo de Parchar.
+            </p>
+
+          </div>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Enviar para revision
+          </button>
+
         </form>
-        <p id="business-message" class="feedback"></p>
+
+        <p
+          id="business-message"
+          class="feedback"
+        ></p>
+
       </section>
 
+      <!-- NAV -->
+
       <nav class="bottom-nav">
-        <a class="nav-item" href="/">
-          <span>📍</span>
-          <strong>Inicio</strong>
+
+        <a
+          class="nav-item"
+          href="/"
+        >
+          <span>
+            📍
+          </span>
+
+          <strong>
+            Inicio
+          </strong>
         </a>
-        <a class="nav-item" href="/places.html?category=moto">
-          <span>🔥</span>
-          <strong>Trending</strong>
+
+        <a
+          class="nav-item"
+          href="/places.html?category=moto"
+        >
+          <span>
+            🔥
+          </span>
+
+          <strong>
+            Trending
+          </strong>
         </a>
-        <a class="nav-item active" href="/clients.html">
-          <span>🎬</span>
-          <strong>Publicar</strong>
+
+        <a
+          class="nav-item active"
+          href="/clients.html"
+        >
+          <span>
+            🎬
+          </span>
+
+          <strong>
+            Publicar
+          </strong>
         </a>
-        <a class="nav-item" href="/clients.html">
-          <span>👤</span>
-          <strong>Perfil</strong>
+
+        <a
+          class="nav-item"
+          href="/clients.html"
+        >
+          <span>
+            👤
+          </span>
+
+          <strong>
+            Perfil
+          </strong>
         </a>
+
       </nav>
 
-      <aside class="ad-banner" aria-label="Publicidad">
-        <span class="ad-pill">Publicidad</span>
-        <p>Espacio para aliados de Parchar</p>
-        <button type="button" class="ad-cta">Anunciar</button>
+      <!-- ADS -->
+
+      <aside
+        class="ad-banner"
+        aria-label="Publicidad"
+      >
+
+        <span class="ad-pill">
+          Publicidad
+        </span>
+
+        <p>
+          Espacio para aliados de Parchar
+        </p>
+
+        <button
+          type="button"
+          class="ad-cta"
+        >
+          Anunciar
+        </button>
+
       </aside>
+
     </main>
 
     <script src="/clients.js"></script>
+
   </body>
 </html>
