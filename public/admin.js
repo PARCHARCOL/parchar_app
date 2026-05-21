@@ -1,5 +1,3 @@
-
-
 const businessList = document.querySelector(
   "#admin-business-list"
 );
@@ -15,6 +13,7 @@ function escapeHtml(value) {
 
 async function approveBusiness(id) {
   try {
+
     const response = await fetch(
       `/api/admin/businesses/${id}/approve`,
       {
@@ -31,14 +30,21 @@ async function approveBusiness(id) {
       );
     }
 
+    alert(
+      "✅ Negocio aprobado correctamente"
+    );
+
     loadBusinesses();
+
   } catch (error) {
+
     alert(error.message);
   }
 }
 
 async function rejectBusiness(id) {
   try {
+
     const response = await fetch(
       `/api/admin/businesses/${id}/reject`,
       {
@@ -55,14 +61,22 @@ async function rejectBusiness(id) {
       );
     }
 
+    alert(
+      "❌ Negocio rechazado y eliminado"
+    );
+
     loadBusinesses();
+
   } catch (error) {
+
     alert(error.message);
   }
 }
 
 function renderBusinesses(items) {
+
   if (!items.length) {
+
     businessList.innerHTML = `
       <div class="glass-card">
         <h3>
@@ -77,6 +91,7 @@ function renderBusinesses(items) {
   businessList.innerHTML = items
     .map(
       (item) => `
+
       <article class="glass-card admin-card">
 
         <h3>
@@ -93,6 +108,13 @@ function renderBusinesses(items) {
         </p>
 
         <p>
+          <strong>Correo:</strong>
+          ${escapeHtml(
+            item.ownerEmail
+          )}
+        </p>
+
+        <p>
           <strong>Telefono:</strong>
           ${escapeHtml(
             item.ownerPhone
@@ -101,7 +123,9 @@ function renderBusinesses(items) {
 
         <p>
           <strong>Ciudad:</strong>
-          ${escapeHtml(item.city)}
+          ${escapeHtml(
+            item.city
+          )}
         </p>
 
         <p>
@@ -124,6 +148,73 @@ function renderBusinesses(items) {
             item.description
           )}
         </p>
+
+        ${
+          item.videoUrl
+            ? `
+          <div class="admin-video-box">
+
+            <video
+              controls
+              preload="metadata"
+              class="admin-video"
+            >
+              <source
+                src="${item.videoUrl}"
+                type="video/mp4"
+              />
+
+              Tu navegador no soporta video.
+            </video>
+
+          </div>
+        `
+            : `
+          <p>
+            ❌ Sin video
+          </p>
+        `
+        }
+
+        <div class="admin-documents">
+
+          ${
+            item.rutDocument
+              ? `
+            <a
+              href="${item.rutDocument}"
+              target="_blank"
+              class="doc-link"
+            >
+              📄 Ver RUT
+            </a>
+          `
+              : `
+            <span class="doc-missing">
+              ❌ Sin RUT
+            </span>
+          `
+          }
+
+          ${
+            item.commerceDocument
+              ? `
+            <a
+              href="${item.commerceDocument}"
+              target="_blank"
+              class="doc-link"
+            >
+              🏢 Cámara de Comercio
+            </a>
+          `
+              : `
+            <span class="doc-missing">
+              ❌ Sin Cámara Comercio
+            </span>
+          `
+          }
+
+        </div>
 
         <div class="admin-actions">
 
@@ -150,7 +241,9 @@ function renderBusinesses(items) {
 }
 
 async function loadBusinesses() {
+
   try {
+
     const response = await fetch(
       "/api/admin/businesses"
     );
@@ -158,6 +251,7 @@ async function loadBusinesses() {
     const data = await response.json();
 
     if (!response.ok) {
+
       throw new Error(
         data.error ||
           "No se pudieron cargar negocios."
@@ -167,9 +261,12 @@ async function loadBusinesses() {
     renderBusinesses(
       data.items || []
     );
+
   } catch (error) {
+
     businessList.innerHTML = `
       <div class="glass-card">
+
         <h3>
           Error cargando negocios
         </h3>
@@ -179,10 +276,10 @@ async function loadBusinesses() {
             error.message
           )}
         </p>
+
       </div>
     `;
   }
 }
 
 loadBusinesses();
-
