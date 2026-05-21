@@ -1,13 +1,17 @@
+const userForm =
+  document.querySelector(
+    "#user-form"
+  );
 
-const userForm = document.querySelector("#user-form");
+const businessForm =
+  document.querySelector(
+    "#business-form"
+  );
 
-const businessForm = document.querySelector(
-  "#business-form"
-);
-
-const userMessage = document.querySelector(
-  "#user-message"
-);
+const userMessage =
+  document.querySelector(
+    "#user-message"
+  );
 
 const businessMessage =
   document.querySelector(
@@ -15,10 +19,14 @@ const businessMessage =
   );
 
 const videoInput =
-  document.querySelector("#video-input");
+  document.querySelector(
+    "#video-input"
+  );
 
 const videoStatus =
-  document.querySelector("#video-status");
+  document.querySelector(
+    "#video-status"
+  );
 
 const videoDurationInput =
   document.querySelector(
@@ -54,9 +62,12 @@ async function extractVideoDuration(
   return new Promise(
     (resolve, reject) => {
       const tempVideo =
-        document.createElement("video");
+        document.createElement(
+          "video"
+        );
 
-      tempVideo.preload = "metadata";
+      tempVideo.preload =
+        "metadata";
 
       tempVideo.muted = true;
 
@@ -73,7 +84,9 @@ async function extractVideoDuration(
           );
 
           if (
-            !Number.isFinite(seconds)
+            !Number.isFinite(
+              seconds
+            )
           ) {
             reject(
               new Error(
@@ -87,17 +100,18 @@ async function extractVideoDuration(
           resolve(seconds);
         };
 
-      tempVideo.onerror = () => {
-        URL.revokeObjectURL(
-          tempVideo.src
-        );
+      tempVideo.onerror =
+        () => {
+          URL.revokeObjectURL(
+            tempVideo.src
+          );
 
-        reject(
-          new Error(
-            "El archivo no parece un video valido."
-          )
-        );
-      };
+          reject(
+            new Error(
+              "El archivo no parece un video valido."
+            )
+          );
+        };
     }
   );
 }
@@ -105,14 +119,18 @@ async function extractVideoDuration(
 videoInput?.addEventListener(
   "change",
   async () => {
-    videoStatus.textContent = "";
+    videoStatus.textContent =
+      "";
 
-    videoDurationInput.value = "";
+    videoDurationInput.value =
+      "";
 
     const file =
       videoInput.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     try {
       const seconds =
@@ -120,15 +138,17 @@ videoInput?.addEventListener(
           file
         );
 
-      const rounded = Number(
-        seconds.toFixed(2)
-      );
+      const rounded =
+        Number(
+          seconds.toFixed(2)
+        );
 
       if (
         rounded < 10 ||
         rounded > 13
       ) {
-        videoInput.value = "";
+        videoInput.value =
+          "";
 
         setMessage(
           videoStatus,
@@ -148,7 +168,8 @@ videoInput?.addEventListener(
         false
       );
     } catch (error) {
-      videoInput.value = "";
+      videoInput.value =
+        "";
 
       setMessage(
         videoStatus,
@@ -162,7 +183,9 @@ videoInput?.addEventListener(
 useLocationButton?.addEventListener(
   "click",
   () => {
-    if (!navigator.geolocation) {
+    if (
+      !navigator.geolocation
+    ) {
       setMessage(
         businessMessage,
         "Tu navegador no permite geolocalizacion.",
@@ -223,30 +246,35 @@ userForm?.addEventListener(
 
     const payload =
       Object.fromEntries(
-        new FormData(userForm).entries()
+        new FormData(
+          userForm
+        ).entries()
       );
 
     try {
-      const response = await fetch(
-        "/api/users/register",
-        {
-          method: "POST",
+      const response =
+        await fetch(
+          "/api/users/register",
+          {
+            method: "POST",
 
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
 
-          body: JSON.stringify(
-            payload
-          ),
-        }
-      );
+            body: JSON.stringify(
+              payload
+            ),
+          }
+        );
 
       const data =
         await response.json();
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
         throw new Error(
           data.error ||
             "No se pudo crear el usuario."
@@ -277,7 +305,7 @@ businessForm?.addEventListener(
 
     setMessage(
       businessMessage,
-      "Registrando negocio..."
+      "Subiendo negocio y videos..."
     );
 
     const formData =
@@ -285,14 +313,17 @@ businessForm?.addEventListener(
         businessForm
       );
 
-    const duration = Number(
-      formData.get(
-        "videoDurationSeconds"
-      )
-    );
+    const duration =
+      Number(
+        formData.get(
+          "videoDurationSeconds"
+        )
+      );
 
     if (
-      !Number.isFinite(duration) ||
+      !Number.isFinite(
+        duration
+      ) ||
       duration < 10 ||
       duration > 13
     ) {
@@ -306,36 +337,22 @@ businessForm?.addEventListener(
     }
 
     try {
-      const payload =
-        Object.fromEntries(
-          formData.entries()
+      const response =
+        await fetch(
+          "/api/businesses",
+          {
+            method: "POST",
+
+            body: formData,
+          }
         );
-
-      payload.videoPath = "";
-
-      payload.videoSeconds =
-        duration;
-
-      const response = await fetch(
-        "/api/businesses",
-        {
-          method: "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-
-          body: JSON.stringify(
-            payload
-          ),
-        }
-      );
 
       const data =
         await response.json();
 
-      if (!response.ok) {
+      if (
+        !response.ok
+      ) {
         throw new Error(
           data.error ||
             "No se pudo registrar el negocio."
@@ -347,11 +364,12 @@ businessForm?.addEventListener(
       videoDurationInput.value =
         "";
 
-      videoStatus.textContent = "";
+      videoStatus.textContent =
+        "";
 
       setMessage(
         businessMessage,
-        "Negocio enviado para revision.",
+        "Negocio enviado para revision correctamente.",
         false
       );
     } catch (error) {
@@ -363,4 +381,3 @@ businessForm?.addEventListener(
     }
   }
 );
-
