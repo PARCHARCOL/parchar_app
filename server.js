@@ -585,13 +585,10 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "raw",
+                      "auto",
 
                       folder:
-                        "parchar/rut",
-
-                      format:
-                        "pdf",
+                      "parchar/rut",
                     },
 
                     (
@@ -641,13 +638,12 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "raw",
+                      "auto",
 
                       folder:
-                        "parchar/commerce",
+                      "parchar/commerce",
 
-                      format:
-                        "pdf",
+                      
                     },
 
                     (
