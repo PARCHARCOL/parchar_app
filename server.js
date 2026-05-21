@@ -1,3 +1,5 @@
+
+
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -620,7 +622,6 @@ const server =
             rutUrl =
               uploadedRut.secure_url;
           }
-
           // CAMARA COMERCIO PDF
 
           if (
@@ -644,7 +645,6 @@ const server =
                       "parchar/commerce",
 
                       },
-
                     (
                       error,
                       result
