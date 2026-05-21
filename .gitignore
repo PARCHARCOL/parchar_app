@@ -1,5 +1,7 @@
-data/
-uploads/
+node_modules
+.runtime
+data
+uploads
+storage
+.env
 *.log
-.runtime/
-storage/
