@@ -643,8 +643,7 @@ const server =
                       folder:
                       "parchar/commerce",
 
-                      
-                    },
+                      },
 
                     (
                       error,
