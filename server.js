@@ -1,4 +1,3 @@
-
 const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
@@ -96,57 +95,96 @@ const ALLOWED_CATEGORIES =
   ]);
 
 async function initializeDatabase() {
+
+  // USERS
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
+
       full_name TEXT NOT NULL,
+
       email TEXT UNIQUE NOT NULL,
+
       phone TEXT NOT NULL,
+
       password_hash TEXT NOT NULL,
+
       age INTEGER NOT NULL,
+
       city TEXT NOT NULL,
+
       neighborhood TEXT NOT NULL,
+
       preferences TEXT NOT NULL,
+
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // BUSINESSES BASE
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
 
       owner_name TEXT NOT NULL,
+
       owner_email TEXT NOT NULL,
+
       owner_phone TEXT NOT NULL,
-      owner_document TEXT,
 
       business_name TEXT NOT NULL,
 
       category TEXT NOT NULL,
 
       description TEXT NOT NULL,
+
       products TEXT NOT NULL,
 
       address TEXT NOT NULL,
+
       city TEXT NOT NULL,
 
       latitude DOUBLE PRECISION NOT NULL,
+
       longitude DOUBLE PRECISION NOT NULL,
 
-      social_link TEXT,
-
-      rut_document TEXT,
-      commerce_document TEXT,
-
-      legal_acceptance BOOLEAN DEFAULT false,
-
       video_path TEXT NOT NULL,
+
       video_seconds DOUBLE PRECISION NOT NULL,
 
       status TEXT DEFAULT 'pendiente',
 
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  // AUTO MIGRACIONES
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS owner_document TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS social_link TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS rut_document TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS commerce_document TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS legal_acceptance BOOLEAN DEFAULT false;
   `);
 
   console.log(
@@ -333,6 +371,7 @@ const server =
         }
 
         // HEALTH
+
         if (
           pathname ===
             "/api/health" &&
@@ -347,6 +386,7 @@ const server =
         }
 
         // REGISTRO USUARIO
+
         if (
           pathname ===
             "/api/users/register" &&
@@ -416,12 +456,14 @@ const server =
           return;
         }
 
-        // CREAR NEGOCIO REAL
+        // CREAR NEGOCIO
+
         if (
           pathname ===
             "/api/businesses" &&
           req.method === "POST"
         ) {
+
           await runMiddleware(
             req,
             res,
@@ -471,15 +513,18 @@ const server =
           let commerceUrl = "";
 
           // VIDEO
+
           if (
             req.files?.video?.[0]
           ) {
+
             const uploadedVideo =
               await new Promise(
                 (
                   resolve,
                   reject
                 ) => {
+
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
@@ -493,6 +538,7 @@ const server =
                       error,
                       result
                     ) => {
+
                       if (error) {
                         reject(
                           error
@@ -518,16 +564,19 @@ const server =
           }
 
           // RUT
+
           if (
             req.files
               ?.rutDocument?.[0]
           ) {
+
             const uploadedRut =
               await new Promise(
                 (
                   resolve,
                   reject
                 ) => {
+
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
@@ -541,6 +590,7 @@ const server =
                       error,
                       result
                     ) => {
+
                       if (error) {
                         reject(
                           error
@@ -566,16 +616,19 @@ const server =
           }
 
           // COMMERCE
+
           if (
             req.files
               ?.commerceDocument?.[0]
           ) {
+
             const uploadedCommerce =
               await new Promise(
                 (
                   resolve,
                   reject
                 ) => {
+
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
@@ -589,6 +642,7 @@ const server =
                       error,
                       result
                     ) => {
+
                       if (error) {
                         reject(
                           error
@@ -724,11 +778,13 @@ const server =
         }
 
         // LISTAR NEGOCIOS
+
         if (
           pathname ===
             "/api/businesses" &&
           req.method === "GET"
         ) {
+
           const category =
             requestUrl.searchParams.get(
               "category"
@@ -790,7 +846,8 @@ const server =
                 address:
                   item.address,
 
-                city: item.city,
+                city:
+                  item.city,
 
                 latitude:
                   item.latitude,
@@ -817,11 +874,13 @@ const server =
         }
 
         // ADMIN
+
         if (
           pathname ===
             "/api/admin/businesses" &&
           req.method === "GET"
         ) {
+
           const result =
             await pool.query(`
               SELECT *
@@ -878,6 +937,7 @@ const server =
         }
 
         // APROBAR
+
         if (
           pathname.match(
             /^\/api\/admin\/businesses\/\d+\/approve$/
@@ -885,6 +945,7 @@ const server =
           req.method ===
             "POST"
         ) {
+
           const id =
             pathname.split("/")[4];
 
@@ -905,6 +966,7 @@ const server =
         }
 
         // RECHAZAR
+
         if (
           pathname.match(
             /^\/api\/admin\/businesses\/\d+\/reject$/
@@ -912,6 +974,7 @@ const server =
           req.method ===
             "POST"
         ) {
+
           const id =
             pathname.split("/")[4];
 
@@ -931,9 +994,11 @@ const server =
         }
 
         // PUBLIC
+
         if (
           req.method === "GET"
         ) {
+
           const publicPath =
             readPublicPath(
               pathname
@@ -951,7 +1016,9 @@ const server =
           error:
             "Ruta no encontrada",
         });
+
       } catch (error) {
+
         console.error(error);
 
         sendJson(res, 500, {
@@ -964,16 +1031,18 @@ const server =
 
 initializeDatabase()
   .then(() => {
+
     server.listen(PORT, () => {
+
       console.log(
         `🔥 Parchar V3 corriendo en puerto ${PORT}`
       );
     });
   })
   .catch((error) => {
+
     console.error(
       "❌ Error inicializando DB",
       error
     );
   });
-
