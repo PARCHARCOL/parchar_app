@@ -4,50 +4,96 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { URL } = require("node:url");
 const { randomBytes, scryptSync } = require("node:crypto");
+
+const multer = require("multer");
+
+const cloudinary =
+  require("cloudinary").v2;
+
 const { Pool } = require("pg");
 
-const PORT = Number(process.env.PORT || 8080);
+const PORT = Number(
+  process.env.PORT || 8080
+);
 
 const ROOT_DIR = __dirname;
-const PUBLIC_DIR = path.join(ROOT_DIR, "public");
 
-const configuredUploadsDir =
-  process.env.UPLOADS_DIR || "uploads";
+const PUBLIC_DIR = path.join(
+  ROOT_DIR,
+  "public"
+);
 
-const UPLOADS_DIR = path.isAbsolute(
-  configuredUploadsDir
-)
-  ? configuredUploadsDir
-  : path.join(ROOT_DIR, configuredUploadsDir);
+cloudinary.config({
+  cloud_name:
+    process.env
+      .CLOUDINARY_CLOUD_NAME,
+
+  api_key:
+    process.env
+      .CLOUDINARY_API_KEY,
+
+  api_secret:
+    process.env
+      .CLOUDINARY_API_SECRET,
+});
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+
+  limits: {
+    fileSize:
+      50 * 1024 * 1024,
+  },
+});
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString:
+    process.env.DATABASE_URL,
+
   ssl: {
     rejectUnauthorized: false,
   },
 });
 
 const MIME_TYPES = {
-  ".css": "text/css; charset=utf-8",
-  ".html": "text/html; charset=utf-8",
+  ".css":
+    "text/css; charset=utf-8",
+
+  ".html":
+    "text/html; charset=utf-8",
+
   ".ico": "image/x-icon",
+
   ".jpeg": "image/jpeg",
+
   ".jpg": "image/jpeg",
-  ".js": "application/javascript; charset=utf-8",
-  ".json": "application/json; charset=utf-8",
+
+  ".js":
+    "application/javascript; charset=utf-8",
+
+  ".json":
+    "application/json; charset=utf-8",
+
   ".mp4": "video/mp4",
-  ".mov": "video/quicktime",
+
+  ".mov":
+    "video/quicktime",
+
   ".png": "image/png",
-  ".svg": "image/svg+xml",
+
+  ".svg":
+    "image/svg+xml",
+
   ".webm": "video/webm",
 };
 
-const ALLOWED_CATEGORIES = new Set([
-  "moto",
-  "carro",
-  "romantico",
-  "bbb",
-]);
+const ALLOWED_CATEGORIES =
+  new Set([
+    "moto",
+    "carro",
+    "romantico",
+    "bbb",
+  ]);
 
 async function initializeDatabase() {
   await pool.query(`
@@ -103,25 +149,44 @@ async function initializeDatabase() {
     );
   `);
 
-  console.log("✅ PostgreSQL inicializado");
+  console.log(
+    "✅ PostgreSQL inicializado"
+  );
 }
 
-function sendJson(res, statusCode, payload) {
-  const body = JSON.stringify(payload);
+function sendJson(
+  res,
+  statusCode,
+  payload
+) {
+  const body = JSON.stringify(
+    payload
+  );
 
   res.writeHead(statusCode, {
     "Content-Type":
       "application/json; charset=utf-8",
-    "Content-Length": Buffer.byteLength(body),
+
+    "Content-Length":
+      Buffer.byteLength(body),
   });
 
   res.end(body);
 }
 
-function sendFile(res, absolutePath) {
-  if (!fs.existsSync(absolutePath)) {
+function sendFile(
+  res,
+  absolutePath
+) {
+  if (
+    !fs.existsSync(
+      absolutePath
+    )
+  ) {
     res.writeHead(404);
+
     res.end("Not found");
+
     return;
   }
 
@@ -135,15 +200,23 @@ function sendFile(res, absolutePath) {
       "application/octet-stream",
   });
 
-  fs.createReadStream(absolutePath).pipe(res);
+  fs.createReadStream(
+    absolutePath
+  ).pipe(res);
 }
 
 function cleanText(value) {
-  return String(value || "").trim();
+  return String(
+    value || ""
+  ).trim();
 }
 
-function hashPassword(password) {
-  const salt = randomBytes(16).toString("hex");
+function hashPassword(
+  password
+) {
+  const salt = randomBytes(
+    16
+  ).toString("hex");
 
   const hash = scryptSync(
     password,
@@ -154,26 +227,41 @@ function hashPassword(password) {
   return `${salt}:${hash}`;
 }
 
-function readPublicPath(urlPathname) {
-  let safePath = urlPathname;
+function readPublicPath(
+  urlPathname
+) {
+  let safePath =
+    urlPathname;
 
   if (safePath === "/") {
-    safePath = "/index.html";
+    safePath =
+      "/index.html";
   }
 
-  safePath = safePath.replace(/^\/+/, "");
+  safePath =
+    safePath.replace(
+      /^\/+/,
+      ""
+    );
 
-  return path.join(PUBLIC_DIR, safePath);
+  return path.join(
+    PUBLIC_DIR,
+    safePath
+  );
 }
 
-async function parseJsonBody(req) {
+async function parseJsonBody(
+  req
+) {
   const chunks = [];
 
   for await (const chunk of req) {
     chunks.push(chunk);
   }
 
-  const raw = Buffer.concat(chunks).toString();
+  const raw = Buffer.concat(
+    chunks
+  ).toString();
 
   if (!raw) {
     return {};
@@ -182,418 +270,703 @@ async function parseJsonBody(req) {
   return JSON.parse(raw);
 }
 
-const server = http.createServer(
-  async (req, res) => {
-    try {
-      const host =
-        req.headers.host ||
-        `localhost:${PORT}`;
+function runMiddleware(
+  req,
+  res,
+  fn
+) {
+  return new Promise(
+    (resolve, reject) => {
+      fn(
+        req,
+        res,
+        (result) => {
+          if (
+            result instanceof Error
+          ) {
+            reject(result);
+            return;
+          }
 
-      const requestUrl = new URL(
-        req.url || "/",
-        `http://${host}`
+          resolve(result);
+        }
       );
+    }
+  );
+}
 
-      const pathname = requestUrl.pathname;
+const server =
+  http.createServer(
+    async (req, res) => {
+      try {
+        const host =
+          req.headers.host ||
+          `localhost:${PORT}`;
 
-      if (req.method === "OPTIONS") {
-        res.writeHead(204, {
-          "Access-Control-Allow-Origin":
-            "*",
-          "Access-Control-Allow-Headers":
-            "Content-Type",
-          "Access-Control-Allow-Methods":
-            "GET,POST,OPTIONS",
-        });
+        const requestUrl =
+          new URL(
+            req.url || "/",
+            `http://${host}`
+          );
 
-        res.end();
-
-        return;
-      }
-
-      // HEALTH
-      if (
-        pathname === "/api/health" &&
-        req.method === "GET"
-      ) {
-        sendJson(res, 200, {
-          ok: true,
-          app: "parchar-v2",
-        });
-
-        return;
-      }
-
-      // REGISTRO USUARIO
-      if (
-        pathname ===
-          "/api/users/register" &&
-        req.method === "POST"
-      ) {
-        const body =
-          await parseJsonBody(req);
-
-        const passwordHash =
-          hashPassword(body.password);
-
-        await pool.query(
-          `
-          INSERT INTO users (
-            full_name,
-            email,
-            phone,
-            password_hash,
-            age,
-            city,
-            neighborhood,
-            preferences
-          )
-          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-        `,
-          [
-            cleanText(body.fullName),
-            cleanText(body.email),
-            cleanText(body.phone),
-            passwordHash,
-            Number(body.age),
-            cleanText(body.city),
-            cleanText(
-              body.neighborhood
-            ),
-            cleanText(body.preferences),
-          ]
-        );
-
-        sendJson(res, 201, {
-          ok: true,
-          message: "Usuario creado",
-        });
-
-        return;
-      }
-
-      // CREAR NEGOCIO
-      if (
-        pathname === "/api/businesses" &&
-        req.method === "POST"
-      ) {
-        const body =
-          await parseJsonBody(req);
-
-        const category = cleanText(
-          body.category
-        ).toLowerCase();
+        const pathname =
+          requestUrl.pathname;
 
         if (
-          !ALLOWED_CATEGORIES.has(
-            category
-          )
+          req.method ===
+          "OPTIONS"
         ) {
-          sendJson(res, 400, {
-            error: "Categoria invalida",
+          res.writeHead(204, {
+            "Access-Control-Allow-Origin":
+              "*",
+
+            "Access-Control-Allow-Headers":
+              "Content-Type",
+
+            "Access-Control-Allow-Methods":
+              "GET,POST,OPTIONS",
+          });
+
+          res.end();
+
+          return;
+        }
+
+        // HEALTH
+        if (
+          pathname ===
+            "/api/health" &&
+          req.method === "GET"
+        ) {
+          sendJson(res, 200, {
+            ok: true,
+            app: "parchar-v3",
           });
 
           return;
         }
 
-        await pool.query(
-          `
-          INSERT INTO businesses (
-            owner_name,
-            owner_email,
-            owner_phone,
-            owner_document,
-            business_name,
-            category,
-            description,
-            products,
-            address,
-            city,
-            latitude,
-            longitude,
-            social_link,
-            rut_document,
-            commerce_document,
-            legal_acceptance,
-            video_path,
-            video_seconds,
-            status
-          )
-          VALUES (
-            $1,$2,$3,$4,$5,$6,$7,$8,$9,
-            $10,$11,$12,$13,$14,$15,$16,
-            $17,$18,$19
-          )
-        `,
-          [
-            cleanText(body.ownerName),
-            cleanText(body.ownerEmail),
-            cleanText(body.ownerPhone),
-            cleanText(body.ownerDocument),
+        // REGISTRO USUARIO
+        if (
+          pathname ===
+            "/api/users/register" &&
+          req.method === "POST"
+        ) {
+          const body =
+            await parseJsonBody(
+              req
+            );
 
-            cleanText(body.businessName),
+          const passwordHash =
+            hashPassword(
+              body.password
+            );
 
-            category,
+          await pool.query(
+            `
+            INSERT INTO users (
+              full_name,
+              email,
+              phone,
+              password_hash,
+              age,
+              city,
+              neighborhood,
+              preferences
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+          `,
+            [
+              cleanText(
+                body.fullName
+              ),
 
-            cleanText(body.description),
-            cleanText(body.products),
+              cleanText(
+                body.email
+              ),
 
-            cleanText(body.address),
-            cleanText(body.city),
+              cleanText(
+                body.phone
+              ),
 
-            Number(body.latitude),
-            Number(body.longitude),
+              passwordHash,
 
-            cleanText(body.socialLink || ""),
+              Number(body.age),
 
-            cleanText(body.rutDocument || ""),
-            cleanText(body.commerceDocument || ""),
+              cleanText(
+                body.city
+              ),
 
-            Boolean(body.legalAcceptance),
+              cleanText(
+                body.neighborhood
+              ),
 
-            cleanText(body.videoPath || ""),
+              cleanText(
+                body.preferences
+              ),
+            ]
+          );
 
-            Number(body.videoSeconds || 10),
+          sendJson(res, 201, {
+            ok: true,
+            message:
+              "Usuario creado",
+          });
 
-            "pendiente",
-          ]
-        );
-
-        sendJson(res, 201, {
-          ok: true,
-          message:
-            "Negocio enviado para revision",
-        });
-
-        return;
-      }
-
-      // LISTAR NEGOCIOS PUBLICOS
-      if (
-        pathname === "/api/businesses" &&
-        req.method === "GET"
-      ) {
-        const category =
-          requestUrl.searchParams.get(
-            "category"
-          ) || "";
-
-        let query = `
-          SELECT *
-          FROM businesses
-          WHERE status = 'aprobado'
-        `;
-
-        const values = [];
-
-        if (category) {
-          query +=
-            " AND category = $1";
-
-          values.push(category);
+          return;
         }
 
-        query += `
-          ORDER BY created_at DESC
-        `;
+        // CREAR NEGOCIO REAL
+        if (
+          pathname ===
+            "/api/businesses" &&
+          req.method === "POST"
+        ) {
+          await runMiddleware(
+            req,
+            res,
+            upload.fields([
+              {
+                name: "video",
+                maxCount: 1,
+              },
 
-        const result =
-          await pool.query(
-            query,
-            values
+              {
+                name: "rutDocument",
+                maxCount: 1,
+              },
+
+              {
+                name:
+                  "commerceDocument",
+                maxCount: 1,
+              },
+            ])
           );
 
-        const items = result.rows.map(
-          (item) => ({
-            id: item.id,
-            ownerName:
-              item.owner_name,
-            ownerEmail:
-              item.owner_email,
-            ownerPhone:
-              item.owner_phone,
-            businessName:
-              item.business_name,
-            category: item.category,
-            description:
-              item.description,
-            products: item.products,
-            address: item.address,
-            city: item.city,
-            latitude: item.latitude,
-            longitude: item.longitude,
-            videoUrl:
-              item.video_path,
-            videoSeconds:
-              item.video_seconds,
-            distanceKm: null,
-          })
-        );
+          const body = req.body;
 
-        sendJson(res, 200, {
-          items,
-        });
+          const category =
+            cleanText(
+              body.category
+            ).toLowerCase();
 
-        return;
-      }
+          if (
+            !ALLOWED_CATEGORIES.has(
+              category
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Categoria invalida",
+            });
 
-      // ADMIN - LISTAR PENDIENTES
-      if (
-        pathname ===
-          "/api/admin/businesses" &&
-        req.method === "GET"
-      ) {
-        const result =
-          await pool.query(`
+            return;
+          }
+
+          let videoUrl = "";
+
+          let rutUrl = "";
+
+          let commerceUrl = "";
+
+          // VIDEO
+          if (
+            req.files?.video?.[0]
+          ) {
+            const uploadedVideo =
+              await new Promise(
+                (
+                  resolve,
+                  reject
+                ) => {
+                  cloudinary.uploader.upload_stream(
+                    {
+                      resource_type:
+                        "video",
+
+                      folder:
+                        "parchar/videos",
+                    },
+
+                    (
+                      error,
+                      result
+                    ) => {
+                      if (error) {
+                        reject(
+                          error
+                        );
+
+                        return;
+                      }
+
+                      resolve(
+                        result
+                      );
+                    }
+                  ).end(
+                    req.files
+                      .video[0]
+                      .buffer
+                  );
+                }
+              );
+
+            videoUrl =
+              uploadedVideo.secure_url;
+          }
+
+          // RUT
+          if (
+            req.files
+              ?.rutDocument?.[0]
+          ) {
+            const uploadedRut =
+              await new Promise(
+                (
+                  resolve,
+                  reject
+                ) => {
+                  cloudinary.uploader.upload_stream(
+                    {
+                      resource_type:
+                        "raw",
+
+                      folder:
+                        "parchar/rut",
+                    },
+
+                    (
+                      error,
+                      result
+                    ) => {
+                      if (error) {
+                        reject(
+                          error
+                        );
+
+                        return;
+                      }
+
+                      resolve(
+                        result
+                      );
+                    }
+                  ).end(
+                    req.files
+                      .rutDocument[0]
+                      .buffer
+                  );
+                }
+              );
+
+            rutUrl =
+              uploadedRut.secure_url;
+          }
+
+          // COMMERCE
+          if (
+            req.files
+              ?.commerceDocument?.[0]
+          ) {
+            const uploadedCommerce =
+              await new Promise(
+                (
+                  resolve,
+                  reject
+                ) => {
+                  cloudinary.uploader.upload_stream(
+                    {
+                      resource_type:
+                        "raw",
+
+                      folder:
+                        "parchar/commerce",
+                    },
+
+                    (
+                      error,
+                      result
+                    ) => {
+                      if (error) {
+                        reject(
+                          error
+                        );
+
+                        return;
+                      }
+
+                      resolve(
+                        result
+                      );
+                    }
+                  ).end(
+                    req.files
+                      .commerceDocument[0]
+                      .buffer
+                  );
+                }
+              );
+
+            commerceUrl =
+              uploadedCommerce.secure_url;
+          }
+
+          await pool.query(
+            `
+            INSERT INTO businesses (
+              owner_name,
+              owner_email,
+              owner_phone,
+              owner_document,
+              business_name,
+              category,
+              description,
+              products,
+              address,
+              city,
+              latitude,
+              longitude,
+              social_link,
+              rut_document,
+              commerce_document,
+              legal_acceptance,
+              video_path,
+              video_seconds,
+              status
+            )
+            VALUES (
+              $1,$2,$3,$4,$5,$6,$7,$8,$9,
+              $10,$11,$12,$13,$14,$15,$16,
+              $17,$18,$19
+            )
+          `,
+            [
+              cleanText(
+                body.ownerName
+              ),
+
+              cleanText(
+                body.ownerEmail
+              ),
+
+              cleanText(
+                body.ownerPhone
+              ),
+
+              cleanText(
+                body.ownerDocument
+              ),
+
+              cleanText(
+                body.businessName
+              ),
+
+              category,
+
+              cleanText(
+                body.description
+              ),
+
+              cleanText(
+                body.products
+              ),
+
+              cleanText(
+                body.address
+              ),
+
+              cleanText(
+                body.city
+              ),
+
+              Number(
+                body.latitude
+              ),
+
+              Number(
+                body.longitude
+              ),
+
+              cleanText(
+                body.socialLink ||
+                  ""
+              ),
+
+              rutUrl,
+
+              commerceUrl,
+
+              Boolean(
+                body.legalAcceptance
+              ),
+
+              videoUrl,
+
+              Number(
+                body.videoDurationSeconds ||
+                  10
+              ),
+
+              "pendiente",
+            ]
+          );
+
+          sendJson(res, 201, {
+            ok: true,
+
+            message:
+              "Negocio enviado para revision",
+          });
+
+          return;
+        }
+
+        // LISTAR NEGOCIOS
+        if (
+          pathname ===
+            "/api/businesses" &&
+          req.method === "GET"
+        ) {
+          const category =
+            requestUrl.searchParams.get(
+              "category"
+            ) || "";
+
+          let query = `
             SELECT *
             FROM businesses
-            WHERE status = 'pendiente'
+            WHERE status = 'aprobado'
+          `;
+
+          const values = [];
+
+          if (category) {
+            query +=
+              " AND category = $1";
+
+            values.push(
+              category
+            );
+          }
+
+          query += `
             ORDER BY created_at DESC
-          `);
+          `;
 
-        const items = result.rows.map(
-          (item) => ({
-            id: item.id,
+          const result =
+            await pool.query(
+              query,
+              values
+            );
 
-            ownerName:
-              item.owner_name,
+          const items =
+            result.rows.map(
+              (item) => ({
+                id: item.id,
 
-            ownerEmail:
-              item.owner_email,
+                ownerName:
+                  item.owner_name,
 
-            ownerPhone:
-              item.owner_phone,
+                ownerEmail:
+                  item.owner_email,
 
-            businessName:
-              item.business_name,
+                ownerPhone:
+                  item.owner_phone,
 
-            category:
-              item.category,
+                businessName:
+                  item.business_name,
 
-            description:
-              item.description,
+                category:
+                  item.category,
 
-            city:
-              item.city,
+                description:
+                  item.description,
 
-            socialLink:
-              item.social_link,
-          })
-        );
+                products:
+                  item.products,
 
-        sendJson(res, 200, {
-          items,
-        });
+                address:
+                  item.address,
 
-        return;
-      }
+                city: item.city,
 
-      // ADMIN - APROBAR
-      if (
-        pathname.match(
-          /^\/api\/admin\/businesses\/\d+\/approve$/
-        ) &&
-        req.method === "POST"
-      ) {
-        const id = pathname.split("/")[4];
+                latitude:
+                  item.latitude,
 
-        await pool.query(
-          `
-          UPDATE businesses
-          SET status = 'aprobado'
-          WHERE id = $1
-        `,
-          [id]
-        );
+                longitude:
+                  item.longitude,
 
-        sendJson(res, 200, {
-          ok: true,
-          message:
-            "Negocio aprobado",
-        });
+                videoUrl:
+                  item.video_path,
 
-        return;
-      }
+                videoSeconds:
+                  item.video_seconds,
 
-      // ADMIN - RECHAZAR
-      if (
-        pathname.match(
-          /^\/api\/admin\/businesses\/\d+\/reject$/
-        ) &&
-        req.method === "POST"
-      ) {
-        const id = pathname.split("/")[4];
+                distanceKm:
+                  null,
+              })
+            );
 
-        await pool.query(
-          `
-          UPDATE businesses
-          SET status = 'rechazado'
-          WHERE id = $1
-        `,
-          [id]
-        );
+          sendJson(res, 200, {
+            items,
+          });
 
-        sendJson(res, 200, {
-          ok: true,
-          message:
-            "Negocio rechazado",
-        });
+          return;
+        }
 
-        return;
-      }
+        // ADMIN
+        if (
+          pathname ===
+            "/api/admin/businesses" &&
+          req.method === "GET"
+        ) {
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM businesses
+              WHERE status = 'pendiente'
+              ORDER BY created_at DESC
+            `);
 
-      // UPLOADS
-      if (
-        pathname.startsWith(
-          "/uploads/"
-        )
-      ) {
-        const relative =
-          pathname.replace(
-            /^\/uploads\//,
-            ""
+          const items =
+            result.rows.map(
+              (item) => ({
+                id: item.id,
+
+                ownerName:
+                  item.owner_name,
+
+                ownerEmail:
+                  item.owner_email,
+
+                ownerPhone:
+                  item.owner_phone,
+
+                businessName:
+                  item.business_name,
+
+                category:
+                  item.category,
+
+                description:
+                  item.description,
+
+                city:
+                  item.city,
+
+                socialLink:
+                  item.social_link,
+
+                videoUrl:
+                  item.video_path,
+
+                rutDocument:
+                  item.rut_document,
+
+                commerceDocument:
+                  item.commerce_document,
+              })
+            );
+
+          sendJson(res, 200, {
+            items,
+          });
+
+          return;
+        }
+
+        // APROBAR
+        if (
+          pathname.match(
+            /^\/api\/admin\/businesses\/\d+\/approve$/
+          ) &&
+          req.method ===
+            "POST"
+        ) {
+          const id =
+            pathname.split("/")[4];
+
+          await pool.query(
+            `
+            UPDATE businesses
+            SET status = 'aprobado'
+            WHERE id = $1
+          `,
+            [id]
           );
 
-        const absolutePath =
-          path.join(
-            UPLOADS_DIR,
-            relative
+          sendJson(res, 200, {
+            ok: true,
+          });
+
+          return;
+        }
+
+        // RECHAZAR
+        if (
+          pathname.match(
+            /^\/api\/admin\/businesses\/\d+\/reject$/
+          ) &&
+          req.method ===
+            "POST"
+        ) {
+          const id =
+            pathname.split("/")[4];
+
+          await pool.query(
+            `
+            DELETE FROM businesses
+            WHERE id = $1
+          `,
+            [id]
           );
 
-        sendFile(res, absolutePath);
+          sendJson(res, 200, {
+            ok: true,
+          });
 
-        return;
+          return;
+        }
+
+        // PUBLIC
+        if (
+          req.method === "GET"
+        ) {
+          const publicPath =
+            readPublicPath(
+              pathname
+            );
+
+          sendFile(
+            res,
+            publicPath
+          );
+
+          return;
+        }
+
+        sendJson(res, 404, {
+          error:
+            "Ruta no encontrada",
+        });
+      } catch (error) {
+        console.error(error);
+
+        sendJson(res, 500, {
+          error:
+            "Error interno servidor",
+        });
       }
-
-      // ARCHIVOS PUBLIC
-      if (req.method === "GET") {
-        const publicPath =
-          readPublicPath(pathname);
-
-        sendFile(res, publicPath);
-
-        return;
-      }
-
-      sendJson(res, 404, {
-        error: "Ruta no encontrada",
-      });
-    } catch (error) {
-      console.error(error);
-
-      sendJson(res, 500, {
-        error:
-          "Error interno servidor",
-      });
     }
-  }
-);
+  );
 
 initializeDatabase()
   .then(() => {
     server.listen(PORT, () => {
       console.log(
-        `🔥 Parchar V2 corriendo en puerto ${PORT}`
+        `🔥 Parchar V3 corriendo en puerto ${PORT}`
       );
     });
   })
