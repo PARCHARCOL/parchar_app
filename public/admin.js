@@ -48,7 +48,7 @@ async function approveBusiness(id) {
 async function rejectBusiness(id) {
 
   const reason = prompt(
-    "Motivo del rechazo:"
+    "Escribe el motivo del rechazo:"
   );
 
   if (!reason) {
@@ -199,9 +199,11 @@ function renderBusinesses(items) {
 
     businessList.innerHTML = `
       <div class="glass-card">
+
         <h3>
           No hay negocios pendientes
         </h3>
+
       </div>
     `;
 
@@ -308,10 +310,10 @@ function renderBusinesses(items) {
               ? `
             <a
               href="${item.rut_document}"
-              target="_blank"
+              download
               class="ghost-btn"
             >
-              📄 Ver RUT
+              📄 Descargar RUT
             </a>
           `
               : `
@@ -326,10 +328,10 @@ function renderBusinesses(items) {
               ? `
             <a
               href="${item.commerce_document}"
-              target="_blank"
+              download
               class="ghost-btn"
             >
-              🏢 Cámara Comercio
+              🏢 Descargar Cámara Comercio
             </a>
           `
               : `
