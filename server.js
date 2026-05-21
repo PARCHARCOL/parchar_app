@@ -5,10 +5,7 @@ const { URL } = require("node:url");
 const { randomBytes, scryptSync } = require("node:crypto");
 
 const multer = require("multer");
-
-const cloudinary =
-  require("cloudinary").v2;
-
+const cloudinary = require("cloudinary").v2;
 const { Pool } = require("pg");
 
 const PORT = Number(
@@ -61,11 +58,14 @@ const MIME_TYPES = {
   ".html":
     "text/html; charset=utf-8",
 
-  ".ico": "image/x-icon",
+  ".ico":
+    "image/x-icon",
 
-  ".jpeg": "image/jpeg",
+  ".jpeg":
+    "image/jpeg",
 
-  ".jpg": "image/jpeg",
+  ".jpg":
+    "image/jpeg",
 
   ".js":
     "application/javascript; charset=utf-8",
@@ -73,20 +73,23 @@ const MIME_TYPES = {
   ".json":
     "application/json; charset=utf-8",
 
-  ".mp4": "video/mp4",
+  ".mp4":
+    "video/mp4",
 
   ".mov":
     "video/quicktime",
 
-  ".png": "image/png",
-
   ".pdf":
     "application/pdf",
+
+  ".png":
+    "image/png",
 
   ".svg":
     "image/svg+xml",
 
-  ".webm": "video/webm",
+  ".webm":
+    "video/webm",
 };
 
 const ALLOWED_CATEGORIES =
@@ -380,7 +383,7 @@ const server =
 
           sendJson(res, 200, {
             ok: true,
-            app: "parchar-v4",
+            app: "parchar-v5",
           });
 
           return;
@@ -510,9 +513,7 @@ const server =
           }
 
           let videoUrl = "";
-
           let rutUrl = "";
-
           let commerceUrl = "";
 
           // VIDEO
@@ -567,7 +568,7 @@ const server =
               uploadedVideo.secure_url;
           }
 
-          // RUT
+          // RUT PDF
 
           if (
             req.files
@@ -584,10 +585,13 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "auto",
+                        "raw",
 
                       folder:
                         "parchar/rut",
+
+                      format:
+                        "pdf",
                     },
 
                     (
@@ -620,7 +624,7 @@ const server =
               uploadedRut.secure_url;
           }
 
-          // COMMERCE
+          // CAMARA COMERCIO PDF
 
           if (
             req.files
@@ -637,10 +641,13 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "auto",
+                        "raw",
 
                       folder:
                         "parchar/commerce",
+
+                      format:
+                        "pdf",
                     },
 
                     (
@@ -775,7 +782,6 @@ const server =
 
           sendJson(res, 201, {
             ok: true,
-
             message:
               "Negocio enviado para revision",
           });
@@ -783,101 +789,7 @@ const server =
           return;
         }
 
-        // LISTAR NEGOCIOS
-
-        if (
-          pathname ===
-            "/api/businesses" &&
-          req.method === "GET"
-        ) {
-
-          const category =
-            requestUrl.searchParams.get(
-              "category"
-            ) || "";
-
-          let query = `
-            SELECT *
-            FROM businesses
-            WHERE status = 'aprobado'
-          `;
-
-          const values = [];
-
-          if (category) {
-
-            query +=
-              " AND category = $1";
-
-            values.push(
-              category
-            );
-          }
-
-          query += `
-            ORDER BY created_at DESC
-          `;
-
-          const result =
-            await pool.query(
-              query,
-              values
-            );
-
-          const items =
-            result.rows.map(
-              (item) => ({
-                id: item.id,
-
-                ownerName:
-                  item.owner_name,
-
-                ownerEmail:
-                  item.owner_email,
-
-                ownerPhone:
-                  item.owner_phone,
-
-                businessName:
-                  item.business_name,
-
-                category:
-                  item.category,
-
-                description:
-                  item.description,
-
-                products:
-                  item.products,
-
-                address:
-                  item.address,
-
-                city:
-                  item.city,
-
-                latitude:
-                  item.latitude,
-
-                longitude:
-                  item.longitude,
-
-                videoUrl:
-                  item.video_path,
-
-                videoSeconds:
-                  item.video_seconds,
-              })
-            );
-
-          sendJson(res, 200, {
-            items,
-          });
-
-          return;
-        }
-
-        // ADMIN PENDIENTES
+        // ADMIN LISTA
 
         if (
           pathname ===
@@ -893,113 +805,9 @@ const server =
               ORDER BY created_at DESC
             `);
 
-          const items =
-            result.rows.map(
-              (item) => ({
-                id: item.id,
-
-                ownerName:
-                  item.owner_name,
-
-                ownerEmail:
-                  item.owner_email,
-
-                ownerPhone:
-                  item.owner_phone,
-
-                businessName:
-                  item.business_name,
-
-                category:
-                  item.category,
-
-                description:
-                  item.description,
-
-                products:
-                  item.products,
-
-                city:
-                  item.city,
-
-                socialLink:
-                  item.social_link,
-
-                videoUrl:
-                  item.video_path,
-
-                rutDocument:
-                  item.rut_document,
-
-                commerceDocument:
-                  item.commerce_document,
-              })
-            );
-
           sendJson(res, 200, {
-            items,
-          });
-
-          return;
-        }
-
-        // EDITAR
-
-        if (
-          pathname.match(
-            /^\/api\/admin\/businesses\/\d+\/edit$/
-          ) &&
-          req.method === "POST"
-        ) {
-
-          const id =
-            pathname.split("/")[4];
-
-          const body =
-            await parseJsonBody(
-              req
-            );
-
-          await pool.query(
-            `
-            UPDATE businesses
-            SET
-              business_name = $1,
-              description = $2,
-              products = $3,
-              city = $4,
-              category = $5
-            WHERE id = $6
-          `,
-            [
-              cleanText(
-                body.businessName
-              ),
-
-              cleanText(
-                body.description
-              ),
-
-              cleanText(
-                body.products
-              ),
-
-              cleanText(
-                body.city
-              ),
-
-              cleanText(
-                body.category
-              ),
-
-              id,
-            ]
-          );
-
-          sendJson(res, 200, {
-            ok: true,
-            message:
-              "Negocio actualizado",
+            items:
+              result.rows,
           });
 
           return;
@@ -1070,11 +878,9 @@ const server =
           const business =
             businessResult.rows[0];
 
-          console.log(
-            "📧 EMAIL RECHAZO"
-          );
-
           console.log(`
+            📧 EMAIL RECHAZO
+
             Negocio:
             ${business.business_name}
 
@@ -1125,8 +931,6 @@ const server =
 
           sendJson(res, 200, {
             ok: true,
-            message:
-              "Negocio eliminado",
           });
 
           return;
@@ -1174,7 +978,7 @@ initializeDatabase()
     server.listen(PORT, () => {
 
       console.log(
-        `🔥 Parchar V4 corriendo en puerto ${PORT}`
+        `🔥 Parchar V5 corriendo en puerto ${PORT}`
       );
     });
   })
