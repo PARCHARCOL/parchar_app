@@ -80,6 +80,9 @@ const MIME_TYPES = {
 
   ".png": "image/png",
 
+  ".pdf":
+    "application/pdf",
+
   ".svg":
     "image/svg+xml",
 
@@ -95,8 +98,6 @@ const ALLOWED_CATEGORIES =
   ]);
 
 async function initializeDatabase() {
-
-  // USERS
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -122,8 +123,6 @@ async function initializeDatabase() {
     );
   `);
 
-  // BUSINESSES BASE
-
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
@@ -133,6 +132,8 @@ async function initializeDatabase() {
       owner_email TEXT NOT NULL,
 
       owner_phone TEXT NOT NULL,
+
+      owner_document TEXT,
 
       business_name TEXT NOT NULL,
 
@@ -150,6 +151,14 @@ async function initializeDatabase() {
 
       longitude DOUBLE PRECISION NOT NULL,
 
+      social_link TEXT,
+
+      rut_document TEXT,
+
+      commerce_document TEXT,
+
+      legal_acceptance BOOLEAN DEFAULT false,
+
       video_path TEXT NOT NULL,
 
       video_seconds DOUBLE PRECISION NOT NULL,
@@ -158,33 +167,6 @@ async function initializeDatabase() {
 
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-  `);
-
-  // AUTO MIGRACIONES
-
-  await pool.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS owner_document TEXT;
-  `);
-
-  await pool.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS social_link TEXT;
-  `);
-
-  await pool.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS rut_document TEXT;
-  `);
-
-  await pool.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS commerce_document TEXT;
-  `);
-
-  await pool.query(`
-    ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS legal_acceptance BOOLEAN DEFAULT false;
   `);
 
   console.log(
@@ -197,6 +179,7 @@ function sendJson(
   statusCode,
   payload
 ) {
+
   const body = JSON.stringify(
     payload
   );
@@ -216,11 +199,13 @@ function sendFile(
   res,
   absolutePath
 ) {
+
   if (
     !fs.existsSync(
       absolutePath
     )
   ) {
+
     res.writeHead(404);
 
     res.end("Not found");
@@ -244,6 +229,7 @@ function sendFile(
 }
 
 function cleanText(value) {
+
   return String(
     value || ""
   ).trim();
@@ -252,6 +238,7 @@ function cleanText(value) {
 function hashPassword(
   password
 ) {
+
   const salt = randomBytes(
     16
   ).toString("hex");
@@ -268,10 +255,12 @@ function hashPassword(
 function readPublicPath(
   urlPathname
 ) {
+
   let safePath =
     urlPathname;
 
   if (safePath === "/") {
+
     safePath =
       "/index.html";
   }
@@ -291,9 +280,11 @@ function readPublicPath(
 async function parseJsonBody(
   req
 ) {
+
   const chunks = [];
 
   for await (const chunk of req) {
+
     chunks.push(chunk);
   }
 
@@ -302,6 +293,7 @@ async function parseJsonBody(
   ).toString();
 
   if (!raw) {
+
     return {};
   }
 
@@ -313,16 +305,21 @@ function runMiddleware(
   res,
   fn
 ) {
+
   return new Promise(
     (resolve, reject) => {
+
       fn(
         req,
         res,
         (result) => {
+
           if (
             result instanceof Error
           ) {
+
             reject(result);
+
             return;
           }
 
@@ -336,7 +333,9 @@ function runMiddleware(
 const server =
   http.createServer(
     async (req, res) => {
+
       try {
+
         const host =
           req.headers.host ||
           `localhost:${PORT}`;
@@ -354,6 +353,7 @@ const server =
           req.method ===
           "OPTIONS"
         ) {
+
           res.writeHead(204, {
             "Access-Control-Allow-Origin":
               "*",
@@ -377,21 +377,23 @@ const server =
             "/api/health" &&
           req.method === "GET"
         ) {
+
           sendJson(res, 200, {
             ok: true,
-            app: "parchar-v3",
+            app: "parchar-v4",
           });
 
           return;
         }
 
-        // REGISTRO USUARIO
+        // USERS
 
         if (
           pathname ===
             "/api/users/register" &&
           req.method === "POST"
         ) {
+
           const body =
             await parseJsonBody(
               req
@@ -498,6 +500,7 @@ const server =
               category
             )
           ) {
+
             sendJson(res, 400, {
               error:
                 "Categoria invalida",
@@ -540,6 +543,7 @@ const server =
                     ) => {
 
                       if (error) {
+
                         reject(
                           error
                         );
@@ -580,7 +584,7 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "raw",
+                        "auto",
 
                       folder:
                         "parchar/rut",
@@ -592,6 +596,7 @@ const server =
                     ) => {
 
                       if (error) {
+
                         reject(
                           error
                         );
@@ -632,7 +637,7 @@ const server =
                   cloudinary.uploader.upload_stream(
                     {
                       resource_type:
-                        "raw",
+                        "auto",
 
                       folder:
                         "parchar/commerce",
@@ -644,6 +649,7 @@ const server =
                     ) => {
 
                       if (error) {
+
                         reject(
                           error
                         );
@@ -799,6 +805,7 @@ const server =
           const values = [];
 
           if (category) {
+
             query +=
               " AND category = $1";
 
@@ -860,9 +867,6 @@ const server =
 
                 videoSeconds:
                   item.video_seconds,
-
-                distanceKm:
-                  null,
               })
             );
 
@@ -873,7 +877,7 @@ const server =
           return;
         }
 
-        // ADMIN
+        // ADMIN PENDIENTES
 
         if (
           pathname ===
@@ -912,6 +916,9 @@ const server =
                 description:
                   item.description,
 
+                products:
+                  item.products,
+
                 city:
                   item.city,
 
@@ -931,6 +938,68 @@ const server =
 
           sendJson(res, 200, {
             items,
+          });
+
+          return;
+        }
+
+        // EDITAR
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/businesses\/\d+\/edit$/
+          ) &&
+          req.method === "POST"
+        ) {
+
+          const id =
+            pathname.split("/")[4];
+
+          const body =
+            await parseJsonBody(
+              req
+            );
+
+          await pool.query(
+            `
+            UPDATE businesses
+            SET
+              business_name = $1,
+              description = $2,
+              products = $3,
+              city = $4,
+              category = $5
+            WHERE id = $6
+          `,
+            [
+              cleanText(
+                body.businessName
+              ),
+
+              cleanText(
+                body.description
+              ),
+
+              cleanText(
+                body.products
+              ),
+
+              cleanText(
+                body.city
+              ),
+
+              cleanText(
+                body.category
+              ),
+
+              id,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Negocio actualizado",
           });
 
           return;
@@ -978,6 +1047,44 @@ const server =
           const id =
             pathname.split("/")[4];
 
+          const body =
+            await parseJsonBody(
+              req
+            );
+
+          const reason =
+            cleanText(
+              body.reason
+            );
+
+          const businessResult =
+            await pool.query(
+              `
+              SELECT *
+              FROM businesses
+              WHERE id = $1
+            `,
+              [id]
+            );
+
+          const business =
+            businessResult.rows[0];
+
+          console.log(
+            "📧 EMAIL RECHAZO"
+          );
+
+          console.log(`
+            Negocio:
+            ${business.business_name}
+
+            Correo:
+            ${business.owner_email}
+
+            Motivo:
+            ${reason}
+          `);
+
           await pool.query(
             `
             DELETE FROM businesses
@@ -988,6 +1095,38 @@ const server =
 
           sendJson(res, 200, {
             ok: true,
+            message:
+              "Negocio rechazado",
+          });
+
+          return;
+        }
+
+        // ELIMINAR
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/businesses\/\d+\/delete$/
+          ) &&
+          req.method ===
+            "POST"
+        ) {
+
+          const id =
+            pathname.split("/")[4];
+
+          await pool.query(
+            `
+            DELETE FROM businesses
+            WHERE id = $1
+          `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Negocio eliminado",
           });
 
           return;
@@ -1035,7 +1174,7 @@ initializeDatabase()
     server.listen(PORT, () => {
 
       console.log(
-        `🔥 Parchar V3 corriendo en puerto ${PORT}`
+        `🔥 Parchar V4 corriendo en puerto ${PORT}`
       );
     });
   })
