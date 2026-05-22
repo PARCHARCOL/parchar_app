@@ -869,7 +869,7 @@ if (
           await pool.query(
             `
             UPDATE businesses
-            SET status = 'aprobado'
+            SET status = 'activo'
             WHERE id = $1
           `,
             [id]
