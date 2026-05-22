@@ -882,71 +882,139 @@ if (
           return;
         }
 
-        // RECHAZAR
 
-        if (
-          pathname.match(
-            /^\/api\/admin\/businesses\/\d+\/reject$/
-          ) &&
-          req.method ===
-            "POST"
-        ) {
 
-          const id =
-            pathname.split("/")[4];
 
-          const body =
-            await parseJsonBody(
-              req
-            );
 
-          const reason =
-            cleanText(
-              body.reason
-            );
+// RECHAZAR
 
-          const businessResult =
-            await pool.query(
-              `
-              SELECT *
-              FROM businesses
-              WHERE id = $1
-            `,
-              [id]
-            );
+if (
+  pathname.match(
+    /^\/api\/admin\/businesses\/\d+\/reject$/
+  ) &&
+  req.method ===
+    "POST"
+) {
 
-          const business =
-            businessResult.rows[0];
+  const id =
+    pathname.split("/")[4];
 
-          console.log(`
-            📧 EMAIL RECHAZO
+  const body =
+    await parseJsonBody(
+      req
+    );
 
-            Negocio:
-            ${business.business_name}
+  const reason =
+    cleanText(
+      body.reason
+    );
 
-            Correo:
-            ${business.owner_email}
+  const businessResult =
+    await pool.query(
+      `
+      SELECT *
+      FROM businesses
+      WHERE id = $1
+    `,
+      [id]
+    );
 
-            Motivo:
-            ${reason}
-          `);
+  const business =
+    businessResult.rows[0];
 
-          await pool.query(
-            `
-            DELETE FROM businesses
-            WHERE id = $1
-          `,
-            [id]
-          );
+  console.log(`
+    📧 EMAIL RECHAZO
 
-          sendJson(res, 200, {
-            ok: true,
-            message:
-              "Negocio rechazado",
-          });
+    Negocio:
+    ${business.business_name}
 
-          return;
-        }
+    Correo:
+    ${business.owner_email}
+
+    Motivo:
+    ${reason}
+  `);
+
+  await pool.query(
+    `
+    UPDATE businesses
+    SET status = 'rechazado'
+    WHERE id = $1
+  `,
+    [id]
+  );
+
+  sendJson(res, 200, {
+    ok: true,
+    message:
+      "Negocio rechazado",
+  });
+
+  return;
+}
+
+// PAUSAR
+
+if (
+  pathname.match(
+    /^\/api\/admin\/businesses\/\d+\/pause$/
+  ) &&
+  req.method ===
+    "POST"
+) {
+
+  const id =
+    pathname.split("/")[4];
+
+  await pool.query(
+    `
+    UPDATE businesses
+    SET status = 'pausado'
+    WHERE id = $1
+  `,
+    [id]
+  );
+
+  sendJson(res, 200, {
+    ok: true,
+  });
+
+  return;
+}
+
+// ACTIVAR
+
+if (
+  pathname.match(
+    /^\/api\/admin\/businesses\/\d+\/activate$/
+  ) &&
+  req.method ===
+    "POST"
+) {
+
+  const id =
+    pathname.split("/")[4];
+
+  await pool.query(
+    `
+    UPDATE businesses
+    SET status = 'activo'
+    WHERE id = $1
+  `,
+    [id]
+  );
+
+  sendJson(res, 200, {
+    ok: true,
+  });
+
+  return;
+}
+
+       
+
+
+
 
         // ELIMINAR
 
