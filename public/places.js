@@ -229,8 +229,13 @@ async function loadPlaces() {
         data.items || []
       ).filter(
         (item) =>
-          item.category ===
-          category
+          
+       String(item.category)
+       .toLowerCase() ===
+       String(category)
+       .toLowerCase()
+
+
       );
 
     renderCards(
