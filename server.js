@@ -931,6 +931,31 @@ const server =
           return;
         }
 
+// NEGOCIOS APROBADOS
+
+if (
+  pathname ===
+    "/api/businesses/approved" &&
+  req.method === "GET"
+) {
+
+  const result =
+    await pool.query(`
+      SELECT *
+      FROM businesses
+      WHERE status = 'aprobado'
+      ORDER BY created_at DESC
+    `);
+
+  sendJson(res, 200, {
+    items:
+      result.rows,
+  });
+
+  return;
+}
+
+
         // PUBLIC
 
         if (
