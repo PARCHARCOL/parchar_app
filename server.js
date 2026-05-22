@@ -842,7 +842,6 @@ if (
             await pool.query(`
               SELECT *
               FROM businesses
-              WHERE status = 'pendiente'
               ORDER BY created_at DESC
             `);
 
