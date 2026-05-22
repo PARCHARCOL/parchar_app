@@ -675,6 +675,52 @@ const server =
               uploadedCommerce.secure_url;
           }
 
+
+
+
+
+
+// VALIDAR DUPLICADOS
+
+const duplicated =
+  await pool.query(
+    `
+    SELECT id
+    FROM businesses
+    WHERE
+      LOWER(business_name) = LOWER($1)
+      OR owner_phone = $2
+    LIMIT 1
+    `,
+    [
+      cleanText(
+        body.businessName
+      ),
+
+      cleanText(
+        body.ownerPhone
+      ),
+    ]
+  );
+
+if (
+  duplicated.rows.length
+) {
+
+  sendJson(res, 400, {
+    error:
+      "Este negocio ya fue registrado.",
+  });
+
+  return;
+}
+
+
+
+
+
+
+
           await pool.query(
             `
             INSERT INTO businesses (
