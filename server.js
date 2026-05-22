@@ -988,7 +988,7 @@ if (
     await pool.query(`
       SELECT *
       FROM businesses
-      WHERE status = 'aprobado'
+      WHERE status = 'activo'
       ORDER BY created_at DESC
     `);
 
