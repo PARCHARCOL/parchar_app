@@ -1,4 +1,6 @@
-const titleEl = document.querySelector("#category-title");
+const titleEl = document.querySelector(
+  "#category-title"
+);
 
 const subtitleEl = document.querySelector(
   "#category-subtitle"
@@ -80,13 +82,12 @@ function renderCards(items) {
       <article class="empty-card">
 
         <h3>
-          Aun no hay sitios publicados en esta categoria.
+          Aun no hay sitios activos en esta categoria.
         </h3>
 
         <p>
-          Pidele a los duenos de los locales que entren a
-          <strong>Clientes</strong>
-          y registren su negocio con video.
+          Parchar mostrara solo negocios
+          seleccionados y aprobados.
         </p>
 
       </article>
@@ -96,82 +97,94 @@ function renderCards(items) {
   }
 
   resultsEl.innerHTML = items
-    .map((item) => {
+    .map(
+      (item) => {
 
-      return `
-        <article class="place-card">
+        return `
+          <article class="place-card">
 
-          <header>
+            <header>
 
-            <p class="chip">
+              <p class="chip">
+                ${escapeHtml(
+                  categoryChip[
+                    item.category
+                  ] ||
+                    item.category
+                )}
+              </p>
+
+              <h3>
+                ${escapeHtml(
+                  item.business_name
+                )}
+              </h3>
+
+            </header>
+
+            <p>
+              <strong>Ubicacion:</strong>
+
               ${escapeHtml(
-                categoryChip[
-                  item.category
-                ] ||
-                  item.category
+                item.address
+              )},
+
+              ${escapeHtml(
+                item.city
               )}
             </p>
 
-            <h3>
+            <p>
+              <strong>Oferta:</strong>
+
               ${escapeHtml(
-                item.business_name
+                item.products
               )}
-            </h3>
+            </p>
 
-          </header>
+            <p>
+              ${escapeHtml(
+                item.description
+              )}
+            </p>
 
-          <p>
-            <strong>Ubicacion:</strong>
-            ${escapeHtml(
-              item.address
-            )},
-            ${escapeHtml(
-              item.city
-            )}
-          </p>
-
-          <p>
-            <strong>Oferta:</strong>
-            ${escapeHtml(
-              item.products
-            )}
-          </p>
-
-          <p>
-            ${escapeHtml(
-              item.description
-            )}
-          </p>
-
-          <video
-            controls
-            preload="metadata"
-            src="${escapeHtml(
+            ${
               item.video_path
-            )}"
-            style="
-              width:100%;
-              border-radius:14px;
-              margin-top:10px;
-            "
-          ></video>
+                ? `
+              <video
+                controls
+                preload="metadata"
+                class="place-video"
+                src="${escapeHtml(
+                  item.video_path
+                )}"
+              ></video>
+            `
+                : `
+              <div class="video-missing">
+                Video no disponible
+              </div>
+            `
+            }
 
-          <p class="tiny">
+            <p class="tiny">
 
-            ❤️ Contacto:
-            ${escapeHtml(
-              item.owner_phone
-            )}
+              ❤️ Contacto:
 
-            (${escapeHtml(
-              item.owner_name
-            )})
+              ${escapeHtml(
+                item.owner_phone
+              )}
 
-          </p>
+              (${escapeHtml(
+                item.owner_name
+              )})
 
-        </article>
-      `;
-    })
+            </p>
+
+          </article>
+        `;
+      }
+    )
     .join("");
 }
 
@@ -197,7 +210,7 @@ async function loadPlaces() {
     subtitleByCategory[
       category
     ] ||
-    "Sitios registrados.";
+    "Negocios seleccionados por Parchar.";
 
   resultsEl.innerHTML =
     `
@@ -227,16 +240,26 @@ async function loadPlaces() {
     const filtered =
       (
         data.items || []
-      ).filter(
-        (item) =>
-          
-       String(item.category)
-       .toLowerCase() ===
-       String(category)
-       .toLowerCase()
+      )
+        .filter(
+          (item) =>
 
+            String(
+              item.category
+            )
+              .toLowerCase() ===
 
-      );
+            String(
+              category
+            )
+              .toLowerCase()
+        )
+        .filter(
+          (item) =>
+
+            item.status ===
+            "activo"
+        );
 
     renderCards(
       filtered

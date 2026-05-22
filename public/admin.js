@@ -2,6 +2,13 @@ const businessList = document.querySelector(
   "#admin-business-list"
 );
 
+const tabs = document.querySelectorAll(
+  ".admin-tab"
+);
+
+let currentStatus =
+  "pendiente";
+
 function escapeHtml(value) {
 
   return String(value || "")
@@ -11,6 +18,30 @@ function escapeHtml(value) {
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
 }
+
+tabs.forEach((tab) => {
+
+  tab.addEventListener(
+    "click",
+    () => {
+
+      tabs.forEach((t) =>
+        t.classList.remove(
+          "active"
+        )
+      );
+
+      tab.classList.add(
+        "active"
+      );
+
+      currentStatus =
+        tab.dataset.status;
+
+      loadBusinesses();
+    }
+  );
+});
 
 async function approveBusiness(id) {
 
@@ -23,7 +54,8 @@ async function approveBusiness(id) {
       }
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
 
@@ -34,7 +66,75 @@ async function approveBusiness(id) {
     }
 
     alert(
-      "✅ Negocio aprobado"
+      "✅ Negocio activado"
+    );
+
+    loadBusinesses();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function pauseBusiness(id) {
+
+  try {
+
+    const response = await fetch(
+      `/api/admin/businesses/${id}/pause`,
+      {
+        method: "POST",
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+          "No se pudo pausar"
+      );
+    }
+
+    alert(
+      "⏸️ Negocio pausado"
+    );
+
+    loadBusinesses();
+
+  } catch (error) {
+
+    alert(error.message);
+  }
+}
+
+async function activateBusiness(id) {
+
+  try {
+
+    const response = await fetch(
+      `/api/admin/businesses/${id}/activate`,
+      {
+        method: "POST",
+      }
+    );
+
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+          "No se pudo activar"
+      );
+    }
+
+    alert(
+      "✅ Negocio activado"
     );
 
     loadBusinesses();
@@ -74,7 +174,8 @@ async function rejectBusiness(id) {
       }
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
 
@@ -116,7 +217,8 @@ async function deleteBusiness(id) {
       }
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
 
@@ -163,15 +265,12 @@ async function editBusiness(id) {
 
         body: JSON.stringify({
           businessName,
-          description: "",
-          products: "",
-          city: "",
-          category: "",
         }),
       }
     );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
 
@@ -193,15 +292,117 @@ async function editBusiness(id) {
   }
 }
 
+function renderActionButtons(item) {
+
+  if (
+    item.status ===
+    "pendiente"
+  ) {
+
+    return `
+      <button
+        class="submit-btn"
+        onclick="approveBusiness(${item.id})"
+      >
+        Aprobar
+      </button>
+
+      <button
+        class="ghost-btn"
+        onclick="rejectBusiness(${item.id})"
+      >
+        Rechazar
+      </button>
+    `;
+  }
+
+  if (
+    item.status ===
+    "activo"
+  ) {
+
+    return `
+      <button
+        class="submit-btn"
+        onclick="pauseBusiness(${item.id})"
+      >
+        Pausar
+      </button>
+
+      <button
+        class="ghost-btn"
+        onclick="editBusiness(${item.id})"
+      >
+        Editar
+      </button>
+
+      <button
+        class="ghost-btn"
+        onclick="deleteBusiness(${item.id})"
+      >
+        Eliminar
+      </button>
+    `;
+  }
+
+  if (
+    item.status ===
+    "pausado"
+  ) {
+
+    return `
+      <button
+        class="submit-btn"
+        onclick="activateBusiness(${item.id})"
+      >
+        Activar
+      </button>
+
+      <button
+        class="ghost-btn"
+        onclick="deleteBusiness(${item.id})"
+      >
+        Eliminar
+      </button>
+    `;
+  }
+
+  if (
+    item.status ===
+    "rechazado"
+  ) {
+
+    return `
+      <button
+        class="ghost-btn"
+        onclick="deleteBusiness(${item.id})"
+      >
+        Eliminar
+      </button>
+    `;
+  }
+
+  return "";
+}
+
 function renderBusinesses(items) {
 
-  if (!items.length) {
+  const filtered =
+    (
+      items || []
+    ).filter(
+      (item) =>
+        item.status ===
+        currentStatus
+    );
+
+  if (!filtered.length) {
 
     businessList.innerHTML = `
       <div class="glass-card">
 
         <h3>
-          No hay negocios pendientes
+          No hay negocios
         </h3>
 
       </div>
@@ -210,9 +411,10 @@ function renderBusinesses(items) {
     return;
   }
 
-  businessList.innerHTML = items
-    .map(
-      (item) => `
+  businessList.innerHTML =
+    filtered
+      .map(
+        (item) => `
 
       <article class="glass-card admin-card">
 
@@ -223,16 +425,16 @@ function renderBusinesses(items) {
         </h3>
 
         <p>
-          <strong>Dueño:</strong>
+          <strong>Estado:</strong>
           ${escapeHtml(
-            item.owner_name
+            item.status
           )}
         </p>
 
         <p>
-          <strong>Correo:</strong>
+          <strong>Dueño:</strong>
           ${escapeHtml(
-            item.owner_email
+            item.owner_name
           )}
         </p>
 
@@ -258,14 +460,6 @@ function renderBusinesses(items) {
         </p>
 
         <p>
-          <strong>Red social:</strong>
-          ${escapeHtml(
-            item.social_link || "-"
-          )}
-        </p>
-
-        <p>
-          <strong>Descripcion:</strong>
           ${escapeHtml(
             item.description
           )}
@@ -313,14 +507,10 @@ function renderBusinesses(items) {
               download
               class="ghost-btn"
             >
-              📄 Descargar RUT
+              📄 RUT
             </a>
           `
-              : `
-            <span>
-              ❌ Sin RUT
-            </span>
-          `
+              : ""
           }
 
           ${
@@ -331,14 +521,10 @@ function renderBusinesses(items) {
               download
               class="ghost-btn"
             >
-              🏢 Descargar Cámara Comercio
+              🏢 Cámara Comercio
             </a>
           `
-              : `
-            <span>
-              ❌ Sin Cámara Comercio
-            </span>
-          `
+              : ""
           }
 
         </div>
@@ -353,51 +539,29 @@ function renderBusinesses(items) {
           "
         >
 
-          <button
-            class="submit-btn"
-            onclick="approveBusiness(${item.id})"
-          >
-            Aprobar
-          </button>
-
-          <button
-            class="ghost-btn"
-            onclick="rejectBusiness(${item.id})"
-          >
-            Rechazar
-          </button>
-
-          <button
-            class="ghost-btn"
-            onclick="editBusiness(${item.id})"
-          >
-            Editar
-          </button>
-
-          <button
-            class="ghost-btn"
-            onclick="deleteBusiness(${item.id})"
-          >
-            Eliminar
-          </button>
+          ${renderActionButtons(
+            item
+          )}
 
         </div>
 
       </article>
     `
-    )
-    .join("");
+      )
+      .join("");
 }
 
 async function loadBusinesses() {
 
   try {
 
-    const response = await fetch(
-      "/api/admin/businesses"
-    );
+    const response =
+      await fetch(
+        "/api/admin/businesses"
+      );
 
-    const data = await response.json();
+    const data =
+      await response.json();
 
     if (!response.ok) {
 

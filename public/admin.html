@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="es">
   <head>
+
     <meta charset="UTF-8" />
 
     <meta
@@ -16,14 +17,17 @@
       rel="stylesheet"
       href="/styles.css"
     />
+
   </head>
 
   <body class="theme-body clients-body">
+
     <div class="ambient-glow"></div>
 
     <main class="app-shell">
 
       <header class="top-strip inner-top">
+
         <a
           class="icon-ghost icon-link"
           href="/"
@@ -39,26 +43,61 @@
         <span class="icon-ghost">
           🛡️
         </span>
+
       </header>
 
       <section class="form-block glass-card">
 
         <h2>
-          Negocios pendientes
+          Administracion de negocios
         </h2>
 
         <p>
-          Aprueba o rechaza negocios
-          antes de publicarlos en Parchar.
+          Gestiona negocios pendientes,
+          activos, pausados o rechazados.
         </p>
+
+        <div class="admin-tabs">
+
+          <button
+            class="admin-tab active"
+            data-status="pendiente"
+          >
+            Pendientes
+          </button>
+
+          <button
+            class="admin-tab"
+            data-status="activo"
+          >
+            Activos
+          </button>
+
+          <button
+            class="admin-tab"
+            data-status="pausado"
+          >
+            Pausados
+          </button>
+
+          <button
+            class="admin-tab"
+            data-status="rechazado"
+          >
+            Rechazados
+          </button>
+
+        </div>
 
         <div
           id="admin-business-list"
           class="admin-list"
         >
+
           <p class="loading">
             Cargando negocios...
           </p>
+
         </div>
 
       </section>
@@ -102,6 +141,6 @@
     </main>
 
     <script src="/admin.js"></script>
+
   </body>
 </html>
-
