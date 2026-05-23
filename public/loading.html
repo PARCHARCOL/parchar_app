@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>
+    Parchar
+  </title>
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+
+      width:100%;
+      height:100vh;
+
+      overflow:hidden;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      background:
+        radial-gradient(
+          circle at top,
+          #5b1bb2,
+          #22003d 45%,
+          #12001f 100%
+        );
+
+      font-family:
+        Arial,
+        sans-serif;
+
+      color:white;
+    }
+
+    .background-glow{
+
+      position:absolute;
+
+      width:500px;
+      height:500px;
+
+      border-radius:50%;
+
+      background:
+        rgba(
+          174,
+          82,
+          255,
+          0.25
+        );
+
+      filter:blur(120px);
+
+      animation:
+        pulse 4s infinite ease-in-out;
+    }
+
+    .loading-container{
+
+      position:relative;
+
+      z-index:2;
+
+      width:90%;
+      max-width:420px;
+
+      padding:40px 30px;
+
+      border-radius:30px;
+
+      background:
+        rgba(
+          255,
+          255,
+          255,
+          0.06
+        );
+
+      backdrop-filter:
+        blur(18px);
+
+      border:
+        1px solid rgba(
+          255,
+          255,
+          255,
+          0.1
+        );
+
+      text-align:center;
+
+      box-shadow:
+        0 0 40px rgba(
+          166,
+          74,
+          255,
+          0.25
+        );
+    }
+
+    .logo{
+
+      width:120px;
+      height:120px;
+
+      margin:auto auto 20px;
+
+      border-radius:30px;
+
+      background:
+        linear-gradient(
+          145deg,
+          #7b2fff,
+          #c34fff
+        );
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      font-size:58px;
+
+      animation:
+        float 2.5s infinite ease-in-out;
+    }
+
+    h1{
+
+      font-size:36px;
+
+      margin-bottom:10px;
+
+      font-weight:800;
+    }
+
+    .subtitle{
+
+      opacity:0.8;
+
+      font-size:15px;
+
+      line-height:1.5;
+
+      margin-bottom:30px;
+    }
+
+    .loader{
+
+      width:70px;
+      height:70px;
+
+      border-radius:50%;
+
+      border:
+        4px solid rgba(
+          255,
+          255,
+          255,
+          0.12
+        );
+
+      border-top:
+        4px solid #ff8cff;
+
+      margin:auto;
+
+      animation:
+        spin 1s linear infinite;
+    }
+
+    .loading-text{
+
+      margin-top:22px;
+
+      font-size:14px;
+
+      opacity:0.8;
+
+      letter-spacing:1px;
+    }
+
+    .status{
+
+      margin-top:15px;
+
+      font-size:12px;
+
+      color:#dcb3ff;
+
+      opacity:0.9;
+    }
+
+    @keyframes spin{
+
+      from{
+        transform:rotate(0deg);
+      }
+
+      to{
+        transform:rotate(360deg);
+      }
+    }
+
+    @keyframes float{
+
+      0%{
+        transform:
+          translateY(0px);
+      }
+
+      50%{
+        transform:
+          translateY(-12px);
+      }
+
+      100%{
+        transform:
+          translateY(0px);
+      }
+    }
+
+    @keyframes pulse{
+
+      0%{
+        transform:scale(1);
+        opacity:0.6;
+      }
+
+      50%{
+        transform:scale(1.15);
+        opacity:1;
+      }
+
+      100%{
+        transform:scale(1);
+        opacity:0.6;
+      }
+    }
+
+  </style>
+
+</head>
+
+<body>
+
+  <div class="background-glow"></div>
+
+  <div class="loading-container">
+
+    <div class="logo">
+      🔥
+    </div>
+
+    <h1>
+      Parchar
+    </h1>
+
+    <p class="subtitle">
+      Descubriendo lugares únicos cerca de ti...
+    </p>
+
+    <div class="loader"></div>
+
+    <p class="loading-text">
+      Iniciando experiencia
+    </p>
+
+    <p
+      class="status"
+      id="status-text"
+    >
+      Despertando servidor...
+    </p>
+
+  </div>
+
+  <script>
+
+    async function checkServer(){
+
+      try{
+
+        const response =
+          await fetch(
+            "/api/health"
+          );
+
+        if(response.ok){
+
+          document.querySelector(
+            "#status-text"
+          ).textContent =
+            "Entrando a Parchar...";
+
+          setTimeout(()=>{
+
+            window.location.href =
+              "/index.html";
+
+          },1200);
+        }
+
+      }catch(error){
+
+        setTimeout(
+          checkServer,
+          2500
+        );
+      }
+    }
+
+    checkServer();
+
+  </script>
+
+</body>
+</html>
