@@ -113,6 +113,47 @@ function normalizeCategory(
     );
 }
 
+function normalizePhone(
+  value
+) {
+  return String(value || "")
+    .replace(/[^0-9]/g, "")
+    .trim();
+}
+
+function parseClientIdentifier(
+  rawValue
+) {
+  const identifier =
+    cleanText(rawValue);
+
+  if (!identifier) {
+    return null;
+  }
+
+  if (identifier.includes("@")) {
+    return {
+      type: "email",
+      value:
+        identifier.toLowerCase(),
+    };
+  }
+
+  const phone =
+    normalizePhone(
+      identifier
+    );
+
+  if (!phone) {
+    return null;
+  }
+
+  return {
+    type: "phone",
+    value: phone,
+  };
+}
+
 function hashPassword(
   password
 ) {
@@ -236,7 +277,7 @@ function readPublicPath(
 ) {
   const pathToUse =
     urlPathname === "/"
-      ? "/index.html"
+      ? "/loading.html"
       : urlPathname;
 
   const resolved =
@@ -443,6 +484,7 @@ async function initializeDatabase() {
       full_name TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
       phone TEXT NOT NULL,
+      phone_normalized TEXT,
       password_hash TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -461,6 +503,7 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
+      client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
       owner_name TEXT NOT NULL,
       owner_email TEXT NOT NULL,
       owner_phone TEXT NOT NULL,
@@ -482,6 +525,31 @@ async function initializeDatabase() {
       status TEXT DEFAULT 'pendiente',
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+  `);
+
+  await pool.query(`
+    ALTER TABLE clients
+    ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
+  `);
+
+  await pool.query(`
+    UPDATE clients
+    SET phone_normalized = REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g')
+    WHERE phone_normalized IS NULL OR phone_normalized = '';
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL;
+  `);
+
+  await pool.query(`
+    UPDATE businesses b
+    SET client_id = c.id
+    FROM clients c
+    WHERE
+      b.client_id IS NULL
+      AND LOWER(b.owner_email) = LOWER(c.email);
   `);
 
   console.log(
@@ -529,7 +597,7 @@ const server =
         ) {
           sendJson(res, 200, {
             ok: true,
-            app: "parchar-v6",
+            app: "parchar-v7",
           });
           return;
         }
@@ -554,6 +622,10 @@ const server =
             ).toLowerCase();
           const phone =
             cleanText(
+              body.phone
+            );
+          const phoneNormalized =
+            normalizePhone(
               body.phone
             );
           const password =
@@ -585,6 +657,16 @@ const server =
           }
 
           if (
+            phoneNormalized.length < 7
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Telefono invalido.",
+            });
+            return;
+          }
+
+          if (
             password.length < 6
           ) {
             sendJson(res, 400, {
@@ -599,10 +681,15 @@ const server =
               `
               SELECT id
               FROM clients
-              WHERE LOWER(email) = LOWER($1)
+              WHERE
+                LOWER(email) = LOWER($1)
+                OR phone_normalized = $2
               LIMIT 1
               `,
-              [email]
+              [
+                email,
+                phoneNormalized,
+              ]
             );
 
           if (
@@ -610,7 +697,7 @@ const server =
           ) {
             sendJson(res, 409, {
               error:
-                "Ese correo ya esta registrado.",
+                "Ese correo o telefono ya esta registrado.",
             });
             return;
           }
@@ -621,14 +708,16 @@ const server =
               full_name,
               email,
               phone,
+              phone_normalized,
               password_hash
             )
-            VALUES ($1,$2,$3,$4)
+            VALUES ($1,$2,$3,$4,$5)
             `,
             [
               fullName,
               email,
               phone,
+              phoneNormalized,
               hashPassword(
                 password
               ),
@@ -653,25 +742,37 @@ const server =
               req
             );
 
-          const email =
+          const identifierRaw =
             cleanText(
-              body.email
-            ).toLowerCase();
+              body.identifier ||
+                body.email ||
+                body.phone
+            );
+          const identifier =
+            parseClientIdentifier(
+              identifierRaw
+            );
           const password =
             cleanText(
               body.password
             );
 
           if (
-            !email ||
+            !identifier ||
             !password
           ) {
             sendJson(res, 400, {
               error:
-                "Correo y contrasena son obligatorios.",
+                "Usuario (correo o telefono) y contrasena son obligatorios.",
             });
             return;
           }
+
+          const whereClause =
+            identifier.type ===
+            "email"
+              ? "LOWER(email) = LOWER($1)"
+              : "phone_normalized = $1";
 
           const result =
             await pool.query(
@@ -683,10 +784,10 @@ const server =
                 phone,
                 password_hash
               FROM clients
-              WHERE LOWER(email) = LOWER($1)
+              WHERE ${whereClause}
               LIMIT 1
               `,
-              [email]
+              [identifier.value]
             );
 
           const account =
@@ -750,6 +851,183 @@ const server =
 
         if (
           pathname ===
+            "/api/clients/recover-username" &&
+          req.method === "POST"
+        ) {
+          const body =
+            await parseJsonBody(
+              req
+            );
+
+          const fullName =
+            cleanText(
+              body.fullName
+            );
+          const phoneNormalized =
+            normalizePhone(
+              body.phone
+            );
+
+          if (
+            !fullName ||
+            phoneNormalized.length < 7
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Debes indicar nombre y telefono registrados.",
+            });
+            return;
+          }
+
+          const result =
+            await pool.query(
+              `
+              SELECT email
+              FROM clients
+              WHERE
+                LOWER(full_name) = LOWER($1)
+                AND phone_normalized = $2
+              LIMIT 1
+              `,
+              [
+                fullName,
+                phoneNormalized,
+              ]
+            );
+
+          if (
+            !result.rows.length
+          ) {
+            sendJson(res, 404, {
+              error:
+                "No encontramos una cuenta con esos datos.",
+            });
+            return;
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+            email:
+              result.rows[0]
+                .email,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/clients/reset-password" &&
+          req.method === "POST"
+        ) {
+          const body =
+            await parseJsonBody(
+              req
+            );
+
+          const identifier =
+            parseClientIdentifier(
+              body.identifier
+            );
+          const fullName =
+            cleanText(
+              body.fullName
+            );
+          const newPassword =
+            cleanText(
+              body.newPassword
+            );
+
+          if (
+            !identifier ||
+            !fullName ||
+            !newPassword
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Completa usuario (correo o telefono), nombre y nueva contrasena.",
+            });
+            return;
+          }
+
+          if (
+            newPassword.length < 6
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La nueva contrasena debe tener al menos 6 caracteres.",
+            });
+            return;
+          }
+
+          const whereIdentifier =
+            identifier.type ===
+            "email"
+              ? "LOWER(email) = LOWER($1)"
+              : "phone_normalized = $1";
+
+          const accountResult =
+            await pool.query(
+              `
+              SELECT id
+              FROM clients
+              WHERE
+                ${whereIdentifier}
+                AND LOWER(full_name) = LOWER($2)
+              LIMIT 1
+              `,
+              [
+                identifier.value,
+                fullName,
+              ]
+            );
+
+          if (
+            !accountResult.rows
+              .length
+          ) {
+            sendJson(res, 404, {
+              error:
+                "No pudimos validar tus datos de recuperacion.",
+            });
+            return;
+          }
+
+          const clientId =
+            accountResult.rows[0]
+              .id;
+
+          await pool.query(
+            `
+            UPDATE clients
+            SET password_hash = $1
+            WHERE id = $2
+            `,
+            [
+              hashPassword(
+                newPassword
+              ),
+              clientId,
+            ]
+          );
+
+          await pool.query(
+            `
+            DELETE FROM client_sessions
+            WHERE client_id = $1
+            `,
+            [clientId]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Contrasena actualizada. Inicia sesion nuevamente.",
+          });
+          return;
+        }
+
+        if (
+          pathname ===
             "/api/clients/me" &&
           req.method === "GET"
         ) {
@@ -767,6 +1045,55 @@ const server =
             ok: true,
             client:
               auth.client,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/clients/businesses" &&
+          req.method === "GET"
+        ) {
+          const auth =
+            await requireClientAuth(
+              req,
+              res
+            );
+
+          if (!auth) {
+            return;
+          }
+
+          const result =
+            await pool.query(
+              `
+              SELECT
+                id,
+                business_name,
+                category,
+                city,
+                status,
+                created_at,
+                video_path
+              FROM businesses
+              WHERE
+                client_id = $1
+                OR (
+                  client_id IS NULL
+                  AND LOWER(owner_email) = LOWER($2)
+                )
+              ORDER BY created_at DESC
+              `,
+              [
+                auth.client.id,
+                auth.client.email,
+              ]
+            );
+
+          sendJson(res, 200, {
+            ok: true,
+            items:
+              result.rows,
           });
           return;
         }
@@ -1032,6 +1359,7 @@ const server =
           await pool.query(
             `
             INSERT INTO businesses (
+              client_id,
               owner_name,
               owner_email,
               owner_phone,
@@ -1054,10 +1382,11 @@ const server =
             )
             VALUES (
               $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,
-              $11,$12,$13,$14,$15,$16,$17,$18,$19
+              $11,$12,$13,$14,$15,$16,$17,$18,$19,$20
             )
             `,
             [
+              auth.client.id,
               auth.client
                 .fullName,
               auth.client

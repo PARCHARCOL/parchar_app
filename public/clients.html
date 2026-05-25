@@ -1,366 +1,226 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-
-    <title>
-      Registro de negocios
-    </title>
-
-    <link
-      rel="stylesheet"
-      href="/styles.css"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Registro de negocios</title>
+    <link rel="stylesheet" href="/styles.css" />
   </head>
 
   <body class="theme-body clients-body">
     <div class="ambient-glow"></div>
 
     <main class="app-shell">
-
       <header class="top-strip inner-top">
-        <a
-          class="icon-ghost icon-link"
-          href="/"
-          aria-label="Volver"
-        >
-          ←
+        <a class="icon-ghost icon-link" href="/" aria-label="Volver">
+          <span aria-hidden="true">&#8592;</span>
         </a>
 
-        <h1>
-          Registro de negocios
-        </h1>
+        <h1>Registro de negocios</h1>
 
-        <span class="icon-ghost">
-          🏪
-        </span>
+        <span class="icon-ghost" aria-hidden="true">&#127970;</span>
       </header>
 
-      <section
-        id="client-auth-section"
-        class="form-block glass-card"
-      >
-
-        <h2>
-          Acceso clientes
-        </h2>
-
+      <section id="client-auth-section" class="form-block glass-card">
+        <h2>Acceso clientes</h2>
         <p>
-          Para publicar un negocio primero debes registrarte e iniciar sesion como cliente.
+          Para publicar un negocio primero debes registrarte e iniciar sesion como
+          cliente.
         </p>
 
-        <form
-          id="client-register-form"
-          class="form-grid"
-        >
+        <div class="auth-panels">
+          <form id="client-register-form" class="form-grid auth-panel">
+            <h3 class="auth-title full-row">Crear cuenta cliente</h3>
 
-          <label>
-            Nombre completo
+            <label>
+              Nombre completo
+              <input name="fullName" required />
+            </label>
 
-            <input
-              name="fullName"
-              required
-            />
-          </label>
+            <label>
+              Correo
+              <input name="email" type="email" required />
+            </label>
 
-          <label>
-            Correo
+            <label>
+              Telefono
+              <input name="phone" required />
+            </label>
 
-            <input
-              name="email"
-              type="email"
-              required
-            />
-          </label>
+            <label>
+              Contrasena
+              <input name="password" type="password" minlength="6" required />
+            </label>
 
-          <label>
-            Telefono
+            <button type="submit" class="submit-btn full-row">Registrarme</button>
+          </form>
 
-            <input
-              name="phone"
-              required
-            />
-          </label>
+          <form id="client-login-form" class="form-grid auth-panel">
+            <h3 class="auth-title full-row">Iniciar sesion</h3>
 
-          <label>
-            Contrasena
+            <label>
+              Usuario (correo o telefono)
+              <input name="identifier" required />
+            </label>
 
-            <input
-              name="password"
-              type="password"
-              minlength="6"
-              required
-            />
-          </label>
+            <label>
+              Contrasena
+              <input name="password" type="password" required />
+            </label>
 
-          <button
-            type="submit"
-            class="submit-btn"
-          >
-            Registrarme
-          </button>
+            <button type="submit" class="submit-btn full-row">Entrar</button>
+          </form>
+        </div>
 
-        </form>
+        <div class="auth-panels recovery-panels">
+          <form id="client-recover-user-form" class="form-grid auth-panel">
+            <h3 class="auth-title full-row">Olvide mi usuario</h3>
 
-        <form
-          id="client-login-form"
-          class="form-grid"
-        >
+            <label>
+              Nombre completo
+              <input name="fullName" required />
+            </label>
 
-          <label>
-            Correo
+            <label>
+              Telefono registrado
+              <input name="phone" required />
+            </label>
 
-            <input
-              name="email"
-              type="email"
-              required
-            />
-          </label>
+            <button type="submit" class="ghost-btn full-row">Recordar correo</button>
+          </form>
 
-          <label>
-            Contrasena
+          <form id="client-reset-password-form" class="form-grid auth-panel">
+            <h3 class="auth-title full-row">Restablecer contrasena</h3>
 
-            <input
-              name="password"
-              type="password"
-              required
-            />
-          </label>
+            <label>
+              Usuario (correo o telefono)
+              <input name="identifier" required />
+            </label>
 
-          <button
-            type="submit"
-            class="submit-btn"
-          >
-            Iniciar sesion
-          </button>
+            <label>
+              Nombre completo
+              <input name="fullName" required />
+            </label>
 
-        </form>
+            <label>
+              Nueva contrasena
+              <input name="newPassword" type="password" minlength="6" required />
+            </label>
 
-        <p
-          id="client-auth-message"
-          class="feedback"
-        ></p>
+            <button type="submit" class="ghost-btn full-row">
+              Actualizar contrasena
+            </button>
+          </form>
+        </div>
 
+        <p id="client-auth-message" class="feedback"></p>
+        <p id="client-recovery-message" class="feedback"></p>
       </section>
 
-      <!-- BUSINESS -->
-
-      <section
-        id="business-section"
-        class="form-block glass-card"
-        style="display:none;"
-      >
-
-        <h2>
-          Registrar tu negocio
-        </h2>
+      <section id="business-section" class="form-block glass-card" style="display: none">
+        <h2>Registrar tu negocio</h2>
 
         <p>
-          Todos los negocios pasan por validacion manual antes de ser publicados en Parchar.
+          Todos los negocios pasan por validacion manual antes de ser publicados en
+          Parchar.
         </p>
 
         <div class="moderation-box full-row">
-          <strong id="client-session-label">
-            Sesion activa
-          </strong>
-          <p id="client-session-user">
-            Cliente autenticado
-          </p>
-          <button
-            id="client-logout"
-            type="button"
-            class="ghost-btn"
-          >
+          <strong id="client-session-label">Sesion activa</strong>
+          <p id="client-session-user">Cliente autenticado</p>
+          <button id="client-logout" type="button" class="ghost-btn">
             Cerrar sesion
           </button>
         </div>
 
-        <form
-          id="business-form"
-          class="form-grid"
-          enctype="multipart/form-data"
-        >
-
+        <form id="business-form" class="form-grid" enctype="multipart/form-data">
           <label>
             Nombre del responsable
-
-            <input
-              name="ownerName"
-              required
-            />
+            <input name="ownerName" required readonly />
           </label>
 
           <label>
             Correo del responsable
-
-            <input
-              name="ownerEmail"
-              type="email"
-              required
-            />
+            <input name="ownerEmail" type="email" required readonly />
           </label>
 
           <label>
             Telefono del responsable
-
-            <input
-              name="ownerPhone"
-              required
-            />
+            <input name="ownerPhone" required readonly />
           </label>
 
           <label>
             Cedula
-
-            <input
-              name="ownerDocument"
-              required
-            />
+            <input name="ownerDocument" required />
           </label>
 
           <label class="full-row">
             Nombre del negocio
-
-            <input
-              name="businessName"
-              required
-            />
+            <input name="businessName" required />
           </label>
 
           <label>
             Categoria
-
-            <select
-              name="category"
-              required
-            >
-              <option value="">
-                Selecciona
-              </option>
-
-              <option value="moto">
-                En moto
-              </option>
-
-              <option value="carro">
-                En carro
-              </option>
-
-              <option value="romantico">
-                Romantico
-              </option>
-
-              <option value="bbb">
-                BBB (Bueno Bonito y Barato)
-              </option>
+            <select name="category" required>
+              <option value="">Selecciona</option>
+              <option value="moto">En moto</option>
+              <option value="carro">En carro</option>
+              <option value="romantico">Romantico</option>
+              <option value="bbb">BBB (Bueno Bonito y Barato)</option>
             </select>
           </label>
 
           <label>
             Ciudad
-
-            <input
-              name="city"
-              required
-            />
+            <input name="city" required />
           </label>
 
           <label class="full-row">
             Direccion
-
-            <input
-              name="address"
-              required
-            />
+            <input name="address" required />
           </label>
 
           <label class="full-row">
             Instagram o Facebook
-
-            <input
-              name="socialLink"
-              placeholder="@tunegocio"
-            />
+            <input name="socialLink" placeholder="@tunegocio" />
           </label>
 
           <label class="full-row">
             Descripcion del local
-
-            <textarea
-              name="description"
-              rows="3"
-              required
-            ></textarea>
+            <textarea name="description" rows="3" required></textarea>
           </label>
 
           <label class="full-row">
             Que vendes / que ofreces
-
-            <textarea
-              name="products"
-              rows="3"
-              required
-            ></textarea>
+            <textarea name="products" rows="3" required></textarea>
           </label>
 
           <label>
             Latitud
-
-            <input
-              name="latitude"
-              type="number"
-              step="0.000001"
-              required
-            />
+            <input name="latitude" type="number" step="0.000001" required />
           </label>
 
           <label>
             Longitud
-
-            <input
-              name="longitude"
-              type="number"
-              step="0.000001"
-              required
-            />
+            <input name="longitude" type="number" step="0.000001" required />
           </label>
 
-          <button
-            id="use-location"
-            type="button"
-            class="ghost-btn"
-          >
+          <button id="use-location" type="button" class="ghost-btn">
             Usar mi ubicacion
           </button>
 
           <label class="full-row">
             RUT del negocio
-
-            <input
-              name="rutDocument"
-              type="file"
-              accept=".pdf,image/*"
-              required
-            />
+            <input name="rutDocument" type="file" accept=".pdf,image/*" required />
           </label>
 
           <label class="full-row">
             Camara de comercio
-
-            <input
-              name="commerceDocument"
-              type="file"
-              accept=".pdf,image/*"
-            />
+            <input name="commerceDocument" type="file" accept=".pdf,image/*" />
           </label>
 
           <label class="full-row">
             Video del local (10-13 segundos)
-
             <input
               id="video-input"
               name="video"
@@ -370,10 +230,7 @@
             />
           </label>
 
-          <p
-            id="video-status"
-            class="status-muted full-row"
-          ></p>
+          <p id="video-status" class="status-muted full-row"></p>
 
           <input
             id="video-duration-seconds"
@@ -382,130 +239,64 @@
           />
 
           <label class="full-row legal-check">
-
-            <input
-              type="checkbox"
-              name="legalAcceptance"
-              required
-            />
-
-            Declaro que soy propietario o representante autorizado del negocio y acepto el proceso de validacion de Parchar.
-
+            <input type="checkbox" name="legalAcceptance" required />
+            Declaro que soy propietario o representante autorizado del negocio y
+            acepto el proceso de validacion de Parchar.
           </label>
 
           <div class="full-row moderation-box">
-
-            <strong>
-              🛡️ Validacion requerida
-            </strong>
-
+            <strong>Validacion requerida</strong>
             <p>
-              Tu negocio quedara pendiente hasta ser aprobado por el equipo de Parchar.
+              Tu negocio quedara pendiente hasta ser aprobado por el equipo de
+              Parchar.
             </p>
-
           </div>
 
-          <button
-            type="submit"
-            class="submit-btn"
-          >
-            Enviar para revision
-          </button>
-
+          <button type="submit" class="submit-btn">Enviar para revision</button>
         </form>
 
-        <p
-          id="business-message"
-          class="feedback"
-        ></p>
+        <p id="business-message" class="feedback"></p>
 
+        <section class="my-businesses-block full-row">
+          <div class="my-businesses-head">
+            <h3>Mis locales vinculados</h3>
+            <button id="refresh-my-businesses" type="button" class="ghost-btn">
+              Actualizar
+            </button>
+          </div>
+          <div id="my-businesses-list" class="my-businesses-grid"></div>
+        </section>
       </section>
 
-      <!-- NAV -->
-
       <nav class="bottom-nav">
-
-        <a
-          class="nav-item"
-          href="/"
-        >
-          <span>
-            📍
-          </span>
-
-          <strong>
-            Inicio
-          </strong>
+        <a class="nav-item" href="/">
+          <span>&#128205;</span>
+          <strong>Inicio</strong>
         </a>
 
-        <a
-          class="nav-item"
-          href="/places.html?category=moto"
-        >
-          <span>
-            🔥
-          </span>
-
-          <strong>
-            Trending
-          </strong>
+        <a class="nav-item" href="/places.html?category=moto">
+          <span>&#128293;</span>
+          <strong>Trending</strong>
         </a>
 
-        <a
-          class="nav-item active"
-          href="/clients.html"
-        >
-          <span>
-            🎬
-          </span>
-
-          <strong>
-            Publicar
-          </strong>
+        <a class="nav-item active" href="/clients.html">
+          <span>&#127916;</span>
+          <strong>Publicar</strong>
         </a>
 
-        <a
-          class="nav-item"
-          href="/clients.html"
-        >
-          <span>
-            👤
-          </span>
-
-          <strong>
-            Perfil
-          </strong>
+        <a class="nav-item" href="/clients.html">
+          <span>&#128100;</span>
+          <strong>Perfil</strong>
         </a>
-
       </nav>
 
-      <!-- ADS -->
-
-      <aside
-        class="ad-banner"
-        aria-label="Publicidad"
-      >
-
-        <span class="ad-pill">
-          Publicidad
-        </span>
-
-        <p>
-          Espacio para aliados de Parchar
-        </p>
-
-        <button
-          type="button"
-          class="ad-cta"
-        >
-          Anunciar
-        </button>
-
+      <aside class="ad-banner" aria-label="Publicidad">
+        <span class="ad-pill">Publicidad</span>
+        <p>Espacio para aliados de Parchar</p>
+        <button type="button" class="ad-cta">Anunciar</button>
       </aside>
-
     </main>
 
     <script src="/clients.js"></script>
-
   </body>
 </html>

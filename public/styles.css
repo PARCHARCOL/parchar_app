@@ -413,6 +413,32 @@ video {
   margin: 0 0 12px;
 }
 
+.auth-panels {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.auth-panel {
+  border-radius: 14px;
+  border: 1px solid rgba(183, 132, 245, 0.32);
+  background: rgba(22, 6, 48, 0.58);
+  padding: 12px;
+}
+
+.auth-panel.form-grid {
+  grid-template-columns: 1fr;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.recovery-panels {
+  margin-top: 2px;
+}
+
 .glass-card {
   backdrop-filter: blur(8px);
 }
@@ -456,6 +482,10 @@ textarea:focus {
   box-shadow: 0 0 0 2px rgba(255, 130, 56, 0.25);
 }
 
+input[readonly] {
+  background: rgba(47, 20, 88, 0.72);
+}
+
 textarea {
   resize: vertical;
   min-height: 85px;
@@ -493,6 +523,83 @@ textarea {
   min-height: 22px;
   font-size: 0.94rem;
   font-weight: 700;
+}
+
+.my-businesses-block {
+  margin-top: 14px;
+  border-top: 1px solid rgba(179, 130, 255, 0.24);
+  padding-top: 14px;
+}
+
+.my-businesses-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.my-businesses-head h3 {
+  margin: 0;
+  font-size: 1.16rem;
+}
+
+.my-businesses-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.mini-business-card {
+  border: 1px solid rgba(193, 148, 255, 0.38);
+  border-radius: 14px;
+  background: rgba(20, 5, 45, 0.78);
+  padding: 11px;
+}
+
+.mini-business-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mini-business-card h4 {
+  margin: 0;
+  font-size: 1.03rem;
+}
+
+.mini-business-card p {
+  margin: 0 0 6px;
+  color: #f3e6ff;
+  font-size: 0.9rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  color: #fff;
+}
+
+.status-activo {
+  background: linear-gradient(145deg, #46d8a2, #239f77);
+}
+
+.status-pendiente {
+  background: linear-gradient(145deg, #ffb747, #ff7b2c);
+}
+
+.status-pausado {
+  background: linear-gradient(145deg, #8bb3ff, #5174d8);
+}
+
+.status-rechazado {
+  background: linear-gradient(145deg, #ff6f8a, #d34058);
 }
 
 .bottom-nav {
@@ -620,6 +727,10 @@ textarea {
   .form-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .auth-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 1100px) {
@@ -677,6 +788,10 @@ textarea {
 
   .clients-body .form-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .clients-body .auth-panel.form-grid {
+    grid-template-columns: 1fr;
   }
 }
 

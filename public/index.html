@@ -1,44 +1,49 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>App de planes</title>
+    <title>Parchar</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
+
     <main class="app-shell">
       <header class="top-strip">
-        <button class="icon-ghost" type="button" aria-label="Menu">☰</button>
+        <button class="icon-ghost" type="button" aria-label="Menu">&#9776;</button>
         <img class="brand-logo" src="/assets/parchar-logo.png" alt="Parchar" />
-        <button class="icon-ghost" type="button" aria-label="Alertas">🔔</button>
+        <button class="icon-ghost" type="button" aria-label="Alertas">&#128276;</button>
       </header>
 
       <section class="search-bar">
-        <span class="search-icon">🔎</span>
+        <span class="search-icon">&#128269;</span>
         <p>Que quieres hacer hoy?</p>
       </section>
 
       <section class="button-grid">
         <button class="action-btn btn-moto" data-route="moto">
-          <span class="action-icon">🏍️</span>
+          <span class="action-icon">&#127949;</span>
           <span class="action-label">En moto</span>
         </button>
+
         <button class="action-btn btn-carro" data-route="carro">
-          <span class="action-icon">🚗</span>
+          <span class="action-icon">&#128663;</span>
           <span class="action-label">En carro</span>
         </button>
+
         <button class="action-btn btn-romantico" data-route="romantico">
-          <span class="action-icon">🍸</span>
+          <span class="action-icon">&#127864;</span>
           <span class="action-label">Romantico</span>
         </button>
+
         <button class="action-btn btn-bbb" data-route="bbb">
-          <span class="action-icon">🍔</span>
+          <span class="action-icon">&#127828;</span>
           <span class="action-label">BBB</span>
         </button>
+
         <button class="action-btn btn-clientes" data-route="clientes">
-          <span class="action-icon">🏪</span>
+          <span class="action-icon">&#127970;</span>
           <span class="action-label">Clientes</span>
         </button>
       </section>
@@ -47,17 +52,20 @@
 
       <section class="suggestion-section">
         <h2>Sugerencias para ti</h2>
+
         <div class="suggestion-grid">
           <article class="suggestion-card card-romance">
             <span class="tag-live">LIVE</span>
             <h3>Plan romantico</h3>
             <p>#Cena #Terraza #Vista</p>
           </article>
+
           <article class="suggestion-card card-bbb">
             <span class="tag-live">HOT</span>
             <h3>Comida BBB</h3>
             <p>#Bueno #Bonito #Barato</p>
           </article>
+
           <article class="suggestion-card card-road">
             <span class="tag-live">TOP</span>
             <h3>Ruta en moto</h3>
@@ -68,19 +76,22 @@
 
       <nav class="bottom-nav">
         <a class="nav-item active" href="/">
-          <span>📍</span>
+          <span>&#128205;</span>
           <strong>Inicio</strong>
         </a>
+
         <a class="nav-item" href="/places.html?category=moto">
-          <span>🔥</span>
+          <span>&#128293;</span>
           <strong>Trending</strong>
         </a>
+
         <a class="nav-item" href="/clients.html">
-          <span>🎬</span>
+          <span>&#127916;</span>
           <strong>Publicar</strong>
         </a>
+
         <a class="nav-item" href="/clients.html">
-          <span>👤</span>
+          <span>&#128100;</span>
           <strong>Perfil</strong>
         </a>
       </nav>
@@ -91,6 +102,7 @@
         <button type="button" class="ad-cta">Anunciar</button>
       </aside>
     </main>
+
     <script src="/app.js"></script>
   </body>
 </html>
