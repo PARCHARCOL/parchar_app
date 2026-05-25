@@ -4,7 +4,6 @@ const http = require("node:http");
 const fs = require("node:fs");
 const path = require("node:path");
 const { URL } = require("node:url");
-const { randomBytes, scryptSync } = require("node:crypto");
 
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
@@ -103,30 +102,6 @@ const ALLOWED_CATEGORIES =
   ]);
 
 async function initializeDatabase() {
-
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-
-      full_name TEXT NOT NULL,
-
-      email TEXT UNIQUE NOT NULL,
-
-      phone TEXT NOT NULL,
-
-      password_hash TEXT NOT NULL,
-
-      age INTEGER NOT NULL,
-
-      city TEXT NOT NULL,
-
-      neighborhood TEXT NOT NULL,
-
-      preferences TEXT NOT NULL,
-
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
@@ -238,23 +213,6 @@ function cleanText(value) {
   return String(
     value || ""
   ).trim();
-}
-
-function hashPassword(
-  password
-) {
-
-  const salt = randomBytes(
-    16
-  ).toString("hex");
-
-  const hash = scryptSync(
-    password,
-    salt,
-    64
-  ).toString("hex");
-
-  return `${salt}:${hash}`;
 }
 
 function readPublicPath(
@@ -386,78 +344,6 @@ const server =
           sendJson(res, 200, {
             ok: true,
             app: "parchar-v5",
-          });
-
-          return;
-        }
-
-        // USERS
-
-        if (
-          pathname ===
-            "/api/users/register" &&
-          req.method === "POST"
-        ) {
-
-          const body =
-            await parseJsonBody(
-              req
-            );
-
-          const passwordHash =
-            hashPassword(
-              body.password
-            );
-
-          await pool.query(
-            `
-            INSERT INTO users (
-              full_name,
-              email,
-              phone,
-              password_hash,
-              age,
-              city,
-              neighborhood,
-              preferences
-            )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-          `,
-            [
-              cleanText(
-                body.fullName
-              ),
-
-              cleanText(
-                body.email
-              ),
-
-              cleanText(
-                body.phone
-              ),
-
-              passwordHash,
-
-              Number(body.age),
-
-              cleanText(
-                body.city
-              ),
-
-              cleanText(
-                body.neighborhood
-              ),
-
-              cleanText(
-                body.preferences
-              ),
-            ]
-          );
-
-          sendJson(res, 201, {
-            ok: true,
-            message:
-              "Usuario creado",
           });
 
           return;

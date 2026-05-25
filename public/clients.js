@@ -1,16 +1,6 @@
-const userForm =
-  document.querySelector(
-    "#user-form"
-  );
-
 const businessForm =
   document.querySelector(
     "#business-form"
-  );
-
-const userMessage =
-  document.querySelector(
-    "#user-message"
   );
 
 const businessMessage =
@@ -43,6 +33,10 @@ function setMessage(
   text,
   isError = false
 ) {
+  if (!element) {
+    return;
+  }
+
   element.textContent = text;
 
   element.classList.toggle(
@@ -231,70 +225,6 @@ useLocationButton?.addEventListener(
         );
       }
     );
-  }
-);
-
-userForm?.addEventListener(
-  "submit",
-  async (event) => {
-    event.preventDefault();
-
-    setMessage(
-      userMessage,
-      "Guardando usuario..."
-    );
-
-    const payload =
-      Object.fromEntries(
-        new FormData(
-          userForm
-        ).entries()
-      );
-
-    try {
-      const response =
-        await fetch(
-          "/api/users/register",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json",
-            },
-
-            body: JSON.stringify(
-              payload
-            ),
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (
-        !response.ok
-      ) {
-        throw new Error(
-          data.error ||
-            "No se pudo crear el usuario."
-        );
-      }
-
-      userForm.reset();
-
-      setMessage(
-        userMessage,
-        data.message ||
-          "Usuario creado."
-      );
-    } catch (error) {
-      setMessage(
-        userMessage,
-        error.message,
-        true
-      );
-    }
   }
 );
 
