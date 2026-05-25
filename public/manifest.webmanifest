@@ -1,0 +1,27 @@
+{
+  "name": "Parchar",
+  "short_name": "Parchar",
+  "description": "Descubre lugares cercanos y comparte planes recomendados.",
+  "id": "/",
+  "start_url": "/index.html?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#140228",
+  "theme_color": "#3d146d",
+  "lang": "es-CO",
+  "icons": [
+    {
+      "src": "/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

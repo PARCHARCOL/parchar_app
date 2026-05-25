@@ -1,5 +1,14 @@
-const buttons = document.querySelectorAll(".action-btn");
+﻿const buttons = document.querySelectorAll(".action-btn");
 const statusEl = document.querySelector("#location-status");
+
+const installButton = document.querySelector("#install-app-btn");
+const installHelpButton = document.querySelector("#install-help-btn");
+const installHint = document.querySelector("#install-hint");
+const installGuide = document.querySelector("#install-guide");
+const installGuideText = document.querySelector("#install-guide-text");
+const installGuideClose = document.querySelector("#install-guide-close");
+
+let deferredInstallPrompt = null;
 
 function updateStatus(message) {
   if (!statusEl) return;
@@ -9,10 +18,12 @@ function updateStatus(message) {
 function redirectWithCategory(category, coords) {
   const url = new URL("/places.html", window.location.origin);
   url.searchParams.set("category", category);
+
   if (coords) {
     url.searchParams.set("lat", String(coords.latitude));
     url.searchParams.set("lng", String(coords.longitude));
   }
+
   window.location.href = url.toString();
 }
 
@@ -51,9 +62,187 @@ function handleCategory(route) {
   );
 }
 
+function isIosDevice() {
+  const ua = window.navigator.userAgent || "";
+  const iOS = /iPad|iPhone|iPod/i.test(ua);
+  const iPadOS =
+    window.navigator.platform === "MacIntel" &&
+    window.navigator.maxTouchPoints > 1;
+
+  return iOS || iPadOS;
+}
+
+function isStandaloneMode() {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true
+  );
+}
+
+function setInstallMessage(text) {
+  if (!installHint) return;
+  installHint.textContent = text;
+}
+
+function showInstallGuide(customText) {
+  if (!installGuide || !installGuideText) return;
+  installGuide.hidden = false;
+
+  if (customText) {
+    installGuideText.textContent = customText;
+  }
+}
+
+function hideInstallGuide() {
+  if (!installGuide) return;
+  installGuide.hidden = true;
+}
+
+function setInstalledState() {
+  if (installButton) {
+    installButton.textContent = "App instalada";
+    installButton.disabled = true;
+  }
+
+  if (installHelpButton) {
+    installHelpButton.disabled = false;
+  }
+
+  setInstallMessage("Parchar ya esta instalada en este dispositivo.");
+}
+
+function setIosInstallState() {
+  if (installButton) {
+    installButton.textContent = "Instalar en iPhone";
+    installButton.disabled = false;
+  }
+
+  setInstallMessage(
+    "En iPhone abre en Safari y toca Compartir > Agregar a pantalla de inicio."
+  );
+}
+
+function setPromptInstallState() {
+  if (installButton) {
+    installButton.textContent = "Descargar app";
+    installButton.disabled = false;
+  }
+
+  setInstallMessage("Instala Parchar y abrela como app desde tu pantalla.");
+}
+
+function setManualInstallState() {
+  if (installButton) {
+    installButton.textContent = "Como instalar";
+    installButton.disabled = false;
+  }
+
+  setInstallMessage("Tu navegador no muestra instalacion directa. Usa la guia.");
+}
+
+async function triggerInstallPrompt() {
+  if (isStandaloneMode()) {
+    setInstalledState();
+    return;
+  }
+
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    const result = await deferredInstallPrompt.userChoice;
+
+    if (result.outcome === "accepted") {
+      setInstallMessage("Instalando Parchar...");
+    } else {
+      setInstallMessage("Puedes instalarla cuando quieras desde este boton.");
+    }
+
+    deferredInstallPrompt = null;
+    return;
+  }
+
+  if (isIosDevice()) {
+    showInstallGuide(
+      "Paso a paso en iPhone: 1) abre en Safari, 2) toca Compartir, 3) elige Agregar a pantalla de inicio."
+    );
+    return;
+  }
+
+  showInstallGuide(
+    "En Android o escritorio, abre el menu del navegador y busca Instalar app o Agregar a pantalla de inicio."
+  );
+}
+
+function setupInstallFlow() {
+  if (!installButton) {
+    return;
+  }
+
+  if (isStandaloneMode()) {
+    setInstalledState();
+  } else if (isIosDevice()) {
+    setIosInstallState();
+  } else {
+    setManualInstallState();
+  }
+
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    setPromptInstallState();
+  });
+
+  window.addEventListener("appinstalled", () => {
+    deferredInstallPrompt = null;
+    setInstalledState();
+    hideInstallGuide();
+  });
+
+  installButton.addEventListener("click", async () => {
+    try {
+      await triggerInstallPrompt();
+    } catch {
+      setInstallMessage("No se pudo abrir el instalador en este momento.");
+    }
+  });
+
+  installHelpButton?.addEventListener("click", () => {
+    if (isIosDevice()) {
+      showInstallGuide(
+        "Paso a paso en iPhone: 1) abre en Safari, 2) toca Compartir, 3) elige Agregar a pantalla de inicio."
+      );
+      return;
+    }
+
+    showInstallGuide(
+      "En Android/PC: abre el menu del navegador y elige Instalar app o Agregar a pantalla de inicio."
+    );
+  });
+
+  installGuideClose?.addEventListener("click", () => {
+    hideInstallGuide();
+  });
+}
+
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  try {
+    await navigator.serviceWorker.register("/service-worker.js", {
+      scope: "/",
+    });
+  } catch {
+    // no-op
+  }
+}
+
 for (const button of buttons) {
   button.addEventListener("click", () => {
     const route = button.dataset.route;
     handleCategory(route);
   });
 }
+
+setupInstallFlow();
+window.addEventListener("load", registerServiceWorker);

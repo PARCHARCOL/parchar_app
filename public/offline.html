@@ -1,0 +1,60 @@
+﻿<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Parchar | Sin conexion</title>
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+        background: linear-gradient(160deg, #2a0b4d, #120222 55%, #090112 100%);
+        color: #f8ecff;
+        padding: 18px;
+      }
+
+      main {
+        width: min(92vw, 460px);
+        border: 1px solid rgba(221, 166, 255, 0.35);
+        border-radius: 20px;
+        padding: 24px 18px;
+        text-align: center;
+        background: rgba(22, 6, 47, 0.78);
+      }
+
+      h1 {
+        margin: 0 0 10px;
+      }
+
+      p {
+        margin: 0;
+        color: #dfc3fb;
+        line-height: 1.5;
+      }
+
+      button {
+        margin-top: 16px;
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #ffae37, #ff4d2e 78%);
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Sin conexion</h1>
+      <p>
+        No hay internet en este momento. Cuando vuelvas a tener conexion, abre
+        Parchar de nuevo.
+      </p>
+      <button type="button" onclick="window.location.reload()">Reintentar</button>
+    </main>
+  </body>
+</html>

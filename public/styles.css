@@ -162,6 +162,60 @@ a {
   color: var(--neon-gold);
 }
 
+.install-cta {
+  margin-top: 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 172, 91, 0.55);
+  background: linear-gradient(150deg, rgba(112, 45, 180, 0.78), rgba(67, 22, 128, 0.88));
+  padding: 11px 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.install-cta strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.install-cta p {
+  margin: 0;
+  color: #f0dcff;
+  font-size: 0.88rem;
+}
+
+.install-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.install-actions .submit-btn,
+.install-actions .ghost-btn {
+  min-height: 40px;
+  padding: 9px 10px;
+  font-size: 0.86rem;
+}
+
+.install-guide {
+  margin-top: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(183, 129, 252, 0.4);
+  background: rgba(27, 7, 58, 0.82);
+  padding: 11px 12px;
+}
+
+.install-guide h3 {
+  margin: 0 0 7px;
+  font-size: 1rem;
+}
+
+.install-guide p {
+  margin: 0 0 10px;
+  color: #efdafe;
+  font-size: 0.88rem;
+}
+
 .button-grid {
   margin-top: 16px;
   display: grid;
@@ -720,6 +774,16 @@ textarea {
     gap: 12px;
   }
 
+  .install-cta {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .install-actions {
+    width: 270px;
+  }
+
   .cards-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -803,6 +867,10 @@ textarea {
 
   .button-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .install-actions {
+    grid-template-columns: 1fr;
   }
 
   .action-btn {

@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Parchar</title>
+    <meta name="theme-color" content="#3d146d" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Parchar" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body class="theme-body home-body">
@@ -19,6 +25,31 @@
       <section class="search-bar">
         <span class="search-icon">&#128269;</span>
         <p>Que quieres hacer hoy?</p>
+      </section>
+
+      <section class="install-cta" aria-label="Descargar app Parchar">
+        <div>
+          <strong>Descargar app</strong>
+          <p id="install-hint">Instala Parchar en tu celular para abrirla como app.</p>
+        </div>
+        <div class="install-actions">
+          <button id="install-app-btn" type="button" class="submit-btn">
+            Descargar app
+          </button>
+          <button id="install-help-btn" type="button" class="ghost-btn">
+            Como instalar
+          </button>
+        </div>
+      </section>
+
+      <section id="install-guide" class="install-guide" hidden>
+        <h3>Instalar Parchar</h3>
+        <p id="install-guide-text">
+          Si usas iPhone: abre en Safari, toca Compartir y luego "Agregar a pantalla de inicio".
+        </p>
+        <button id="install-guide-close" type="button" class="ghost-btn">
+          Cerrar
+        </button>
       </section>
 
       <section class="button-grid">
