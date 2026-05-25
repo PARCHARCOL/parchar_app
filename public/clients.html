@@ -40,9 +40,120 @@
         </span>
       </header>
 
+      <section
+        id="client-auth-section"
+        class="form-block glass-card"
+      >
+
+        <h2>
+          Acceso clientes
+        </h2>
+
+        <p>
+          Para publicar un negocio primero debes registrarte e iniciar sesion como cliente.
+        </p>
+
+        <form
+          id="client-register-form"
+          class="form-grid"
+        >
+
+          <label>
+            Nombre completo
+
+            <input
+              name="fullName"
+              required
+            />
+          </label>
+
+          <label>
+            Correo
+
+            <input
+              name="email"
+              type="email"
+              required
+            />
+          </label>
+
+          <label>
+            Telefono
+
+            <input
+              name="phone"
+              required
+            />
+          </label>
+
+          <label>
+            Contrasena
+
+            <input
+              name="password"
+              type="password"
+              minlength="6"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Registrarme
+          </button>
+
+        </form>
+
+        <form
+          id="client-login-form"
+          class="form-grid"
+        >
+
+          <label>
+            Correo
+
+            <input
+              name="email"
+              type="email"
+              required
+            />
+          </label>
+
+          <label>
+            Contrasena
+
+            <input
+              name="password"
+              type="password"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Iniciar sesion
+          </button>
+
+        </form>
+
+        <p
+          id="client-auth-message"
+          class="feedback"
+        ></p>
+
+      </section>
+
       <!-- BUSINESS -->
 
-      <section class="form-block glass-card">
+      <section
+        id="business-section"
+        class="form-block glass-card"
+        style="display:none;"
+      >
 
         <h2>
           Registrar tu negocio
@@ -51,6 +162,22 @@
         <p>
           Todos los negocios pasan por validacion manual antes de ser publicados en Parchar.
         </p>
+
+        <div class="moderation-box full-row">
+          <strong id="client-session-label">
+            Sesion activa
+          </strong>
+          <p id="client-session-user">
+            Cliente autenticado
+          </p>
+          <button
+            id="client-logout"
+            type="button"
+            class="ghost-btn"
+          >
+            Cerrar sesion
+          </button>
+        </div>
 
         <form
           id="business-form"

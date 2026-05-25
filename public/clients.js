@@ -1,3 +1,46 @@
+const SESSION_KEY =
+  "parchar_client_session";
+
+const registerForm =
+  document.querySelector(
+    "#client-register-form"
+  );
+
+const loginForm =
+  document.querySelector(
+    "#client-login-form"
+  );
+
+const authSection =
+  document.querySelector(
+    "#client-auth-section"
+  );
+
+const authMessage =
+  document.querySelector(
+    "#client-auth-message"
+  );
+
+const businessSection =
+  document.querySelector(
+    "#business-section"
+  );
+
+const sessionLabel =
+  document.querySelector(
+    "#client-session-label"
+  );
+
+const sessionUser =
+  document.querySelector(
+    "#client-session-user"
+  );
+
+const logoutButton =
+  document.querySelector(
+    "#client-logout"
+  );
+
 const businessForm =
   document.querySelector(
     "#business-form"
@@ -28,6 +71,9 @@ const useLocationButton =
     "#use-location"
   );
 
+let currentToken = "";
+let currentClient = null;
+
 function setMessage(
   element,
   text,
@@ -50,6 +96,316 @@ function setMessage(
   );
 }
 
+function saveSession(
+  token,
+  client
+) {
+  localStorage.setItem(
+    SESSION_KEY,
+    JSON.stringify({
+      token,
+      client,
+    })
+  );
+}
+
+function clearSession() {
+  localStorage.removeItem(
+    SESSION_KEY
+  );
+  currentToken = "";
+  currentClient = null;
+}
+
+function loadSession() {
+  try {
+    const raw =
+      localStorage.getItem(
+        SESSION_KEY
+      );
+
+    if (!raw) {
+      return null;
+    }
+
+    const parsed =
+      JSON.parse(raw);
+
+    if (
+      !parsed?.token ||
+      !parsed?.client
+    ) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function setBusinessFormClientData(
+  client
+) {
+  if (!businessForm) {
+    return;
+  }
+
+  const ownerNameInput =
+    businessForm.querySelector(
+      "input[name='ownerName']"
+    );
+
+  const ownerEmailInput =
+    businessForm.querySelector(
+      "input[name='ownerEmail']"
+    );
+
+  const ownerPhoneInput =
+    businessForm.querySelector(
+      "input[name='ownerPhone']"
+    );
+
+  ownerNameInput.value =
+    client.fullName;
+  ownerEmailInput.value =
+    client.email;
+  ownerPhoneInput.value =
+    client.phone;
+}
+
+function showLoggedOutState() {
+  authSection.style.display =
+    "block";
+  businessSection.style.display =
+    "none";
+  setMessage(
+    authMessage,
+    "Inicia sesion para publicar tu negocio.",
+    false
+  );
+}
+
+function showLoggedInState() {
+  authSection.style.display =
+    "none";
+  businessSection.style.display =
+    "block";
+
+  sessionLabel.textContent =
+    "Sesion activa";
+
+  sessionUser.textContent = `${currentClient.fullName} (${currentClient.email})`;
+
+  setBusinessFormClientData(
+    currentClient
+  );
+}
+
+async function apiRequest(
+  url,
+  options = {}
+) {
+  const headers = new Headers(
+    options.headers || {}
+  );
+
+  if (
+    currentToken &&
+    !headers.has(
+      "Authorization"
+    )
+  ) {
+    headers.set(
+      "Authorization",
+      `Bearer ${currentToken}`
+    );
+  }
+
+  const response = await fetch(
+    url,
+    {
+      ...options,
+      headers,
+    }
+  );
+
+  const data =
+    await response.json();
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+        "Error en la solicitud."
+    );
+  }
+
+  return data;
+}
+
+async function bootstrapSession() {
+  const session =
+    loadSession();
+
+  if (!session) {
+    showLoggedOutState();
+    return;
+  }
+
+  currentToken =
+    session.token;
+
+  try {
+    const data =
+      await apiRequest(
+        "/api/clients/me"
+      );
+
+    currentClient =
+      data.client;
+    saveSession(
+      currentToken,
+      currentClient
+    );
+    showLoggedInState();
+  } catch {
+    clearSession();
+    showLoggedOutState();
+  }
+}
+
+registerForm?.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    setMessage(
+      authMessage,
+      "Creando cuenta cliente..."
+    );
+
+    const payload =
+      Object.fromEntries(
+        new FormData(
+          registerForm
+        ).entries()
+      );
+
+    try {
+      await apiRequest(
+        "/api/clients/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            payload
+          ),
+        }
+      );
+
+      registerForm.reset();
+      setMessage(
+        authMessage,
+        "Cuenta creada. Ahora inicia sesion.",
+        false
+      );
+    } catch (error) {
+      setMessage(
+        authMessage,
+        error.message,
+        true
+      );
+    }
+  }
+);
+
+loginForm?.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+
+    setMessage(
+      authMessage,
+      "Iniciando sesion..."
+    );
+
+    const payload =
+      Object.fromEntries(
+        new FormData(
+          loginForm
+        ).entries()
+      );
+
+    try {
+      const data =
+        await apiRequest(
+          "/api/clients/login",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify(
+              payload
+            ),
+          }
+        );
+
+      currentToken =
+        data.token;
+      currentClient =
+        data.client;
+
+      saveSession(
+        currentToken,
+        currentClient
+      );
+
+      loginForm.reset();
+      showLoggedInState();
+      setMessage(
+        businessMessage,
+        "Sesion activa. Ya puedes publicar tu negocio.",
+        false
+      );
+    } catch (error) {
+      setMessage(
+        authMessage,
+        error.message,
+        true
+      );
+    }
+  }
+);
+
+logoutButton?.addEventListener(
+  "click",
+  async () => {
+    try {
+      await apiRequest(
+        "/api/clients/logout",
+        {
+          method: "POST",
+        }
+      );
+    } catch {
+      // no-op
+    } finally {
+      clearSession();
+      businessForm.reset();
+      videoDurationInput.value =
+        "";
+      videoStatus.textContent =
+        "";
+      showLoggedOutState();
+    }
+  }
+);
+
 async function extractVideoDuration(
   file
 ) {
@@ -62,9 +418,7 @@ async function extractVideoDuration(
 
       tempVideo.preload =
         "metadata";
-
       tempVideo.muted = true;
-
       tempVideo.src =
         URL.createObjectURL(file);
 
@@ -87,25 +441,22 @@ async function extractVideoDuration(
                 "No pudimos leer la duracion del video."
               )
             );
-
             return;
           }
 
           resolve(seconds);
         };
 
-      tempVideo.onerror =
-        () => {
-          URL.revokeObjectURL(
-            tempVideo.src
-          );
-
-          reject(
-            new Error(
-              "El archivo no parece un video valido."
-            )
-          );
-        };
+      tempVideo.onerror = () => {
+        URL.revokeObjectURL(
+          tempVideo.src
+        );
+        reject(
+          new Error(
+            "El archivo no parece un video valido."
+          )
+        );
+      };
     }
   );
 }
@@ -115,7 +466,6 @@ videoInput?.addEventListener(
   async () => {
     videoStatus.textContent =
       "";
-
     videoDurationInput.value =
       "";
 
@@ -143,13 +493,11 @@ videoInput?.addEventListener(
       ) {
         videoInput.value =
           "";
-
         setMessage(
           videoStatus,
           `Duracion invalida (${rounded}s). Debe durar entre 10 y 13 segundos.`,
           true
         );
-
         return;
       }
 
@@ -164,7 +512,6 @@ videoInput?.addEventListener(
     } catch (error) {
       videoInput.value =
         "";
-
       setMessage(
         videoStatus,
         error.message,
@@ -185,7 +532,6 @@ useLocationButton?.addEventListener(
         "Tu navegador no permite geolocalizacion.",
         true
       );
-
       return;
     }
 
@@ -205,7 +551,6 @@ useLocationButton?.addEventListener(
           position.coords.latitude.toFixed(
             6
           );
-
         lngInput.value =
           position.coords.longitude.toFixed(
             6
@@ -233,9 +578,23 @@ businessForm?.addEventListener(
   async (event) => {
     event.preventDefault();
 
+    if (!currentToken) {
+      setMessage(
+        businessMessage,
+        "Debes iniciar sesion para publicar.",
+        true
+      );
+      showLoggedOutState();
+      return;
+    }
+
+    setBusinessFormClientData(
+      currentClient
+    );
+
     setMessage(
       businessMessage,
-      "Subiendo negocio y videos..."
+      "Subiendo negocio y documentos..."
     );
 
     const formData =
@@ -262,38 +621,24 @@ businessForm?.addEventListener(
         "Debes subir un video valido entre 10 y 13 segundos.",
         true
       );
-
       return;
     }
 
     try {
-      const response =
-        await fetch(
-          "/api/businesses",
-          {
-            method: "POST",
-
-            body: formData,
-          }
-        );
-
-      const data =
-        await response.json();
-
-      if (
-        !response.ok
-      ) {
-        throw new Error(
-          data.error ||
-            "No se pudo registrar el negocio."
-        );
-      }
+      await apiRequest(
+        "/api/businesses",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       businessForm.reset();
-
+      setBusinessFormClientData(
+        currentClient
+      );
       videoDurationInput.value =
         "";
-
       videoStatus.textContent =
         "";
 
@@ -311,3 +656,5 @@ businessForm?.addEventListener(
     }
   }
 );
+
+bootstrapSession();

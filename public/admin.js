@@ -504,10 +504,11 @@ function renderBusinesses(items) {
               ? `
             <a
               href="${item.rut_document}"
-              download
+              target="_blank"
+              rel="noopener noreferrer"
               class="ghost-btn"
             >
-              📄 RUT
+              Ver RUT
             </a>
           `
               : ""
@@ -518,10 +519,11 @@ function renderBusinesses(items) {
               ? `
             <a
               href="${item.commerce_document}"
-              download
+              target="_blank"
+              rel="noopener noreferrer"
               class="ghost-btn"
             >
-              🏢 Cámara Comercio
+              Ver Camara Comercio
             </a>
           `
               : ""
@@ -596,3 +598,4 @@ async function loadBusinesses() {
 }
 
 loadBusinesses();
+
