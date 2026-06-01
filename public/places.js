@@ -47,6 +47,148 @@ const categoryChip = {
   bbb: "BBB",
 };
 
+function isValidCoordinate(
+  latitude,
+  longitude
+) {
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  );
+}
+
+function getCoordsFromUrl(
+  params
+) {
+  const latitude = Number(
+    params.get("lat")
+  );
+  const longitude = Number(
+    params.get("lng")
+  );
+
+  if (
+    !isValidCoordinate(
+      latitude,
+      longitude
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    latitude,
+    longitude,
+  };
+}
+
+function requestUserCoords() {
+  return new Promise(
+    (resolve) => {
+      if (!navigator.geolocation) {
+        resolve(null);
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude:
+              position.coords
+                .latitude,
+            longitude:
+              position.coords
+                .longitude,
+          });
+        },
+        () => resolve(null),
+        {
+          enableHighAccuracy: true,
+          timeout: 7000,
+          maximumAge: 60000,
+        }
+      );
+    }
+  );
+}
+
+function calculateDistanceKm(
+  from,
+  item
+) {
+  const toLatitude =
+    Number(item.latitude);
+  const toLongitude =
+    Number(item.longitude);
+
+  if (
+    !from ||
+    !isValidCoordinate(
+      toLatitude,
+      toLongitude
+    )
+  ) {
+    return null;
+  }
+
+  const earthRadiusKm = 6371;
+  const degreesToRadians =
+    Math.PI / 180;
+  const dLat =
+    (toLatitude -
+      from.latitude) *
+    degreesToRadians;
+  const dLng =
+    (toLongitude -
+      from.longitude) *
+    degreesToRadians;
+  const lat1 =
+    from.latitude *
+    degreesToRadians;
+  const lat2 =
+    toLatitude *
+    degreesToRadians;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1) *
+      Math.cos(lat2) *
+      Math.sin(dLng / 2) ** 2;
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a)
+    );
+
+  return earthRadiusKm * c;
+}
+
+function formatDistance(
+  km
+) {
+  if (!Number.isFinite(km)) {
+    return "";
+  }
+
+  if (km < 1) {
+    return `${Math.max(
+      1,
+      Math.round(km * 1000)
+    )} m`;
+  }
+
+  if (km < 10) {
+    return `${km.toFixed(1)} km`;
+  }
+
+  return `${Math.round(km)} km`;
+}
+
 function escapeHtml(value) {
 
   return String(
@@ -74,7 +216,10 @@ function escapeHtml(value) {
     );
 }
 
-function renderCards(items) {
+function renderCards(
+  items,
+  hasUserCoords
+) {
 
   if (!items.length) {
 
@@ -132,6 +277,24 @@ function renderCards(items) {
               ${escapeHtml(
                 item.city
               )}
+            </p>
+
+            <p class="distance-line">
+              <strong>Distancia:</strong>
+
+              ${
+                item.distanceKm !== null &&
+                item.distanceKm !==
+                  undefined
+                  ? `A ${escapeHtml(
+                      formatDistance(
+                        item.distanceKm
+                      )
+                    )} de ti`
+                  : hasUserCoords
+                    ? "No disponible para este local"
+                    : "Permite ubicacion para calcularla"
+              }
             </p>
 
             <p>
@@ -221,6 +384,18 @@ async function loadPlaces() {
 
   try {
 
+    let userCoords =
+      getCoordsFromUrl(
+        params
+      );
+
+    if (!userCoords) {
+      subtitleEl.textContent =
+        "Calculando distancia desde tu ubicacion...";
+      userCoords =
+        await requestUserCoords();
+    }
+
     const response =
       await fetch(
         "/api/businesses/approved"
@@ -259,10 +434,56 @@ async function loadPlaces() {
 
             item.status ===
             "activo"
+        )
+        .map(
+          (item) => ({
+            ...item,
+            distanceKm:
+              calculateDistanceKm(
+                userCoords,
+                item
+              ),
+          })
+        )
+        .sort(
+          (a, b) => {
+            if (
+              a.distanceKm === null &&
+              b.distanceKm === null
+            ) {
+              return 0;
+            }
+
+            if (
+              a.distanceKm === null
+            ) {
+              return 1;
+            }
+
+            if (
+              b.distanceKm === null
+            ) {
+              return -1;
+            }
+
+            return (
+              a.distanceKm -
+              b.distanceKm
+            );
+          }
         );
 
+    if (userCoords) {
+      subtitleEl.textContent =
+        "Sitios ordenados por cercania a tu ubicacion.";
+    } else {
+      subtitleEl.textContent =
+        "No se pudo leer tu ubicacion. Puedes permitirla para ver distancias.";
+    }
+
     renderCards(
-      filtered
+      filtered,
+      Boolean(userCoords)
     );
 
   } catch (error) {

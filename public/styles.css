@@ -427,6 +427,14 @@ a {
   color: #ece1ff;
 }
 
+.distance-line {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 190, 106, 0.42);
+  background: rgba(255, 142, 45, 0.13);
+  padding: 8px 10px;
+  font-weight: 800;
+}
+
 .chip {
   display: inline-block;
   margin: 0;

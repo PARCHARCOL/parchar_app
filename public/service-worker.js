@@ -1,11 +1,15 @@
-﻿const CACHE_NAME = "parchar-shell-v1";
+const CACHE_NAME = "parchar-shell-v2";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
   "/index.html",
   "/loading.html",
+  "/places.html",
+  "/clients.html",
   "/styles.css",
   "/app.js",
+  "/places.js",
+  "/clients.js",
   "/manifest.webmanifest",
   "/assets/parchar-logo.png",
   "/assets/icons/icon-192.png",
@@ -58,18 +62,43 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          const responseCopy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseCopy);
-          });
-          return networkResponse;
-        })
-        .catch(async () => {
-          const cache = await caches.open(CACHE_NAME);
-          return (await cache.match(request)) || (await cache.match("/index.html")) || (await cache.match(OFFLINE_URL));
-        })
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached =
+          (await cache.match(request, {
+            ignoreSearch: true,
+          })) ||
+          (await cache.match("/index.html")) ||
+          (await cache.match(OFFLINE_URL));
+
+        const networkPromise = fetch(request)
+          .then((networkResponse) => {
+            if (
+              networkResponse &&
+              networkResponse.status === 200
+            ) {
+              cache.put(
+                request,
+                networkResponse.clone()
+              );
+            }
+
+            return networkResponse;
+          })
+          .catch(() => null);
+
+        if (cached) {
+          event.waitUntil(networkPromise);
+          return cached;
+        }
+
+        const networkResponse =
+          await networkPromise;
+
+        return (
+          networkResponse ||
+          (await cache.match(OFFLINE_URL))
+        );
+      })
     );
     return;
   }
@@ -81,11 +110,15 @@ self.addEventListener("fetch", (event) => {
       }
 
       return fetch(request).then((networkResponse) => {
-        if (!networkResponse || networkResponse.status !== 200) {
+        if (
+          !networkResponse ||
+          networkResponse.status !== 200
+        ) {
           return networkResponse;
         }
 
-        const responseCopy = networkResponse.clone();
+        const responseCopy =
+          networkResponse.clone();
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(request, responseCopy);
         });
