@@ -72,6 +72,19 @@ function isIosDevice() {
   return iOS || iPadOS;
 }
 
+function isAndroidDevice() {
+  return /Android/i.test(
+    window.navigator.userAgent || ""
+  );
+}
+
+function isLikelyInAppBrowser() {
+  const ua =
+    window.navigator.userAgent || "";
+
+  return /FBAN|FBAV|Instagram|Line|WhatsApp|wv/i.test(ua);
+}
+
 function isStandaloneMode() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
@@ -122,6 +135,17 @@ function setIosInstallState() {
   );
 }
 
+function setAndroidInAppState() {
+  if (installButton) {
+    installButton.textContent = "Abrir en Chrome";
+    installButton.disabled = false;
+  }
+
+  setInstallMessage(
+    "Para instalar en Android, abre este link en Chrome. No instales desde WhatsApp."
+  );
+}
+
 function setPromptInstallState() {
   if (installButton) {
     installButton.textContent = "Descargar app";
@@ -143,6 +167,16 @@ function setManualInstallState() {
 async function triggerInstallPrompt() {
   if (isStandaloneMode()) {
     setInstalledState();
+    return;
+  }
+
+  if (
+    isAndroidDevice() &&
+    isLikelyInAppBrowser()
+  ) {
+    showInstallGuide(
+      "Android: toca los tres puntos de esta ventana y elige Abrir en Chrome. Luego toca Descargar app."
+    );
     return;
   }
 
@@ -179,6 +213,11 @@ function setupInstallFlow() {
 
   if (isStandaloneMode()) {
     setInstalledState();
+  } else if (
+    isAndroidDevice() &&
+    isLikelyInAppBrowser()
+  ) {
+    setAndroidInAppState();
   } else if (isIosDevice()) {
     setIosInstallState();
   } else {
@@ -206,6 +245,16 @@ function setupInstallFlow() {
   });
 
   installHelpButton?.addEventListener("click", () => {
+    if (
+      isAndroidDevice() &&
+      isLikelyInAppBrowser()
+    ) {
+      showInstallGuide(
+        "Android: en WhatsApp, Facebook o Instagram, toca los tres puntos y abre el link en Chrome. Desde Chrome toca Descargar app."
+      );
+      return;
+    }
+
     if (isIosDevice()) {
       showInstallGuide(
         "Paso a paso en iPhone: 1) abre en Safari, 2) toca Compartir, 3) elige Agregar a pantalla de inicio."
