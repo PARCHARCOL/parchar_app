@@ -542,7 +542,25 @@ async function initializeDatabase() {
 
   await pool.query(`
     ALTER TABLE businesses
-    ADD COLUMN IF NOT EXISTS client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL;
+    ADD COLUMN IF NOT EXISTS client_id INTEGER;
+  `);
+
+  await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'businesses_client_id_fkey'
+      ) THEN
+        ALTER TABLE businesses
+        ADD CONSTRAINT businesses_client_id_fkey
+        FOREIGN KEY (client_id)
+        REFERENCES clients(id)
+        ON DELETE SET NULL;
+      END IF;
+    END
+    $$;
   `);
 
   await pool.query(`
@@ -1693,4 +1711,5 @@ initializeDatabase()
       "Error inicializando DB",
       error
     );
+    process.exit(1);
   });
