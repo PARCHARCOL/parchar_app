@@ -32,6 +32,49 @@ const PUBLIC_DIR = path.resolve(
   ROOT_DIR,
   "public"
 );
+const configuredUploadsDir =
+  process.env.UPLOADS_DIR ||
+  "uploads";
+const configuredDataDir =
+  process.env.DATA_DIR ||
+  "data";
+const UPLOADS_DIR =
+  path.isAbsolute(
+    configuredUploadsDir
+  )
+    ? configuredUploadsDir
+    : path.resolve(
+        ROOT_DIR,
+        configuredUploadsDir
+      );
+const DATA_DIR =
+  path.isAbsolute(
+    configuredDataDir
+  )
+    ? configuredDataDir
+    : path.resolve(
+        ROOT_DIR,
+        configuredDataDir
+      );
+const DB_PATH = path.join(
+  DATA_DIR,
+  "parchar.db"
+);
+const USE_POSTGRES =
+  Boolean(
+    process.env.DATABASE_URL
+  );
+const USE_CLOUDINARY =
+  Boolean(
+    process.env
+      .CLOUDINARY_CLOUD_NAME &&
+      process.env
+        .CLOUDINARY_API_KEY &&
+      process.env
+        .CLOUDINARY_API_SECRET
+  );
+const VIDEO_MIN_SECONDS = 15;
+const VIDEO_MAX_SECONDS = 20;
 const ALLOWED_CATEGORIES =
   new Set([
     "moto",
@@ -88,13 +131,157 @@ const upload = multer({
   },
 });
 
-const pool = new Pool({
-  connectionString:
-    process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
-});
+for (const dir of [
+  PUBLIC_DIR,
+  UPLOADS_DIR,
+  DATA_DIR,
+]) {
+  fs.mkdirSync(dir, {
+    recursive: true,
+  });
+}
+
+const postgresSsl =
+  USE_POSTGRES &&
+  !/localhost|127\.0\.0\.1/i.test(
+    process.env.DATABASE_URL
+  )
+    ? { rejectUnauthorized: false }
+    : false;
+
+const pool = USE_POSTGRES
+  ? new Pool({
+      connectionString:
+        process.env.DATABASE_URL,
+      ssl: postgresSsl,
+    })
+  : createSqlitePool();
+
+function createSqlitePool() {
+  const { DatabaseSync } = require(
+    "node:sqlite"
+  );
+  const db = new DatabaseSync(
+    DB_PATH
+  );
+
+  db.exec(`
+    PRAGMA journal_mode = WAL;
+    PRAGMA foreign_keys = ON;
+  `);
+
+  return {
+    dialect: "sqlite",
+    exec(sql) {
+      db.exec(sql);
+      return Promise.resolve({
+        rows: [],
+        rowCount: 0,
+      });
+    },
+    query(sql, params = []) {
+      const prepared =
+        prepareSqliteQuery(
+          sql,
+          params
+        );
+      const command =
+        prepared.sql
+          .trim()
+          .split(/\s+/, 1)[0]
+          .toUpperCase();
+
+      if (
+        command === "SELECT" ||
+        command === "PRAGMA"
+      ) {
+        const rows = db
+          .prepare(prepared.sql)
+          .all(...prepared.params);
+
+        return Promise.resolve({
+          rows,
+          rowCount: rows.length,
+        });
+      }
+
+      const result = db
+        .prepare(prepared.sql)
+        .run(...prepared.params);
+
+      return Promise.resolve({
+        rows: [],
+        rowCount: result.changes,
+        lastID:
+          result.lastInsertRowid,
+      });
+    },
+  };
+}
+
+function prepareSqliteQuery(
+  sql,
+  params
+) {
+  const normalizeParam = (
+    value
+  ) => {
+    if (
+      typeof value ===
+      "boolean"
+    ) {
+      return value ? 1 : 0;
+    }
+
+    if (
+      value === undefined
+    ) {
+      return null;
+    }
+
+    return value;
+  };
+  const orderedParams = [];
+  const sqliteSql = sql
+    .replace(
+      /NOW\(\)\s*\+\s*INTERVAL\s+'30 days'/gi,
+      "datetime('now', '+30 days')"
+    )
+    .replace(
+      /NOW\(\)/gi,
+      "datetime('now')"
+    )
+    .replace(
+      /\bTRUE\b/gi,
+      "1"
+    )
+    .replace(
+      /\bFALSE\b/gi,
+      "0"
+    )
+    .replace(
+      /\$(\d+)/g,
+      (_, index) => {
+        orderedParams.push(
+          normalizeParam(
+            params[
+              Number(index) - 1
+            ]
+          )
+        );
+        return "?";
+      }
+    );
+
+  return {
+    sql: sqliteSql,
+    params: orderedParams.length
+      ? orderedParams
+      : params.map(
+          normalizeParam
+        ),
+  };
+}
 
 function cleanText(value) {
   return String(
@@ -394,10 +581,114 @@ function runMiddleware(
   );
 }
 
+function extensionFromMime(
+  mimetype
+) {
+  const known = {
+    "application/pdf": ".pdf",
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "video/mp4": ".mp4",
+    "video/quicktime": ".mov",
+    "video/webm": ".webm",
+  };
+
+  return (
+    known[mimetype] || ""
+  );
+}
+
+function safeUploadSegment(
+  value
+) {
+  return (
+    cleanText(value)
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]+/g, "-")
+      .replace(/^-+|-+$/g, "") ||
+    "archivo"
+  );
+}
+
+function safeUploadFolder(
+  folder
+) {
+  return cleanText(folder || "files")
+    .split(/[\\/]+/)
+    .map(safeUploadSegment)
+    .join("/");
+}
+
+async function saveLocalUpload(
+  file,
+  options = {}
+) {
+  const folder =
+    safeUploadFolder(
+      options.folder
+    );
+  const originalName =
+    file.originalname || "archivo";
+  const ext =
+    path
+      .extname(originalName)
+      .toLowerCase() ||
+    extensionFromMime(
+      file.mimetype
+    ) ||
+    ".bin";
+  const baseName =
+    safeUploadSegment(
+      path.basename(
+        originalName,
+        ext
+      )
+    );
+  const fileName = `${Date.now()}-${randomBytes(
+    4
+  ).toString("hex")}-${baseName}${ext}`;
+  const targetDir =
+    path.resolve(
+      UPLOADS_DIR,
+      folder
+    );
+
+  if (
+    targetDir !== UPLOADS_DIR &&
+    !targetDir.startsWith(
+      `${UPLOADS_DIR}${path.sep}`
+    )
+  ) {
+    throw new Error(
+      "Ruta de archivo invalida."
+    );
+  }
+
+  fs.mkdirSync(targetDir, {
+    recursive: true,
+  });
+
+  fs.writeFileSync(
+    path.join(targetDir, fileName),
+    file.buffer
+  );
+
+  return {
+    secure_url: `/uploads/${folder}/${fileName}`,
+  };
+}
+
 async function uploadToCloudinary(
   file,
   options
 ) {
+  if (!USE_CLOUDINARY) {
+    return saveLocalUpload(
+      file,
+      options
+    );
+  }
+
   return new Promise(
     (resolve, reject) => {
       cloudinary.uploader
@@ -479,7 +770,277 @@ async function requireClientAuth(
   };
 }
 
+function assertSqliteIdentifier(
+  value
+) {
+  if (
+    !/^[a-z_][a-z0-9_]*$/i.test(
+      value
+    )
+  ) {
+    throw new Error(
+      "Identificador SQLite invalido."
+    );
+  }
+}
+
+async function sqliteTableExists(
+  tableName
+) {
+  assertSqliteIdentifier(
+    tableName
+  );
+
+  const result =
+    await pool.query(
+      `
+      SELECT name
+      FROM sqlite_master
+      WHERE type = 'table'
+        AND name = $1
+      LIMIT 1
+      `,
+      [tableName]
+    );
+
+  return Boolean(
+    result.rows.length
+  );
+}
+
+async function ensureSqliteColumn(
+  tableName,
+  columnName,
+  definition
+) {
+  assertSqliteIdentifier(
+    tableName
+  );
+  assertSqliteIdentifier(
+    columnName
+  );
+
+  const result =
+    await pool.query(
+      `PRAGMA table_info(${tableName})`
+    );
+  const exists =
+    result.rows.some(
+      (column) =>
+        column.name ===
+        columnName
+    );
+
+  if (exists) {
+    return;
+  }
+
+  await pool.exec(
+    `ALTER TABLE ${tableName} ADD COLUMN ${columnName} ${definition}`
+  );
+}
+
+async function normalizeSqliteClientPhones() {
+  const result =
+    await pool.query(`
+      SELECT id, phone
+      FROM clients
+      WHERE phone_normalized IS NULL
+         OR phone_normalized = ''
+    `);
+
+  for (const row of result.rows) {
+    await pool.query(
+      `
+      UPDATE clients
+      SET phone_normalized = $1
+      WHERE id = $2
+      `,
+      [
+        normalizePhone(row.phone),
+        row.id,
+      ]
+    );
+  }
+}
+
+async function migrateLegacyUsersToClients() {
+  if (
+    !(await sqliteTableExists(
+      "users"
+    ))
+  ) {
+    return;
+  }
+
+  const result =
+    await pool.query(`
+      SELECT
+        u.full_name,
+        u.email,
+        u.phone,
+        u.password_hash
+      FROM users u
+      WHERE NOT EXISTS (
+        SELECT 1
+        FROM clients c
+        WHERE LOWER(c.email) = LOWER(u.email)
+      )
+    `);
+
+  for (const user of result.rows) {
+    await pool.query(
+      `
+      INSERT INTO clients (
+        full_name,
+        email,
+        phone,
+        phone_normalized,
+        password_hash
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      `,
+      [
+        user.full_name,
+        user.email,
+        user.phone,
+        normalizePhone(
+          user.phone
+        ),
+        user.password_hash,
+      ]
+    );
+  }
+}
+
+async function initializeSqliteDatabase() {
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS clients (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      full_name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      phone TEXT NOT NULL,
+      phone_normalized TEXT,
+      password_hash TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS client_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS businesses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
+      owner_name TEXT NOT NULL,
+      owner_email TEXT NOT NULL,
+      owner_phone TEXT NOT NULL,
+      owner_document TEXT,
+      business_name TEXT NOT NULL,
+      category TEXT NOT NULL,
+      description TEXT NOT NULL,
+      products TEXT NOT NULL,
+      address TEXT NOT NULL,
+      city TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      social_link TEXT,
+      rut_document TEXT,
+      commerce_document TEXT,
+      legal_acceptance INTEGER DEFAULT 0,
+      video_path TEXT NOT NULL,
+      video_seconds REAL NOT NULL,
+      status TEXT DEFAULT 'pendiente',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await ensureSqliteColumn(
+    "clients",
+    "phone_normalized",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "client_id",
+    "INTEGER"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "owner_document",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "social_link",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "rut_document",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "commerce_document",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "legal_acceptance",
+    "INTEGER DEFAULT 0"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "status",
+    "TEXT DEFAULT 'activo'"
+  );
+
+  await migrateLegacyUsersToClients();
+  await normalizeSqliteClientPhones();
+
+  await pool.query(`
+    UPDATE businesses
+    SET status = 'activo'
+    WHERE status IS NULL
+       OR status = ''
+  `);
+
+  await pool.query(`
+    UPDATE businesses
+    SET client_id = (
+      SELECT c.id
+      FROM clients c
+      WHERE LOWER(c.email) = LOWER(businesses.owner_email)
+      LIMIT 1
+    )
+    WHERE client_id IS NULL
+      AND EXISTS (
+        SELECT 1
+        FROM clients c
+        WHERE LOWER(c.email) = LOWER(businesses.owner_email)
+      )
+  `);
+
+  console.log(
+    `SQLite inicializado en ${DB_PATH}`
+  );
+}
+
 async function initializeDatabase() {
+  if (!USE_POSTGRES) {
+    await initializeSqliteDatabase();
+    return;
+  }
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS clients (
       id SERIAL PRIMARY KEY,
@@ -1281,12 +1842,14 @@ const server =
             !Number.isFinite(
               videoSeconds
             ) ||
-            videoSeconds < 10 ||
-            videoSeconds > 13
+            videoSeconds <
+              VIDEO_MIN_SECONDS ||
+            videoSeconds >
+              VIDEO_MAX_SECONDS
           ) {
             sendJson(res, 400, {
               error:
-                "El video debe durar entre 10 y 13 segundos.",
+                `El video debe durar entre ${VIDEO_MIN_SECONDS} y ${VIDEO_MAX_SECONDS} segundos.`,
             });
             return;
           }
@@ -1667,6 +2230,46 @@ const server =
             items:
               result.rows,
           });
+          return;
+        }
+
+        if (
+          pathname.startsWith(
+            "/uploads/"
+          ) &&
+          req.method === "GET"
+        ) {
+          const relativeUploadPath =
+            decodeURIComponent(
+              pathname.replace(
+                /^\/uploads\//,
+                ""
+              )
+            );
+          const uploadPath =
+            path.resolve(
+              UPLOADS_DIR,
+              relativeUploadPath
+            );
+
+          if (
+            uploadPath ===
+              UPLOADS_DIR ||
+            !uploadPath.startsWith(
+              `${UPLOADS_DIR}${path.sep}`
+            )
+          ) {
+            sendJson(res, 403, {
+              error:
+                "Acceso no permitido.",
+            });
+            return;
+          }
+
+          sendFile(
+            res,
+            uploadPath
+          );
           return;
         }
 

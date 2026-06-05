@@ -25,6 +25,9 @@ const useLocationButton = document.querySelector("#use-location");
 const myBusinessesList = document.querySelector("#my-businesses-list");
 const refreshMyBusinessesButton = document.querySelector("#refresh-my-businesses");
 
+const VIDEO_MIN_SECONDS = 15;
+const VIDEO_MAX_SECONDS = 20;
+
 let currentToken = "";
 let currentClient = null;
 
@@ -445,11 +448,14 @@ videoInput?.addEventListener("change", async () => {
     const seconds = await extractVideoDuration(file);
     const rounded = Number(seconds.toFixed(2));
 
-    if (rounded < 10 || rounded > 13) {
+    if (
+      rounded < VIDEO_MIN_SECONDS ||
+      rounded > VIDEO_MAX_SECONDS
+    ) {
       videoInput.value = "";
       setMessage(
         videoStatus,
-        `Duracion invalida (${rounded}s). Debe durar entre 10 y 13 segundos.`,
+        `Duracion invalida (${rounded}s). Debe durar entre ${VIDEO_MIN_SECONDS} y ${VIDEO_MAX_SECONDS} segundos.`,
         true
       );
       return;
@@ -517,10 +523,14 @@ businessForm?.addEventListener("submit", async (event) => {
   const formData = new FormData(businessForm);
   const duration = Number(formData.get("videoDurationSeconds"));
 
-  if (!Number.isFinite(duration) || duration < 10 || duration > 13) {
+  if (
+    !Number.isFinite(duration) ||
+    duration < VIDEO_MIN_SECONDS ||
+    duration > VIDEO_MAX_SECONDS
+  ) {
     setMessage(
       businessMessage,
-      "Debes subir un video valido entre 10 y 13 segundos.",
+      `Debes subir un video valido entre ${VIDEO_MIN_SECONDS} y ${VIDEO_MAX_SECONDS} segundos.`,
       true
     );
     return;

@@ -1,20 +1,22 @@
 # Parchar
 
-App web para descubrir sitios por categoria (`moto`, `carro`, `romantico`, `bbb`) y registrar negocios con video obligatorio entre 10 y 13 segundos.
+App web para descubrir sitios por categoria (`moto`, `carro`, `romantico`, `bbb`) y registrar negocios con video obligatorio entre 15 y 20 segundos.
 
 ## Tecnologia
 
-- Backend: Node.js nativo (`http`, `node:sqlite`)
+- Backend: Node.js nativo (`http`) con Node `>=22.5`
 - Frontend: HTML, CSS y JavaScript vanilla
-- Base de datos: SQLite (`/data/parchar.db`)
-- Archivos multimedia: `/uploads`
+- Base de datos local: SQLite (`/data/parchar.db`) cuando no existe `DATABASE_URL`
+- Base de datos cloud: PostgreSQL cuando existe `DATABASE_URL`
+- Archivos multimedia locales: `/uploads` cuando no hay credenciales Cloudinary
+- Archivos multimedia cloud: Cloudinary cuando existen `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`
 
 ## Ejecutar local
 
 1. Abre terminal en esta carpeta:
 
 ```powershell
-cd C:\Users\luxury\Desktop\nomina\parchar
+cd C:\Users\luxury\Desktop\nomina\parchar_app
 ```
 
 2. Inicia el servidor:
@@ -36,7 +38,7 @@ node server.js
   - BBB
   - Clientes
 - Los negocios deben ser registrados por clientes (duenos de locales).
-- El formulario de negocio exige video y valida que dure de 10 a 13 segundos.
+- El formulario de negocio exige video y valida que dure de 15 a 20 segundos.
 - Se guarda info completa del usuario y del negocio.
 - Moto y carro muestran lugares cercanos cuando se comparte ubicacion.
 
@@ -46,6 +48,10 @@ Se puede subir a Render o Railway como servicio Node.
 
 - Start command: `node server.js`
 - Puerto: usar variable de entorno `PORT` (la app ya lo soporta)
+- Sin `DATABASE_URL`, la app usa SQLite sobre el disco persistente configurado.
+- Con `DATABASE_URL`, la app usa PostgreSQL.
+- Sin credenciales Cloudinary, los archivos se guardan en `/uploads`.
+- Con credenciales Cloudinary, videos y documentos se guardan en Cloudinary.
 
 ## Acceso permanente (recomendado)
 
@@ -73,7 +79,7 @@ Si quieres ensayarla de inmediato desde cualquier celular sin subirla aun a Rend
 1. Enciende URL publica:
 
 ```powershell
-cd C:\Users\luxury\Desktop\nomina\parchar
+cd C:\Users\luxury\Desktop\nomina\parchar_app
 powershell -ExecutionPolicy Bypass -File .\start-public.ps1
 ```
 
@@ -84,8 +90,8 @@ powershell -ExecutionPolicy Bypass -File .\stop-public.ps1
 ```
 
 La URL publica activa tambien queda guardada en:
-`C:\Users\luxury\Desktop\nomina\parchar\.runtime\public-url.txt`
+`C:\Users\luxury\Desktop\nomina\parchar_app\.runtime\public-url.txt`
 
 Tambien puedes usar doble clic:
-- `C:\Users\luxury\Desktop\nomina\parchar\start-public.cmd`
-- `C:\Users\luxury\Desktop\nomina\parchar\stop-public.cmd`
+- `C:\Users\luxury\Desktop\nomina\parchar_app\start-public.cmd`
+- `C:\Users\luxury\Desktop\nomina\parchar_app\stop-public.cmd`
