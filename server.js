@@ -289,6 +289,49 @@ function cleanText(value) {
   ).trim();
 }
 
+function cleanLimitedText(
+  value,
+  maxLength
+) {
+  return cleanText(value).slice(
+    0,
+    maxLength
+  );
+}
+
+function parseBooleanFlag(value) {
+  return [
+    true,
+    1,
+    "true",
+    "on",
+    "1",
+    "si",
+  ].includes(
+    typeof value === "string"
+      ? value.trim().toLowerCase()
+      : value
+  );
+}
+
+function normalizeAdBanner(row) {
+  return {
+    enabled: Boolean(
+      Number(row?.enabled || 0)
+    ),
+    title:
+      row?.title || "Publicidad",
+    message:
+      row?.message ||
+      "Espacio para aliados de Parchar",
+    ctaLabel:
+      row?.cta_label ||
+      "Anunciar",
+    updatedAt:
+      row?.updated_at || null,
+  };
+}
+
 function normalizeCategory(
   rawValue
 ) {
@@ -913,6 +956,40 @@ async function migrateLegacyUsersToClients() {
   }
 }
 
+async function ensureDefaultAdBanner() {
+  const existing =
+    await pool.query(`
+      SELECT id
+      FROM ad_banner_settings
+      WHERE id = 1
+      LIMIT 1
+    `);
+
+  if (existing.rows.length) {
+    return;
+  }
+
+  await pool.query(
+    `
+    INSERT INTO ad_banner_settings (
+      id,
+      enabled,
+      title,
+      message,
+      cta_label
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      1,
+      true,
+      "Publicidad",
+      "Espacio para aliados de Parchar",
+      "Anunciar",
+    ]
+  );
+}
+
 async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE TABLE IF NOT EXISTS clients (
@@ -963,6 +1040,31 @@ async function initializeSqliteDatabase() {
     );
   `);
 
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS ad_banner_settings (
+      id INTEGER PRIMARY KEY,
+      enabled INTEGER DEFAULT 1,
+      title TEXT DEFAULT 'Publicidad',
+      message TEXT DEFAULT 'Espacio para aliados de Parchar',
+      cta_label TEXT DEFAULT 'Anunciar',
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS ad_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      full_name TEXT NOT NULL,
+      business_name TEXT NOT NULL,
+      phone TEXT,
+      email TEXT,
+      message TEXT NOT NULL,
+      source_page TEXT,
+      status TEXT DEFAULT 'pendiente',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   await ensureSqliteColumn(
     "clients",
     "phone_normalized",
@@ -1006,6 +1108,7 @@ async function initializeSqliteDatabase() {
 
   await migrateLegacyUsersToClients();
   await normalizeSqliteClientPhones();
+  await ensureDefaultAdBanner();
 
   await pool.query(`
     UPDATE businesses
@@ -1091,6 +1194,31 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS ad_banner_settings (
+      id INTEGER PRIMARY KEY,
+      enabled BOOLEAN DEFAULT true,
+      title TEXT DEFAULT 'Publicidad',
+      message TEXT DEFAULT 'Espacio para aliados de Parchar',
+      cta_label TEXT DEFAULT 'Anunciar',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ad_requests (
+      id SERIAL PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      business_name TEXT NOT NULL,
+      phone TEXT,
+      email TEXT,
+      message TEXT NOT NULL,
+      source_page TEXT,
+      status TEXT DEFAULT 'pendiente',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     ALTER TABLE clients
     ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
   `);
@@ -1132,6 +1260,8 @@ async function initializeDatabase() {
       b.client_id IS NULL
       AND LOWER(b.owner_email) = LOWER(c.email);
   `);
+
+  await ensureDefaultAdBanner();
 
   console.log(
     "PostgreSQL inicializado"
@@ -1179,6 +1309,127 @@ const server =
           sendJson(res, 200, {
             ok: true,
             app: "parchar-v7",
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/ads/banner" &&
+          req.method === "GET"
+        ) {
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM ad_banner_settings
+              WHERE id = 1
+              LIMIT 1
+            `);
+
+          sendJson(res, 200, {
+            banner:
+              normalizeAdBanner(
+                result.rows[0]
+              ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/ads/requests" &&
+          req.method === "POST"
+        ) {
+          const body =
+            await parseJsonBody(
+              req
+            );
+
+          const fullName =
+            cleanLimitedText(
+              body.fullName,
+              120
+            );
+          const businessName =
+            cleanLimitedText(
+              body.businessName,
+              140
+            );
+          const phone =
+            cleanLimitedText(
+              body.phone,
+              80
+            );
+          const email =
+            cleanLimitedText(
+              body.email,
+              160
+            ).toLowerCase();
+          const sourcePage =
+            cleanLimitedText(
+              body.sourcePage,
+              200
+            );
+          const message =
+            cleanLimitedText(
+              body.message ||
+                "Quiero recibir informacion para pautar publicidad en Parchar.",
+              1200
+            );
+
+          if (
+            !fullName ||
+            !businessName ||
+            (!phone && !email)
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Deja tu nombre, negocio y telefono o correo para contactarte.",
+            });
+            return;
+          }
+
+          if (
+            email &&
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+              email
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Escribe un correo valido.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            INSERT INTO ad_requests (
+              full_name,
+              business_name,
+              phone,
+              email,
+              message,
+              source_page,
+              status
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7)
+            `,
+            [
+              fullName,
+              businessName,
+              phone,
+              email,
+              message,
+              sourcePage,
+              "pendiente",
+            ]
+          );
+
+          sendJson(res, 201, {
+            ok: true,
+            message:
+              "Solicitud enviada. El equipo de Parchar te contactara.",
           });
           return;
         }
@@ -2022,6 +2273,137 @@ const server =
           sendJson(res, 200, {
             items:
               result.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/ad-banner" &&
+          req.method === "GET"
+        ) {
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM ad_banner_settings
+              WHERE id = 1
+              LIMIT 1
+            `);
+
+          sendJson(res, 200, {
+            banner:
+              normalizeAdBanner(
+                result.rows[0]
+              ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/ad-banner" &&
+          req.method === "POST"
+        ) {
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const enabled =
+            parseBooleanFlag(
+              body.enabled
+            );
+          const title =
+            cleanLimitedText(
+              body.title ||
+                "Publicidad",
+              60
+            );
+          const message =
+            cleanLimitedText(
+              body.message,
+              180
+            );
+          const ctaLabel =
+            cleanLimitedText(
+              body.ctaLabel ||
+                "Anunciar",
+              40
+            );
+
+          if (!message) {
+            sendJson(res, 400, {
+              error:
+                "Escribe el texto del banner.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE ad_banner_settings
+            SET
+              enabled = $1,
+              title = $2,
+              message = $3,
+              cta_label = $4,
+              updated_at = NOW()
+            WHERE id = 1
+            `,
+            [
+              enabled,
+              title,
+              message,
+              ctaLabel,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/ad-requests" &&
+          req.method === "GET"
+        ) {
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM ad_requests
+              ORDER BY created_at DESC
+            `);
+
+          sendJson(res, 200, {
+            items:
+              result.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/ad-requests\/\d+\/resolve$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await pool.query(
+            `
+            UPDATE ad_requests
+            SET status = 'contactado'
+            WHERE id = $1
+            `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
           });
           return;
         }

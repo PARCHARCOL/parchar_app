@@ -189,6 +189,54 @@ function formatDistance(
   return `${Math.round(km)} km`;
 }
 
+function buildRouteUrl(
+  item,
+  userCoords
+) {
+  const destinationLatitude =
+    Number(item.latitude);
+  const destinationLongitude =
+    Number(item.longitude);
+  const url = new URL(
+    "https://www.google.com/maps/dir/"
+  );
+
+  url.searchParams.set(
+    "api",
+    "1"
+  );
+  url.searchParams.set(
+    "travelmode",
+    "driving"
+  );
+
+  if (
+    isValidCoordinate(
+      destinationLatitude,
+      destinationLongitude
+    )
+  ) {
+    url.searchParams.set(
+      "destination",
+      `${destinationLatitude},${destinationLongitude}`
+    );
+  } else {
+    url.searchParams.set(
+      "destination",
+      `${item.address || ""}, ${item.city || ""}`
+    );
+  }
+
+  if (userCoords) {
+    url.searchParams.set(
+      "origin",
+      `${userCoords.latitude},${userCoords.longitude}`
+    );
+  }
+
+  return url.toString();
+}
+
 function escapeHtml(value) {
 
   return String(
@@ -218,8 +266,10 @@ function escapeHtml(value) {
 
 function renderCards(
   items,
-  hasUserCoords
+  userCoords
 ) {
+  const hasUserCoords =
+    Boolean(userCoords);
 
   if (!items.length) {
 
@@ -244,6 +294,11 @@ function renderCards(
   resultsEl.innerHTML = items
     .map(
       (item) => {
+        const routeUrl =
+          buildRouteUrl(
+            item,
+            userCoords
+          );
 
         return `
           <article class="place-card">
@@ -280,21 +335,34 @@ function renderCards(
             </p>
 
             <p class="distance-line">
-              <strong>Distancia:</strong>
+              <span>
+                <strong>Distancia:</strong>
 
-              ${
-                item.distanceKm !== null &&
-                item.distanceKm !==
-                  undefined
-                  ? `A ${escapeHtml(
-                      formatDistance(
-                        item.distanceKm
-                      )
-                    )} de ti`
-                  : hasUserCoords
-                    ? "No disponible para este local"
-                    : "Permite ubicacion para calcularla"
-              }
+                ${
+                  item.distanceKm !== null &&
+                  item.distanceKm !==
+                    undefined
+                    ? `A ${escapeHtml(
+                        formatDistance(
+                          item.distanceKm
+                        )
+                      )} de ti`
+                    : hasUserCoords
+                      ? "No disponible para este local"
+                      : "Permite ubicacion para calcularla"
+                }
+              </span>
+
+              <a
+                class="route-btn"
+                href="${escapeHtml(
+                  routeUrl
+                )}"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ir
+              </a>
             </p>
 
             <p>
@@ -483,7 +551,7 @@ async function loadPlaces() {
 
     renderCards(
       filtered,
-      Boolean(userCoords)
+      userCoords
     );
 
   } catch (error) {

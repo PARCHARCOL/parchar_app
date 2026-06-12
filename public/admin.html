@@ -102,6 +102,99 @@
 
       </section>
 
+      <section class="form-block glass-card">
+
+        <h2>
+          Publicidad
+        </h2>
+
+        <p>
+          Activa el banner visible en la app y revisa solicitudes de pauta.
+        </p>
+
+        <form
+          id="admin-ad-form"
+          class="form-grid"
+        >
+
+          <label class="full-row legal-check">
+            <input
+              id="admin-ad-enabled"
+              name="enabled"
+              type="checkbox"
+            />
+            Banner activo
+          </label>
+
+          <label>
+            Titulo
+            <input
+              name="title"
+              maxlength="60"
+              required
+            />
+          </label>
+
+          <label class="full-row">
+            Texto del banner
+            <textarea
+              name="message"
+              rows="2"
+              maxlength="180"
+              required
+            ></textarea>
+          </label>
+
+          <label>
+            Texto del boton
+            <input
+              name="ctaLabel"
+              maxlength="40"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Guardar banner
+          </button>
+
+        </form>
+
+        <p
+          id="admin-ad-message"
+          class="feedback"
+        ></p>
+
+        <div class="my-businesses-head ad-requests-head">
+          <h3>
+            Solicitudes de pauta
+          </h3>
+
+          <button
+            id="refresh-ad-requests"
+            type="button"
+            class="ghost-btn"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <div
+          id="admin-ad-request-list"
+          class="admin-list"
+        >
+
+          <p class="loading">
+            Cargando solicitudes...
+          </p>
+
+        </div>
+
+      </section>
+
       <nav class="bottom-nav">
 
         <a

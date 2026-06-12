@@ -433,6 +433,25 @@ a {
   background: rgba(255, 142, 45, 0.13);
   padding: 8px 10px;
   font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.distance-line span {
+  min-width: 0;
+}
+
+.route-btn {
+  flex-shrink: 0;
+  border-radius: 11px;
+  padding: 8px 12px;
+  color: #391800;
+  background: linear-gradient(145deg, #ffd869, #ffa038);
+  text-decoration: none;
+  font-weight: 900;
+  box-shadow: 0 8px 16px rgba(255, 143, 39, 0.28);
 }
 
 .chip {
@@ -664,6 +683,10 @@ textarea {
   background: linear-gradient(145deg, #ff6f8a, #d34058);
 }
 
+.status-contactado {
+  background: linear-gradient(145deg, #4bd4ff, #2f77c8);
+}
+
 .bottom-nav {
   position: absolute;
   left: 12px;
@@ -720,6 +743,18 @@ textarea {
   padding: 8px 10px;
 }
 
+.ad-banner[hidden] {
+  display: none;
+}
+
+.ad-disabled .app-shell {
+  padding-bottom: calc(var(--nav-height) + 34px);
+}
+
+.ad-disabled .bottom-nav {
+  bottom: 12px;
+}
+
 .ad-pill {
   background: linear-gradient(145deg, #ffb148, #ff6a2f);
   color: #fff;
@@ -748,6 +783,60 @@ textarea {
   font-weight: 800;
   color: #3b1d00;
   background: linear-gradient(145deg, #ffd869, #ffa038);
+}
+
+.ad-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(7, 1, 19, 0.72);
+  backdrop-filter: blur(7px);
+}
+
+.ad-modal[hidden] {
+  display: none;
+}
+
+.ad-modal-card {
+  width: min(100%, 540px);
+  max-height: min(90vh, 720px);
+  overflow-y: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 188, 111, 0.48);
+  background:
+    linear-gradient(170deg, rgba(71, 27, 141, 0.96), rgba(20, 5, 45, 0.98));
+  box-shadow: var(--shadow-app);
+  padding: 16px;
+}
+
+.ad-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.ad-modal-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.ad-modal-card > p {
+  margin: 0 0 12px;
+  color: var(--text-soft);
+}
+
+.ad-close {
+  border: 0;
+  cursor: pointer;
+}
+
+.ad-requests-head {
+  margin-top: 18px;
 }
 
 @media (min-width: 700px) {
