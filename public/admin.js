@@ -2,6 +2,38 @@ const businessList = document.querySelector(
   "#admin-business-list"
 );
 
+const STAFF_SESSION_KEY =
+  "parchar_staff_session";
+
+const staffLoginSection =
+  document.querySelector(
+    "#staff-login-section"
+  );
+const staffLoginForm =
+  document.querySelector(
+    "#staff-login-form"
+  );
+const staffLoginMessage =
+  document.querySelector(
+    "#staff-login-message"
+  );
+const adminDashboard =
+  document.querySelector(
+    "#admin-dashboard"
+  );
+const staffSessionName =
+  document.querySelector(
+    "#staff-session-name"
+  );
+const staffSessionRole =
+  document.querySelector(
+    "#staff-session-role"
+  );
+const staffLogoutButton =
+  document.querySelector(
+    "#staff-logout"
+  );
+
 const tabs = document.querySelectorAll(
   ".admin-tab"
 );
@@ -12,6 +44,10 @@ const adForm = document.querySelector(
 
 const adMessage = document.querySelector(
   "#admin-ad-message"
+);
+
+const adPreview = document.querySelector(
+  "#admin-ad-preview"
 );
 
 const adRequestList = document.querySelector(
@@ -25,6 +61,9 @@ const refreshAdRequestsButton =
 
 let currentStatus =
   "pendiente";
+let staffToken = "";
+let currentStaff = null;
+let currentAdRequests = [];
 
 function escapeHtml(value) {
 
@@ -54,6 +93,132 @@ function setFeedback(
     "success",
     Boolean(message) && !isError
   );
+}
+
+function saveStaffSession(
+  token,
+  staff
+) {
+  localStorage.setItem(
+    STAFF_SESSION_KEY,
+    JSON.stringify({
+      token,
+      staff,
+    })
+  );
+}
+
+function loadStaffSession() {
+  try {
+    const parsed = JSON.parse(
+      localStorage.getItem(
+        STAFF_SESSION_KEY
+      ) || "{}"
+    );
+
+    if (!parsed.token || !parsed.staff) {
+      return null;
+    }
+
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function clearStaffSession() {
+  localStorage.removeItem(
+    STAFF_SESSION_KEY
+  );
+  staffToken = "";
+  currentStaff = null;
+}
+
+function isAdmin() {
+  return currentStaff?.role === "admin";
+}
+
+function showStaffLogin(
+  message = "",
+  isError = false
+) {
+  if (staffLoginSection) {
+    staffLoginSection.hidden = false;
+  }
+
+  if (adminDashboard) {
+    adminDashboard.hidden = true;
+  }
+
+  setFeedback(
+    staffLoginMessage,
+    message,
+    isError
+  );
+}
+
+function showAdminDashboard() {
+  if (staffLoginSection) {
+    staffLoginSection.hidden = true;
+  }
+
+  if (adminDashboard) {
+    adminDashboard.hidden = false;
+  }
+
+  if (staffSessionName) {
+    staffSessionName.textContent =
+      currentStaff?.displayName ||
+      currentStaff?.username ||
+      "Personal Parchar";
+  }
+
+  if (staffSessionRole) {
+    staffSessionRole.textContent =
+      currentStaff?.role || "";
+    staffSessionRole.className =
+      `status-pill staff-role-${currentStaff?.role || ""}`;
+  }
+
+  document
+    .querySelectorAll(".admin-only")
+    .forEach((element) => {
+      element.hidden = !isAdmin();
+    });
+}
+
+async function staffFetch(
+  url,
+  options = {}
+) {
+  const headers = new Headers(
+    options.headers || {}
+  );
+
+  if (staffToken) {
+    headers.set(
+      "Authorization",
+      `Bearer ${staffToken}`
+    );
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (
+    response.status === 401 &&
+    !url.endsWith("/api/staff/login")
+  ) {
+    clearStaffSession();
+    showStaffLogin(
+      "Tu sesion vencio. Inicia sesion nuevamente.",
+      true
+    );
+  }
+
+  return response;
 }
 
 function formatDateTime(value) {
@@ -104,7 +269,7 @@ async function approveBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/approve`,
       {
         method: "POST",
@@ -138,7 +303,7 @@ async function pauseBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/pause`,
       {
         method: "POST",
@@ -172,7 +337,7 @@ async function activateBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/activate`,
       {
         method: "POST",
@@ -215,7 +380,7 @@ async function rejectBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/reject`,
       {
         method: "POST",
@@ -267,7 +432,7 @@ async function deleteBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/delete`,
       {
         method: "POST",
@@ -310,7 +475,7 @@ async function editBusiness(id) {
 
   try {
 
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/businesses/${id}/edit`,
       {
         method: "POST",
@@ -350,6 +515,10 @@ async function editBusiness(id) {
 }
 
 function renderActionButtons(item) {
+
+  if (!isAdmin()) {
+    return "";
+  }
 
   if (
     item.status ===
@@ -610,13 +779,45 @@ function renderBusinesses(items) {
       .join("");
 }
 
+function renderAdPreview(banner) {
+  if (!adPreview) {
+    return;
+  }
+
+  if (!banner?.mediaPath) {
+    adPreview.hidden = true;
+    adPreview.innerHTML = "";
+    return;
+  }
+
+  const media = String(
+    banner.mediaType || ""
+  ).startsWith("video/")
+    ? `
+      <video controls preload="metadata" src="${escapeHtml(
+        banner.mediaPath
+      )}"></video>
+    `
+    : `
+      <img src="${escapeHtml(
+        banner.mediaPath
+      )}" alt="Publicidad actual" />
+    `;
+
+  adPreview.innerHTML = `
+    <strong>Archivo publicado</strong>
+    ${media}
+  `;
+  adPreview.hidden = false;
+}
+
 async function loadAdBannerSettings() {
   if (!adForm) {
     return;
   }
 
   try {
-    const response = await fetch(
+    const response = await staffFetch(
       "/api/admin/ad-banner"
     );
     const data =
@@ -641,6 +842,13 @@ async function loadAdBannerSettings() {
       "Espacio para aliados de Parchar";
     adForm.elements.ctaLabel.value =
       banner.ctaLabel || "Anunciar";
+    adForm.elements.advertiserName.value =
+      banner.advertiserName || "";
+    adForm.elements.targetUrl.value =
+      banner.targetUrl || "";
+    adForm.elements.clearMedia.checked =
+      false;
+    renderAdPreview(banner);
   } catch (error) {
     setFeedback(
       adMessage,
@@ -661,25 +869,19 @@ async function saveAdBannerSettings(event) {
   const formData = new FormData(
     adForm
   );
-  const payload =
-    Object.fromEntries(
-      formData.entries()
-    );
-  payload.enabled =
-    adForm.elements.enabled.checked;
+  formData.set(
+    "enabled",
+    adForm.elements.enabled.checked
+      ? "true"
+      : "false"
+  );
 
   try {
-    const response = await fetch(
+    const response = await staffFetch(
       "/api/admin/ad-banner",
       {
         method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-        },
-        body: JSON.stringify(
-          payload
-        ),
+        body: formData,
       }
     );
     const data =
@@ -696,6 +898,7 @@ async function saveAdBannerSettings(event) {
       adMessage,
       "Banner actualizado."
     );
+    await loadAdBannerSettings();
   } catch (error) {
     setFeedback(
       adMessage,
@@ -710,6 +913,8 @@ function renderAdRequests(items) {
     return;
   }
 
+  currentAdRequests = items || [];
+
   if (!items.length) {
     adRequestList.innerHTML = `
       <div class="glass-card">
@@ -722,83 +927,143 @@ function renderAdRequests(items) {
   adRequestList.innerHTML =
     items
       .map(
-        (item) => `
-      <article class="glass-card admin-card">
-        <div class="mini-business-head">
-          <h3>
-            ${escapeHtml(
-              item.business_name
-            )}
-          </h3>
-          <span class="status-pill status-${escapeHtml(
-            item.status
-          )}">
-            ${escapeHtml(
-              item.status
-            )}
-          </span>
-        </div>
+        (item) => {
+          const phone = String(
+            item.phone || ""
+          ).replace(/[^0-9]/g, "");
+          const whatsappPhone =
+            phone.length === 10
+              ? `57${phone}`
+              : phone;
+          const whatsappUrl = whatsappPhone
+            ? `https://wa.me/${whatsappPhone}`
+            : "";
+          const emailUrl = item.email
+            ? `mailto:${encodeURIComponent(
+                item.email
+              )}`
+            : "";
 
-        <p>
-          <strong>Contacto:</strong>
-          ${escapeHtml(
-            item.full_name
-          )}
-        </p>
+          return `
+            <article class="glass-card admin-card ad-request-card">
+              <div class="mini-business-head">
+                <h3>${escapeHtml(
+                  item.business_name
+                )}</h3>
+                <span class="status-pill status-${escapeHtml(
+                  item.status
+                )}">${escapeHtml(
+                  item.status
+                )}</span>
+              </div>
 
-        <p>
-          <strong>Telefono:</strong>
-          ${escapeHtml(
-            item.phone || "No enviado"
-          )}
-        </p>
+              <p><strong>Contacto:</strong> ${escapeHtml(
+                item.full_name
+              )}</p>
+              <p><strong>Telefono:</strong> ${escapeHtml(
+                item.phone || "No enviado"
+              )}</p>
+              <p><strong>Correo:</strong> ${escapeHtml(
+                item.email || "No enviado"
+              )}</p>
+              <p><strong>Mensaje:</strong> ${escapeHtml(
+                item.message
+              )}</p>
 
-        <p>
-          <strong>Correo:</strong>
-          ${escapeHtml(
-            item.email || "No enviado"
-          )}
-        </p>
+              <p class="tiny">
+                Solicitud: ${escapeHtml(
+                  formatDateTime(
+                    item.created_at
+                  )
+                )}
+              </p>
 
-        <p>
-          <strong>Mensaje:</strong>
-          ${escapeHtml(
-            item.message
-          )}
-        </p>
+              ${
+                item.contacted_by
+                  ? `
+                    <p class="tiny">
+                      Contactado por ${escapeHtml(
+                        item.contacted_by
+                      )} el ${escapeHtml(
+                        formatDateTime(
+                          item.contacted_at
+                        )
+                      )}
+                    </p>
+                  `
+                  : ""
+              }
 
-        <p class="tiny">
-          ${escapeHtml(
-            formatDateTime(
-              item.created_at
-            )
-          )}
-          ${
-            item.source_page
-              ? ` - ${escapeHtml(
-                  item.source_page
-                )}`
-              : ""
-          }
-        </p>
-
-        ${
-          item.status ===
-          "contactado"
-            ? ""
-            : `
-          <button
-            class="submit-btn"
-            onclick="resolveAdRequest(${item.id})"
-          >
-            Marcar contactado
-          </button>
-        `
+              <div class="request-actions">
+                ${
+                  whatsappUrl
+                    ? `<a class="ghost-btn" href="${escapeHtml(
+                        whatsappUrl
+                      )}" target="_blank" rel="noopener noreferrer">WhatsApp</a>`
+                    : ""
+                }
+                ${
+                  emailUrl
+                    ? `<a class="ghost-btn" href="${escapeHtml(
+                        emailUrl
+                      )}">Correo</a>`
+                    : ""
+                }
+                ${
+                  item.status === "contactado"
+                    ? ""
+                    : `
+                      <button class="submit-btn" onclick="resolveAdRequest(${item.id})">
+                        Marcar contactado
+                      </button>
+                    `
+                }
+                ${
+                  isAdmin()
+                    ? `
+                      <button class="ghost-btn" onclick="prepareAdFromRequest(${item.id})">
+                        Preparar publicidad
+                      </button>
+                    `
+                    : ""
+                }
+              </div>
+            </article>
+          `;
         }
-      </article>
-    `
       )
       .join("");
+}
+
+function prepareAdFromRequest(id) {
+  if (!isAdmin() || !adForm) {
+    return;
+  }
+
+  const request =
+    currentAdRequests.find(
+      (item) =>
+        Number(item.id) === Number(id)
+    );
+
+  if (!request) {
+    return;
+  }
+
+  adForm.elements.advertiserName.value =
+    request.business_name || "";
+  adForm.elements.message.value =
+    `Conoce ${request.business_name} en Parchar.`;
+  adForm.elements.enabled.checked = true;
+  adForm.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+  adForm.elements.targetUrl.focus();
+  setFeedback(
+    adMessage,
+    "Solicitud cargada. Agrega el enlace y el archivo de la publicidad."
+  );
 }
 
 async function loadAdRequests() {
@@ -807,7 +1072,7 @@ async function loadAdRequests() {
   }
 
   try {
-    const response = await fetch(
+    const response = await staffFetch(
       "/api/admin/ad-requests"
     );
     const data =
@@ -837,7 +1102,7 @@ async function loadAdRequests() {
 
 async function resolveAdRequest(id) {
   try {
-    const response = await fetch(
+    const response = await staffFetch(
       `/api/admin/ad-requests/${id}/resolve`,
       {
         method: "POST",
@@ -864,7 +1129,7 @@ async function loadBusinesses() {
   try {
 
     const response =
-      await fetch(
+      await staffFetch(
         "/api/admin/businesses"
       );
 
@@ -903,6 +1168,139 @@ async function loadBusinesses() {
   }
 }
 
+async function loadDashboardData() {
+  showAdminDashboard();
+
+  const tasks = [
+    loadBusinesses(),
+    loadAdRequests(),
+  ];
+
+  if (isAdmin()) {
+    tasks.push(
+      loadAdBannerSettings()
+    );
+  }
+
+  await Promise.all(tasks);
+}
+
+async function bootstrapStaffSession() {
+  const session = loadStaffSession();
+
+  if (!session) {
+    showStaffLogin();
+    return;
+  }
+
+  staffToken = session.token;
+  currentStaff = session.staff;
+
+  try {
+    const response = await staffFetch(
+      "/api/staff/me"
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo validar la sesion."
+      );
+    }
+
+    currentStaff = data.staff;
+    saveStaffSession(
+      staffToken,
+      currentStaff
+    );
+    await loadDashboardData();
+  } catch (error) {
+    clearStaffSession();
+    showStaffLogin(
+      error.message,
+      true
+    );
+  }
+}
+
+staffLoginForm?.addEventListener(
+  "submit",
+  async (event) => {
+    event.preventDefault();
+    setFeedback(
+      staffLoginMessage,
+      "Validando acceso..."
+    );
+
+    const payload = Object.fromEntries(
+      new FormData(
+        staffLoginForm
+      ).entries()
+    );
+
+    try {
+      const response = await fetch(
+        "/api/staff/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify(
+            payload
+          ),
+        }
+      );
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+            "No se pudo iniciar sesion."
+        );
+      }
+
+      staffToken = data.token;
+      currentStaff = data.staff;
+      saveStaffSession(
+        staffToken,
+        currentStaff
+      );
+      staffLoginForm.reset();
+      await loadDashboardData();
+    } catch (error) {
+      setFeedback(
+        staffLoginMessage,
+        error.message,
+        true
+      );
+    }
+  }
+);
+
+staffLogoutButton?.addEventListener(
+  "click",
+  async () => {
+    try {
+      await staffFetch(
+        "/api/staff/logout",
+        {
+          method: "POST",
+        }
+      );
+    } catch {
+      // no-op
+    } finally {
+      clearStaffSession();
+      showStaffLogin(
+        "Sesion cerrada."
+      );
+    }
+  }
+);
+
 adForm?.addEventListener(
   "submit",
   saveAdBannerSettings
@@ -913,6 +1311,4 @@ refreshAdRequestsButton?.addEventListener(
   loadAdRequests
 );
 
-loadBusinesses();
-loadAdBannerSettings();
-loadAdRequests();
+bootstrapStaffSession();

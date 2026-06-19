@@ -42,6 +42,25 @@ node server.js
 - Se guarda info completa del usuario y del negocio.
 - Moto y carro muestran lugares cercanos cuando se comparte ubicacion.
 
+## Acceso interno
+
+El panel `/admin.html` requiere inicio de sesion y maneja dos perfiles:
+
+- `admin`: modera negocios y publica campanas en el banner.
+- `asesor`: consulta solicitudes de pauta y registra contactos.
+
+Cuentas iniciales para desarrollo local:
+
+- Admin: usuario `admin`, clave `ParcharAdmin2026!`
+- Asesor: usuario `asesor`, clave `ParcharAsesor2026!`
+
+Antes de desplegar, cambia estas credenciales con variables de entorno:
+
+- `PARCHAR_ADMIN_USERNAME`
+- `PARCHAR_ADMIN_PASSWORD`
+- `PARCHAR_ADVISOR_USERNAME`
+- `PARCHAR_ADVISOR_PASSWORD`
+
 ## Despliegue en la nube
 
 Se puede subir a Render o Railway como servicio Node.

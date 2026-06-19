@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Registro de negocios</title>
+    <title>Clientes | Parchar</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
 
@@ -16,99 +16,122 @@
           <span aria-hidden="true">&#8592;</span>
         </a>
 
-        <h1>Registro de negocios</h1>
+        <h1>Clientes Parchar</h1>
 
         <span class="icon-ghost" aria-hidden="true">&#127970;</span>
       </header>
 
       <section id="client-auth-section" class="form-block glass-card">
-        <h2>Acceso clientes</h2>
-        <p>
-          Para publicar un negocio primero debes registrarte e iniciar sesion como
-          cliente.
+        <h2 id="client-auth-title">Iniciar sesion</h2>
+        <p id="client-auth-intro">
+          Ingresa para publicar y administrar tus negocios.
         </p>
 
-        <div class="auth-panels">
-          <form id="client-register-form" class="form-grid auth-panel">
-            <h3 class="auth-title full-row">Crear cuenta cliente</h3>
+        <div class="auth-switcher" role="tablist" aria-label="Acceso clientes">
+          <button type="button" class="auth-switch active" data-auth-view="login">
+            Iniciar sesion
+          </button>
+          <button type="button" class="auth-switch" data-auth-view="register">
+            Crear cuenta
+          </button>
+        </div>
 
-            <label>
-              Nombre completo
-              <input name="fullName" required />
-            </label>
-
-            <label>
-              Correo
-              <input name="email" type="email" required />
-            </label>
-
-            <label>
-              Telefono
-              <input name="phone" required />
-            </label>
-
-            <label>
-              Contrasena
-              <input name="password" type="password" minlength="6" required />
-            </label>
-
-            <button type="submit" class="submit-btn full-row">Registrarme</button>
-          </form>
-
+        <div class="auth-view" data-auth-panel="login">
           <form id="client-login-form" class="form-grid auth-panel">
-            <h3 class="auth-title full-row">Iniciar sesion</h3>
-
-            <label>
+            <label class="full-row">
               Usuario (correo o telefono)
-              <input name="identifier" required />
+              <input name="identifier" autocomplete="username" required />
             </label>
 
-            <label>
+            <label class="full-row">
               Contrasena
-              <input name="password" type="password" required />
+              <input name="password" type="password" autocomplete="current-password" required />
             </label>
 
             <button type="submit" class="submit-btn full-row">Entrar</button>
           </form>
+
+          <div class="auth-links">
+            <button type="button" class="text-btn" data-auth-view="register">
+              No tengo cuenta
+            </button>
+            <button type="button" class="text-btn" data-auth-view="recover-user">
+              Olvide mi usuario
+            </button>
+            <button type="button" class="text-btn" data-auth-view="reset-password">
+              Cambiar clave
+            </button>
+          </div>
         </div>
 
-        <div class="auth-panels recovery-panels">
-          <form id="client-recover-user-form" class="form-grid auth-panel">
-            <h3 class="auth-title full-row">Olvide mi usuario</h3>
+        <div class="auth-view" data-auth-panel="register" hidden>
+          <form id="client-register-form" class="form-grid auth-panel">
+            <label>
+              Nombre completo
+              <input name="fullName" autocomplete="name" required />
+            </label>
 
             <label>
+              Correo
+              <input name="email" type="email" autocomplete="email" required />
+            </label>
+
+            <label>
+              Telefono
+              <input name="phone" autocomplete="tel" required />
+            </label>
+
+            <label>
+              Contrasena
+              <input name="password" type="password" minlength="6" autocomplete="new-password" required />
+            </label>
+
+            <button type="submit" class="submit-btn full-row">Crear cuenta</button>
+            <button type="button" class="ghost-btn full-row" data-auth-view="login">
+              Ya tengo cuenta
+            </button>
+          </form>
+        </div>
+
+        <div class="auth-view" data-auth-panel="recover-user" hidden>
+          <form id="client-recover-user-form" class="form-grid auth-panel">
+            <label class="full-row">
               Nombre completo
               <input name="fullName" required />
             </label>
 
-            <label>
+            <label class="full-row">
               Telefono registrado
-              <input name="phone" required />
+              <input name="phone" autocomplete="tel" required />
             </label>
 
-            <button type="submit" class="ghost-btn full-row">Recordar correo</button>
+            <button type="submit" class="submit-btn full-row">Recordar usuario</button>
+            <button type="button" class="ghost-btn full-row" data-auth-view="login">
+              Volver a iniciar sesion
+            </button>
           </form>
+        </div>
 
+        <div class="auth-view" data-auth-panel="reset-password" hidden>
           <form id="client-reset-password-form" class="form-grid auth-panel">
-            <h3 class="auth-title full-row">Restablecer contrasena</h3>
-
-            <label>
+            <label class="full-row">
               Usuario (correo o telefono)
               <input name="identifier" required />
             </label>
 
-            <label>
+            <label class="full-row">
               Nombre completo
               <input name="fullName" required />
             </label>
 
-            <label>
+            <label class="full-row">
               Nueva contrasena
-              <input name="newPassword" type="password" minlength="6" required />
+              <input name="newPassword" type="password" minlength="6" autocomplete="new-password" required />
             </label>
 
-            <button type="submit" class="ghost-btn full-row">
-              Actualizar contrasena
+            <button type="submit" class="submit-btn full-row">Actualizar clave</button>
+            <button type="button" class="ghost-btn full-row" data-auth-view="login">
+              Volver a iniciar sesion
             </button>
           </form>
         </div>
@@ -268,7 +291,7 @@
         </section>
       </section>
 
-      <nav class="bottom-nav">
+      <nav class="bottom-nav public-nav">
         <a class="nav-item" href="/">
           <span>&#128205;</span>
           <strong>Inicio</strong>
@@ -284,13 +307,9 @@
           <strong>Publicar</strong>
         </a>
 
-        <a class="nav-item" href="/clients.html">
-          <span>&#128100;</span>
-          <strong>Perfil</strong>
-        </a>
       </nav>
 
-      <aside class="ad-banner" aria-label="Publicidad" hidden>
+      <aside class="ad-banner" aria-label="Publicidad">
         <span class="ad-pill">Publicidad</span>
         <p>Espacio para aliados de Parchar</p>
         <button type="button" class="ad-cta">Anunciar</button>

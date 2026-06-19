@@ -8,6 +8,10 @@ const resetPasswordForm = document.querySelector("#client-reset-password-form");
 const authSection = document.querySelector("#client-auth-section");
 const authMessage = document.querySelector("#client-auth-message");
 const recoveryMessage = document.querySelector("#client-recovery-message");
+const authTitle = document.querySelector("#client-auth-title");
+const authIntro = document.querySelector("#client-auth-intro");
+const authViewButtons = document.querySelectorAll("[data-auth-view]");
+const authPanels = document.querySelectorAll("[data-auth-panel]");
 
 const businessSection = document.querySelector("#business-section");
 const sessionLabel = document.querySelector("#client-session-label");
@@ -31,6 +35,25 @@ const VIDEO_MAX_SECONDS = 20;
 let currentToken = "";
 let currentClient = null;
 
+const AUTH_VIEW_COPY = {
+  login: {
+    title: "Iniciar sesion",
+    intro: "Ingresa para publicar y administrar tus negocios.",
+  },
+  register: {
+    title: "Crear cuenta",
+    intro: "Registra tus datos para comenzar a publicar en Parchar.",
+  },
+  "recover-user": {
+    title: "Recordar usuario",
+    intro: "Confirma tus datos para consultar el correo de acceso.",
+  },
+  "reset-password": {
+    title: "Cambiar clave",
+    intro: "Verifica tu cuenta y define una nueva contrasena.",
+  },
+};
+
 function escapeHtml(value) {
   return String(value || "")
     .replaceAll("&", "&amp;")
@@ -48,6 +71,37 @@ function setMessage(element, text, isError = false) {
   element.textContent = text || "";
   element.classList.toggle("error", Boolean(text) && isError);
   element.classList.toggle("success", Boolean(text) && !isError);
+}
+
+function showAuthView(view) {
+  const selectedView = AUTH_VIEW_COPY[view]
+    ? view
+    : "login";
+
+  authPanels.forEach((panel) => {
+    panel.hidden =
+      panel.dataset.authPanel !== selectedView;
+  });
+
+  authViewButtons.forEach((button) => {
+    button.classList.toggle(
+      "active",
+      button.dataset.authView === selectedView
+    );
+  });
+
+  if (authTitle) {
+    authTitle.textContent =
+      AUTH_VIEW_COPY[selectedView].title;
+  }
+
+  if (authIntro) {
+    authIntro.textContent =
+      AUTH_VIEW_COPY[selectedView].intro;
+  }
+
+  setMessage(authMessage, "", false);
+  setMessage(recoveryMessage, "", false);
 }
 
 function saveSession(token, client) {
@@ -128,10 +182,17 @@ function showLoggedOutState() {
     businessSection.style.display = "none";
   }
 
+  showAuthView("login");
   setMessage(authMessage, "Inicia sesion para publicar tu negocio.", false);
   setMessage(recoveryMessage, "", false);
   setMessage(businessMessage, "", false);
 }
+
+authViewButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    showAuthView(button.dataset.authView);
+  });
+});
 
 async function showLoggedInState() {
   if (authSection) {
@@ -294,6 +355,7 @@ registerForm?.addEventListener("submit", async (event) => {
     });
 
     registerForm.reset();
+    showAuthView("login");
     setMessage(authMessage, "Cuenta creada. Ahora inicia sesion.", false);
   } catch (error) {
     setMessage(authMessage, error.message, true);
@@ -375,8 +437,9 @@ resetPasswordForm?.addEventListener("submit", async (event) => {
     });
 
     resetPasswordForm.reset();
+    showAuthView("login");
     setMessage(
-      recoveryMessage,
+      authMessage,
       "Contrasena actualizada. Ahora inicia sesion con tu nueva clave.",
       false
     );

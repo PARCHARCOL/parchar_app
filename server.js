@@ -82,6 +82,32 @@ const ALLOWED_CATEGORIES =
     "romantico",
     "bbb",
   ]);
+const STAFF_ROLES = new Set([
+  "admin",
+  "asesor",
+]);
+const DEFAULT_STAFF_ACCOUNTS = [
+  {
+    username:
+      process.env.PARCHAR_ADMIN_USERNAME ||
+      "admin",
+    password:
+      process.env.PARCHAR_ADMIN_PASSWORD ||
+      "ParcharAdmin2026!",
+    displayName: "Administrador Parchar",
+    role: "admin",
+  },
+  {
+    username:
+      process.env.PARCHAR_ADVISOR_USERNAME ||
+      "asesor",
+    password:
+      process.env.PARCHAR_ADVISOR_PASSWORD ||
+      "ParcharAsesor2026!",
+    displayName: "Asesor Parchar",
+    role: "asesor",
+  },
+];
 
 const MIME_TYPES = {
   ".css":
@@ -90,6 +116,7 @@ const MIME_TYPES = {
     "text/html; charset=utf-8",
   ".ico":
     "image/x-icon",
+  ".gif": "image/gif",
   ".jpeg":
     "image/jpeg",
   ".jpg":
@@ -106,6 +133,7 @@ const MIME_TYPES = {
   ".png": "image/png",
   ".svg":
     "image/svg+xml",
+  ".webp": "image/webp",
   ".webmanifest":
     "application/manifest+json; charset=utf-8",
   ".webm": "video/webm",
@@ -327,9 +355,43 @@ function normalizeAdBanner(row) {
     ctaLabel:
       row?.cta_label ||
       "Anunciar",
+    advertiserName:
+      row?.advertiser_name || "",
+    mediaPath:
+      row?.media_path || "",
+    mediaType:
+      row?.media_type || "",
+    targetUrl:
+      row?.target_url || "",
     updatedAt:
       row?.updated_at || null,
   };
+}
+
+function normalizeStaffUsername(value) {
+  return cleanLimitedText(
+    value,
+    60
+  ).toLowerCase();
+}
+
+function normalizeExternalUrl(value) {
+  const raw = cleanText(value);
+
+  if (!raw) {
+    return "";
+  }
+
+  try {
+    const url = new URL(raw);
+    return ["http:", "https:"].includes(
+      url.protocol
+    )
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeCategory(
@@ -629,8 +691,10 @@ function extensionFromMime(
 ) {
   const known = {
     "application/pdf": ".pdf",
+    "image/gif": ".gif",
     "image/jpeg": ".jpg",
     "image/png": ".png",
+    "image/webp": ".webp",
     "video/mp4": ".mp4",
     "video/quicktime": ".mov",
     "video/webm": ".webm",
@@ -813,6 +877,75 @@ async function requireClientAuth(
   };
 }
 
+async function getStaffFromToken(token) {
+  if (!token) {
+    return null;
+  }
+
+  const result = await pool.query(
+    `
+    SELECT
+      u.id,
+      u.username,
+      u.display_name AS "displayName",
+      u.role
+    FROM staff_sessions s
+    JOIN staff_users u
+      ON u.id = s.staff_user_id
+    WHERE
+      s.token_hash = $1
+      AND s.expires_at > NOW()
+      AND u.active = TRUE
+    LIMIT 1
+    `,
+    [hashToken(token)]
+  );
+
+  return result.rows[0] || null;
+}
+
+async function requireStaffAuth(
+  req,
+  res
+) {
+  const token = parseBearerToken(req);
+  const staff = await getStaffFromToken(
+    token
+  );
+
+  if (!staff) {
+    sendJson(res, 401, {
+      error:
+        "Debes iniciar sesion como personal de Parchar.",
+    });
+    return null;
+  }
+
+  return {
+    token,
+    staff,
+  };
+}
+
+function requireStaffRole(
+  auth,
+  res,
+  roles
+) {
+  if (
+    auth &&
+    roles.includes(auth.staff.role)
+  ) {
+    return true;
+  }
+
+  sendJson(res, 403, {
+    error:
+      "Tu perfil no tiene permiso para esta accion.",
+  });
+  return false;
+}
+
 function assertSqliteIdentifier(
   value
 ) {
@@ -956,6 +1089,56 @@ async function migrateLegacyUsersToClients() {
   }
 }
 
+async function ensureStaffAccounts() {
+  for (const account of DEFAULT_STAFF_ACCOUNTS) {
+    const username =
+      normalizeStaffUsername(
+        account.username
+      );
+
+    if (
+      !username ||
+      !STAFF_ROLES.has(account.role)
+    ) {
+      continue;
+    }
+
+    const existing = await pool.query(
+      `
+      SELECT id
+      FROM staff_users
+      WHERE LOWER(username) = LOWER($1)
+      LIMIT 1
+      `,
+      [username]
+    );
+
+    if (existing.rows.length) {
+      continue;
+    }
+
+    await pool.query(
+      `
+      INSERT INTO staff_users (
+        username,
+        password_hash,
+        display_name,
+        role,
+        active
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      `,
+      [
+        username,
+        hashPassword(account.password),
+        account.displayName,
+        account.role,
+        true,
+      ]
+    );
+  }
+}
+
 async function ensureDefaultAdBanner() {
   const existing =
     await pool.query(`
@@ -982,12 +1165,25 @@ async function ensureDefaultAdBanner() {
     `,
     [
       1,
-      true,
+      false,
       "Publicidad",
       "Espacio para aliados de Parchar",
       "Anunciar",
     ]
   );
+}
+
+async function normalizeDefaultAdBannerState() {
+  await pool.query(`
+    UPDATE ad_banner_settings
+    SET enabled = FALSE
+    WHERE
+      id = 1
+      AND COALESCE(advertiser_name, '') = ''
+      AND COALESCE(media_path, '') = ''
+      AND COALESCE(target_url, '') = ''
+      AND message = 'Espacio para aliados de Parchar'
+  `);
 }
 
 async function initializeSqliteDatabase() {
@@ -1007,6 +1203,28 @@ async function initializeSqliteDatabase() {
     CREATE TABLE IF NOT EXISTS client_sessions (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       client_id INTEGER NOT NULL REFERENCES clients(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS staff_users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      role TEXT NOT NULL,
+      active INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS staff_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      staff_user_id INTEGER NOT NULL REFERENCES staff_users(id) ON DELETE CASCADE,
       token_hash TEXT UNIQUE NOT NULL,
       expires_at TEXT NOT NULL,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
@@ -1043,10 +1261,14 @@ async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE TABLE IF NOT EXISTS ad_banner_settings (
       id INTEGER PRIMARY KEY,
-      enabled INTEGER DEFAULT 1,
+      enabled INTEGER DEFAULT 0,
       title TEXT DEFAULT 'Publicidad',
       message TEXT DEFAULT 'Espacio para aliados de Parchar',
       cta_label TEXT DEFAULT 'Anunciar',
+      advertiser_name TEXT,
+      media_path TEXT,
+      media_type TEXT,
+      target_url TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1061,6 +1283,8 @@ async function initializeSqliteDatabase() {
       message TEXT NOT NULL,
       source_page TEXT,
       status TEXT DEFAULT 'pendiente',
+      contacted_by TEXT,
+      contacted_at TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1105,10 +1329,42 @@ async function initializeSqliteDatabase() {
     "status",
     "TEXT DEFAULT 'activo'"
   );
+  await ensureSqliteColumn(
+    "ad_banner_settings",
+    "advertiser_name",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_banner_settings",
+    "media_path",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_banner_settings",
+    "media_type",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_banner_settings",
+    "target_url",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_requests",
+    "contacted_by",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_requests",
+    "contacted_at",
+    "TEXT"
+  );
 
   await migrateLegacyUsersToClients();
   await normalizeSqliteClientPhones();
+  await ensureStaffAccounts();
   await ensureDefaultAdBanner();
+  await normalizeDefaultAdBannerState();
 
   await pool.query(`
     UPDATE businesses
@@ -1167,6 +1423,28 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS staff_users (
+      id SERIAL PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      role TEXT NOT NULL,
+      active BOOLEAN DEFAULT true,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS staff_sessions (
+      id SERIAL PRIMARY KEY,
+      staff_user_id INTEGER NOT NULL REFERENCES staff_users(id) ON DELETE CASCADE,
+      token_hash TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS businesses (
       id SERIAL PRIMARY KEY,
       client_id INTEGER REFERENCES clients(id) ON DELETE SET NULL,
@@ -1196,10 +1474,14 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS ad_banner_settings (
       id INTEGER PRIMARY KEY,
-      enabled BOOLEAN DEFAULT true,
+      enabled BOOLEAN DEFAULT false,
       title TEXT DEFAULT 'Publicidad',
       message TEXT DEFAULT 'Espacio para aliados de Parchar',
       cta_label TEXT DEFAULT 'Anunciar',
+      advertiser_name TEXT,
+      media_path TEXT,
+      media_type TEXT,
+      target_url TEXT,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1214,6 +1496,8 @@ async function initializeDatabase() {
       message TEXT NOT NULL,
       source_page TEXT,
       status TEXT DEFAULT 'pendiente',
+      contacted_by TEXT,
+      contacted_at TIMESTAMP,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1232,6 +1516,20 @@ async function initializeDatabase() {
   await pool.query(`
     ALTER TABLE businesses
     ADD COLUMN IF NOT EXISTS client_id INTEGER;
+  `);
+
+  await pool.query(`
+    ALTER TABLE ad_banner_settings
+    ADD COLUMN IF NOT EXISTS advertiser_name TEXT,
+    ADD COLUMN IF NOT EXISTS media_path TEXT,
+    ADD COLUMN IF NOT EXISTS media_type TEXT,
+    ADD COLUMN IF NOT EXISTS target_url TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE ad_requests
+    ADD COLUMN IF NOT EXISTS contacted_by TEXT,
+    ADD COLUMN IF NOT EXISTS contacted_at TIMESTAMP;
   `);
 
   await pool.query(`
@@ -1261,7 +1559,9 @@ async function initializeDatabase() {
       AND LOWER(b.owner_email) = LOWER(c.email);
   `);
 
+  await ensureStaffAccounts();
   await ensureDefaultAdBanner();
+  await normalizeDefaultAdBannerState();
 
   console.log(
     "PostgreSQL inicializado"
@@ -1308,7 +1608,156 @@ const server =
         ) {
           sendJson(res, 200, {
             ok: true,
-            app: "parchar-v7",
+            app: "parchar-v8",
+          });
+          return;
+        }
+
+        let staffAuth = null;
+
+        if (
+          pathname.startsWith(
+            "/api/admin/"
+          )
+        ) {
+          staffAuth =
+            await requireStaffAuth(
+              req,
+              res
+            );
+
+          if (!staffAuth) {
+            return;
+          }
+        }
+
+        if (
+          pathname ===
+            "/api/staff/login" &&
+          req.method === "POST"
+        ) {
+          const body = await parseJsonBody(
+            req
+          );
+          const username =
+            normalizeStaffUsername(
+              body.username
+            );
+          const password = cleanText(
+            body.password
+          );
+
+          if (!username || !password) {
+            sendJson(res, 400, {
+              error:
+                "Escribe usuario y contrasena.",
+            });
+            return;
+          }
+
+          const result = await pool.query(
+            `
+            SELECT *
+            FROM staff_users
+            WHERE
+              LOWER(username) = LOWER($1)
+              AND active = TRUE
+            LIMIT 1
+            `,
+            [username]
+          );
+          const staffRow = result.rows[0];
+
+          if (
+            !staffRow ||
+            !verifyPassword(
+              password,
+              staffRow.password_hash
+            )
+          ) {
+            sendJson(res, 401, {
+              error:
+                "Usuario o contrasena incorrectos.",
+            });
+            return;
+          }
+
+          const token = randomBytes(
+            32
+          ).toString("hex");
+
+          await pool.query(
+            `
+            INSERT INTO staff_sessions (
+              staff_user_id,
+              token_hash,
+              expires_at
+            )
+            VALUES ($1,$2,NOW() + INTERVAL '30 days')
+            `,
+            [
+              staffRow.id,
+              hashToken(token),
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            token,
+            staff: {
+              id: staffRow.id,
+              username:
+                staffRow.username,
+              displayName:
+                staffRow.display_name,
+              role: staffRow.role,
+            },
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/staff/me" &&
+          req.method === "GET"
+        ) {
+          const auth =
+            await requireStaffAuth(
+              req,
+              res
+            );
+
+          if (!auth) {
+            return;
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+            staff: auth.staff,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/staff/logout" &&
+          req.method === "POST"
+        ) {
+          const token =
+            parseBearerToken(req);
+
+          if (token) {
+            await pool.query(
+              `
+              DELETE FROM staff_sessions
+              WHERE token_hash = $1
+              `,
+              [hashToken(token)]
+            );
+          }
+
+          sendJson(res, 200, {
+            ok: true,
           });
           return;
         }
@@ -2304,10 +2753,23 @@ const server =
             "/api/admin/ad-banner" &&
           req.method === "POST"
         ) {
-          const body =
-            await parseJsonBody(
-              req
-            );
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          await runMiddleware(
+            req,
+            res,
+            upload.single("media")
+          );
+
+          const body = req.body || {};
           const enabled =
             parseBooleanFlag(
               body.enabled
@@ -2329,11 +2791,97 @@ const server =
                 "Anunciar",
               40
             );
+          const advertiserName =
+            cleanLimitedText(
+              body.advertiserName,
+              120
+            );
+          const targetUrl =
+            normalizeExternalUrl(
+              body.targetUrl
+            );
+          const clearMedia =
+            parseBooleanFlag(
+              body.clearMedia
+            );
 
           if (!message) {
             sendJson(res, 400, {
               error:
                 "Escribe el texto del banner.",
+            });
+            return;
+          }
+
+          if (enabled && !advertiserName) {
+            sendJson(res, 400, {
+              error:
+                "Escribe el cliente o marca antes de activar la campana.",
+            });
+            return;
+          }
+
+          if (targetUrl === null) {
+            sendJson(res, 400, {
+              error:
+                "El enlace del anunciante debe comenzar con http:// o https://.",
+            });
+            return;
+          }
+
+          const currentResult =
+            await pool.query(`
+              SELECT media_path, media_type
+              FROM ad_banner_settings
+              WHERE id = 1
+              LIMIT 1
+            `);
+          let mediaPath =
+            currentResult.rows[0]
+              ?.media_path || "";
+          let mediaType =
+            currentResult.rows[0]
+              ?.media_type || "";
+
+          if (clearMedia) {
+            mediaPath = "";
+            mediaType = "";
+          }
+
+          const mediaFile = req.file;
+
+          if (mediaFile) {
+            if (
+              !/^(image|video)\//.test(
+                mediaFile.mimetype || ""
+              )
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "La publicidad debe ser una imagen o un video.",
+              });
+              return;
+            }
+
+            const uploadedMedia =
+              await uploadToCloudinary(
+                mediaFile,
+                {
+                  resource_type: "auto",
+                  folder:
+                    "parchar/ads",
+                }
+              );
+            mediaPath =
+              uploadedMedia.secure_url;
+            mediaType =
+              mediaFile.mimetype;
+          }
+
+          if (enabled && !mediaPath) {
+            sendJson(res, 400, {
+              error:
+                "Sube una imagen o video antes de activar la campana.",
             });
             return;
           }
@@ -2346,6 +2894,10 @@ const server =
               title = $2,
               message = $3,
               cta_label = $4,
+              advertiser_name = $5,
+              media_path = $6,
+              media_type = $7,
+              target_url = $8,
               updated_at = NOW()
             WHERE id = 1
             `,
@@ -2354,6 +2906,10 @@ const server =
               title,
               message,
               ctaLabel,
+              advertiserName,
+              mediaPath,
+              mediaType,
+              targetUrl,
             ]
           );
 
@@ -2396,10 +2952,16 @@ const server =
           await pool.query(
             `
             UPDATE ad_requests
-            SET status = 'contactado'
-            WHERE id = $1
+            SET
+              status = 'contactado',
+              contacted_by = $1,
+              contacted_at = NOW()
+            WHERE id = $2
             `,
-            [id]
+            [
+              staffAuth.staff.username,
+              id,
+            ]
           );
 
           sendJson(res, 200, {
@@ -2414,6 +2976,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"
@@ -2440,6 +3012,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"
@@ -2478,6 +3060,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"
@@ -2504,6 +3096,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"
@@ -2530,6 +3132,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"
@@ -2576,6 +3188,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"

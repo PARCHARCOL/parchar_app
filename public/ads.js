@@ -198,10 +198,28 @@ async function loadAdBanner() {
     return;
   }
 
-  document.body.classList.add(
+  const pill = adBanner.querySelector(
+    ".ad-pill"
+  );
+  const text =
+    adBanner.querySelector("p");
+  const button =
+    adBanner.querySelector(
+      ".ad-cta"
+    );
+
+  document.body.classList.remove(
     "ad-disabled"
   );
-  adBanner.hidden = true;
+  adBanner.hidden = false;
+
+  if (button) {
+    button.textContent = "Anunciar";
+    button.addEventListener(
+      "click",
+      openAdRequestModal
+    );
+  }
 
   try {
     const response = await fetch(
@@ -220,47 +238,124 @@ async function loadAdBanner() {
     const banner =
       data.banner || {};
 
-    if (!banner.enabled) {
-      return;
-    }
-
-    const pill =
-      adBanner.querySelector(
-        ".ad-pill"
-      );
-    const text =
-      adBanner.querySelector("p");
-    const button =
-      adBanner.querySelector(
-        ".ad-cta"
-      );
-
     if (pill) {
       pill.textContent =
-        banner.title || "Publicidad";
+        banner.enabled
+          ? banner.title || "Publicidad"
+          : "Publicidad";
     }
 
     if (text) {
       text.textContent =
-        banner.message ||
-        "Espacio para aliados de Parchar";
+        banner.enabled
+          ? `${
+              banner.advertiserName
+                ? `${banner.advertiserName}: `
+                : ""
+            }${
+              banner.message ||
+              "Conoce nuestros aliados."
+            }`
+          : "Pauta tu marca en Parchar";
+      text.classList.toggle(
+        "ad-link-copy",
+        Boolean(
+          banner.enabled &&
+            banner.targetUrl
+        )
+      );
+      text.onclick =
+        banner.enabled &&
+        banner.targetUrl
+          ? () => {
+              window.open(
+                banner.targetUrl,
+                "_blank",
+                "noopener,noreferrer"
+              );
+            }
+          : null;
     }
 
     if (button) {
       button.textContent =
         banner.ctaLabel || "Anunciar";
-      button.addEventListener(
-        "click",
-        openAdRequestModal
-      );
     }
 
-    document.body.classList.remove(
-      "ad-disabled"
-    );
-    adBanner.hidden = false;
+    let mediaContainer =
+      adBanner.querySelector(
+        ".ad-media"
+      );
+
+    if (
+      banner.enabled &&
+      banner.mediaPath
+    ) {
+      if (!mediaContainer) {
+        mediaContainer =
+          document.createElement(
+            banner.targetUrl
+              ? "a"
+              : "div"
+          );
+        mediaContainer.className =
+          "ad-media";
+        adBanner.insertBefore(
+          mediaContainer,
+          pill
+        );
+      }
+
+      mediaContainer.replaceChildren();
+
+      if (banner.targetUrl) {
+        mediaContainer.href =
+          banner.targetUrl;
+        mediaContainer.target =
+          "_blank";
+        mediaContainer.rel =
+          "noopener noreferrer";
+      }
+
+      const media =
+        document.createElement(
+          String(
+            banner.mediaType || ""
+          ).startsWith("video/")
+            ? "video"
+            : "img"
+        );
+      media.src = banner.mediaPath;
+      media.setAttribute(
+        "aria-label",
+        banner.advertiserName ||
+          "Publicidad"
+      );
+
+      if (media.tagName === "VIDEO") {
+        media.muted = true;
+        media.autoplay = true;
+        media.loop = true;
+        media.playsInline = true;
+      } else {
+        media.alt =
+          banner.advertiserName ||
+          "Publicidad";
+      }
+
+      mediaContainer.appendChild(media);
+      mediaContainer.hidden = false;
+    } else if (mediaContainer) {
+      mediaContainer.hidden = true;
+    }
   } catch {
-    adBanner.hidden = true;
+    if (pill) {
+      pill.textContent = "Publicidad";
+    }
+    if (text) {
+      text.textContent =
+        "Pauta tu marca en Parchar";
+    }
   }
 }
 
