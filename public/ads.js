@@ -193,6 +193,25 @@ function openAdRequestModal() {
   form?.elements.businessName?.focus();
 }
 
+function bindAdRequestButtons() {
+  document
+    .querySelectorAll(
+      ".ad-cta, [data-open-ad-request]"
+    )
+    .forEach((button) => {
+      if (button.dataset.adRequestBound) {
+        return;
+      }
+
+      button.dataset.adRequestBound =
+        "true";
+      button.addEventListener(
+        "click",
+        openAdRequestModal
+      );
+    });
+}
+
 async function loadAdBanner() {
   if (!adBanner) {
     return;
@@ -215,10 +234,6 @@ async function loadAdBanner() {
 
   if (button) {
     button.textContent = "Anunciar";
-    button.addEventListener(
-      "click",
-      openAdRequestModal
-    );
   }
 
   try {
@@ -359,11 +374,16 @@ async function loadAdBanner() {
   }
 }
 
+function initializeAds() {
+  bindAdRequestButtons();
+  loadAdBanner();
+}
+
 if (document.readyState === "loading") {
   document.addEventListener(
     "DOMContentLoaded",
-    loadAdBanner
+    initializeAds
   );
 } else {
-  loadAdBanner();
+  initializeAds();
 }

@@ -827,7 +827,7 @@ textarea {
 }
 
 .bottom-nav.public-nav {
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
 }
 
 .nav-item {
@@ -839,6 +839,15 @@ textarea {
   place-items: center;
   font-size: 0.86rem;
   gap: 2px;
+}
+
+.nav-button {
+  border: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  font-family: inherit;
+  cursor: pointer;
 }
 
 .nav-item span {

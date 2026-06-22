@@ -515,11 +515,6 @@ async function editBusiness(id) {
 }
 
 function renderActionButtons(item) {
-
-  if (!isAdmin()) {
-    return "";
-  }
-
   if (
     item.status ===
     "pendiente"
@@ -540,6 +535,10 @@ function renderActionButtons(item) {
         Rechazar
       </button>
     `;
+  }
+
+  if (!isAdmin()) {
+    return "";
   }
 
   if (
@@ -1172,8 +1171,8 @@ async function loadDashboardData() {
   showAdminDashboard();
 
   const tasks = [
-    loadBusinesses(),
     loadAdRequests(),
+    loadBusinesses(),
   ];
 
   if (isAdmin()) {

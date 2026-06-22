@@ -47,7 +47,7 @@ node server.js
 El panel `/admin.html` requiere inicio de sesion y maneja dos perfiles:
 
 - `admin`: modera negocios y publica campanas en el banner.
-- `asesor`: consulta solicitudes de pauta y registra contactos.
+- `asesor`: consulta solicitudes de pauta, registra contactos y aprueba o rechaza locales pendientes.
 
 Cuentas iniciales para desarrollo local:
 

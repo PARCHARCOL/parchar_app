@@ -2749,6 +2749,16 @@ const server =
             "/api/admin/businesses" &&
           req.method === "GET"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
           const result =
             await pool.query(`
               SELECT *
@@ -2768,6 +2778,16 @@ const server =
             "/api/admin/ad-banner" &&
           req.method === "GET"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
           const result =
             await pool.query(`
               SELECT *
@@ -3017,7 +3037,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -3053,7 +3073,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
