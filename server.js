@@ -60,10 +60,47 @@ const DB_PATH = path.join(
   DATA_DIR,
   "parchar.db"
 );
-const USE_POSTGRES =
-  Boolean(
-    process.env.DATABASE_URL
+const DATABASE_MODE = String(
+  process.env.DATABASE_MODE ||
+    "auto"
+)
+  .trim()
+  .toLowerCase();
+const DATABASE_URL = String(
+  process.env.DATABASE_URL || ""
+).trim();
+
+if (
+  !["auto", "sqlite", "postgres"].includes(
+    DATABASE_MODE
+  )
+) {
+  throw new Error(
+    "DATABASE_MODE debe ser auto, sqlite o postgres."
   );
+}
+
+if (
+  DATABASE_MODE === "postgres" &&
+  !DATABASE_URL
+) {
+  throw new Error(
+    "DATABASE_MODE=postgres requiere DATABASE_URL."
+  );
+}
+
+if (
+  DATABASE_MODE === "sqlite" &&
+  DATABASE_URL
+) {
+  console.warn(
+    "DATABASE_MODE=sqlite: se ignora DATABASE_URL y se usa el disco persistente."
+  );
+}
+
+const USE_POSTGRES =
+  DATABASE_MODE !== "sqlite" &&
+  Boolean(DATABASE_URL);
 const USE_CLOUDINARY =
   Boolean(
     process.env
@@ -172,7 +209,7 @@ for (const dir of [
 const postgresSsl =
   USE_POSTGRES &&
   !/localhost|127\.0\.0\.1/i.test(
-    process.env.DATABASE_URL
+    DATABASE_URL
   )
     ? { rejectUnauthorized: false }
     : false;
@@ -180,7 +217,7 @@ const postgresSsl =
 const pool = USE_POSTGRES
   ? new Pool({
       connectionString:
-        process.env.DATABASE_URL,
+        DATABASE_URL,
       ssl: postgresSsl,
     })
   : createSqlitePool();

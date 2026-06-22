@@ -8,6 +8,8 @@ services:
     startCommand: node server.js
     healthCheckPath: /api/health
     envVars:
+      - key: DATABASE_MODE
+        value: sqlite
       - key: DATA_DIR
         value: /opt/render/project/src/storage/data
       - key: UPLOADS_DIR

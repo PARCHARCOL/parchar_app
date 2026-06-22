@@ -67,6 +67,8 @@ Se puede subir a Render o Railway como servicio Node.
 
 - Start command: `node server.js`
 - Puerto: usar variable de entorno `PORT` (la app ya lo soporta)
+- `DATABASE_MODE=sqlite` fuerza SQLite e ignora un `DATABASE_URL` antiguo.
+- `DATABASE_MODE=postgres` usa PostgreSQL y requiere un `DATABASE_URL` valido.
 - Sin `DATABASE_URL`, la app usa SQLite sobre el disco persistente configurado.
 - Con `DATABASE_URL`, la app usa PostgreSQL.
 - Sin credenciales Cloudinary, los archivos se guardan en `/uploads`.
