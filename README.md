@@ -86,6 +86,8 @@ Se puede subir a Render o Railway como servicio Node.
 - Sin credenciales Cloudinary, los archivos se guardan en `/uploads`.
 - Con credenciales Cloudinary, videos y documentos se guardan en Cloudinary.
 
+Importante para Render gratis: SQLite y `/uploads` quedan en disco temporal si no hay disco persistente pagado. En cada deploy o reinicio se pueden perder locales, campanas, solicitudes y archivos locales. Para no perder datos en plan gratis usa PostgreSQL externo, por ejemplo Neon o Supabase, con `DATABASE_MODE=postgres` y `DATABASE_URL`.
+
 ## Acceso permanente (recomendado)
 
 Para que no sea temporal debes dejarla en hosting 24/7 con dominio.
@@ -103,7 +105,7 @@ Para que no sea temporal debes dejarla en hosting 24/7 con dominio.
 
 Con eso queda estable y sin vencimiento de link.
 
-Importante: en Render, los discos persistentes aplican en planes de pago.
+Importante: en Render, los discos persistentes aplican en planes de pago. En plan gratis no uses SQLite para datos reales.
 
 ## Publicar ya en internet (URL HTTPS)
 

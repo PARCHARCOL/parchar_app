@@ -1258,7 +1258,11 @@ textarea {
 @media (max-width: 540px) {
   :root {
     --nav-height: 70px;
-    --ad-height: 52px;
+    --ad-height: 78px;
+  }
+
+  .app-shell {
+    padding-bottom: calc(var(--nav-height) + var(--ad-height) + 28px);
   }
 
   .button-grid {
@@ -1281,13 +1285,28 @@ textarea {
     grid-column: auto;
   }
 
+  .ad-banner {
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .ad-media {
+    width: 68px;
+    height: 56px;
+    flex-basis: 68px;
+    border-radius: 10px;
+  }
+
   .ad-banner p {
-    font-size: 0.74rem;
+    font-size: 0.76rem;
+    line-height: 1.2;
   }
 
   .ad-cta {
     font-size: 0.72rem;
     padding: 5px 8px;
+    min-width: 76px;
   }
 
   .app-update-banner {
