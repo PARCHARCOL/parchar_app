@@ -1258,11 +1258,11 @@ textarea {
 @media (max-width: 540px) {
   :root {
     --nav-height: 70px;
-    --ad-height: 78px;
+    --ad-height: 132px;
   }
 
   .app-shell {
-    padding-bottom: calc(var(--nav-height) + var(--ad-height) + 28px);
+    padding-bottom: calc(var(--nav-height) + var(--ad-height) + 30px);
   }
 
   .button-grid {
@@ -1286,27 +1286,50 @@ textarea {
   }
 
   .ad-banner {
+    display: grid;
+    grid-template-columns: clamp(122px, 38vw, 150px) minmax(0, 1fr);
+    grid-template-areas:
+      "media pill"
+      "media text"
+      "media cta";
     align-items: center;
-    gap: 8px;
-    padding: 8px;
+    gap: 6px 10px;
+    min-height: var(--ad-height);
+    padding: 9px;
   }
 
   .ad-media {
-    width: 68px;
-    height: 56px;
-    flex-basis: 68px;
-    border-radius: 10px;
+    grid-area: media;
+    width: 100%;
+    height: clamp(94px, 26vw, 108px);
+    flex-basis: clamp(122px, 38vw, 150px);
+    border-radius: 12px;
+  }
+
+  .ad-pill {
+    grid-area: pill;
+    justify-self: start;
   }
 
   .ad-banner p {
-    font-size: 0.76rem;
-    line-height: 1.2;
+    grid-area: text;
+    font-size: 0.84rem;
+    line-height: 1.22;
+    align-self: start;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .ad-cta {
-    font-size: 0.72rem;
-    padding: 5px 8px;
-    min-width: 76px;
+    grid-area: cta;
+    justify-self: start;
+    min-height: 40px;
+    min-width: 96px;
+    font-size: 0.78rem;
+    padding: 7px 9px;
+    align-self: start;
   }
 
   .app-update-banner {

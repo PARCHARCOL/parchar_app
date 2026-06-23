@@ -1,4 +1,6 @@
 const adBanner = document.querySelector(".ad-banner");
+const AD_REFRESH_MS = 18000;
+let adRefreshTimer = null;
 
 function readStoredClient() {
   try {
@@ -286,7 +288,10 @@ async function loadAdBanner() {
 
   try {
     const response = await fetch(
-      "/api/ads/banner"
+      `/api/ads/banner?t=${Date.now()}`,
+      {
+        cache: "no-store",
+      }
     );
     const data =
       await response.json();
@@ -470,6 +475,13 @@ async function loadAdBanner() {
 function initializeAds() {
   bindAdRequestButtons();
   loadAdBanner();
+
+  if (!adRefreshTimer) {
+    adRefreshTimer = window.setInterval(
+      loadAdBanner,
+      AD_REFRESH_MS
+    );
+  }
 }
 
 if (document.readyState === "loading") {

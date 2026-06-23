@@ -589,26 +589,23 @@ function selectRotatingCampaign(rows) {
     return null;
   }
 
-  const totalWeight =
-    active.reduce(
-      (sum, item) =>
-        sum + item.priority,
-      0
-    );
-  let cursor =
-    Math.floor(
-      Math.random() * totalWeight
-    );
+  return active.sort((a, b) => {
+    const aScore =
+      a.impressions /
+      Math.max(1, a.priority);
+    const bScore =
+      b.impressions /
+      Math.max(1, b.priority);
 
-  for (const item of active) {
-    cursor -= item.priority;
-
-    if (cursor < 0) {
-      return item;
+    if (aScore !== bScore) {
+      return aScore - bScore;
     }
-  }
 
-  return active[0];
+    return (
+      Number(a.id || 0) -
+      Number(b.id || 0)
+    );
+  })[0];
 }
 
 function normalizeStaffUsername(value) {
@@ -874,6 +871,8 @@ function sendJson(
   res.writeHead(statusCode, {
     "Content-Type":
       "application/json; charset=utf-8",
+    "Cache-Control":
+      "no-store, no-cache, must-revalidate",
     "Content-Length":
       Buffer.byteLength(body),
   });
