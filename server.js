@@ -839,6 +839,45 @@ function hashToken(token) {
     .digest("hex");
 }
 
+function getRequestVisitorKey(
+  req,
+  providedKey
+) {
+  const cleaned =
+    cleanLimitedText(
+      providedKey,
+      100
+    );
+
+  if (cleaned) {
+    return cleaned;
+  }
+
+  const forwardedFor = String(
+    req.headers[
+      "x-forwarded-for"
+    ] || ""
+  )
+    .split(",")[0]
+    .trim();
+  const remoteAddress =
+    req.socket?.remoteAddress ||
+    "";
+  const userAgent =
+    req.headers[
+      "user-agent"
+    ] || "";
+
+  return `anon-${createHash(
+    "sha256"
+  )
+    .update(
+      `${forwardedFor || remoteAddress}|${userAgent}`
+    )
+    .digest("hex")
+    .slice(0, 40)}`;
+}
+
 function parseBearerToken(
   req
 ) {
@@ -4717,18 +4756,10 @@ const server =
               req
             );
           const visitorKey =
-            cleanLimitedText(
+            getRequestVisitorKey(
+              req,
               body.visitorKey,
-              100
             );
-
-          if (!visitorKey) {
-            sendJson(res, 400, {
-              error:
-                "No se pudo identificar este dispositivo.",
-            });
-            return;
-          }
 
           const business =
             await pool.query(
@@ -4825,9 +4856,9 @@ const server =
 
           const videoFile = req.file;
           const visitorKey =
-            cleanLimitedText(
+            getRequestVisitorKey(
+              req,
               req.body?.visitorKey,
-              100
             );
           const videoSeconds =
             Number(
@@ -4929,6 +4960,46 @@ const server =
             ok: true,
             message:
               "Resena publicada por 15 dias.",
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/social/reviews" &&
+          req.method === "GET"
+        ) {
+          const reviews =
+            await pool.query(`
+              SELECT
+                r.id,
+                r.business_id,
+                r.video_path,
+                r.video_seconds,
+                r.expires_at,
+                r.created_at,
+                b.business_name,
+                b.category,
+                b.city,
+                b.address,
+                COALESCE((
+                  SELECT COUNT(*)
+                  FROM business_parches p
+                  WHERE p.business_id = b.id
+                ), 0) AS parchar_count
+              FROM business_reviews r
+              JOIN businesses b
+                ON b.id = r.business_id
+              WHERE
+                r.status = 'activa'
+                AND r.expires_at > CURRENT_TIMESTAMP
+                AND b.status = 'activo'
+              ORDER BY r.created_at DESC
+              LIMIT 60
+            `);
+
+          sendJson(res, 200, {
+            items: reviews.rows,
           });
           return;
         }

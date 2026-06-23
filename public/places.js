@@ -15,6 +15,7 @@ const WALKING_DISTANCE_KM = 1.5;
 const PARCHAR_VISITOR_KEY =
   "parchar_visitor_key";
 const REVIEW_SECONDS = 15;
+let fallbackVisitorKey = "";
 
 let reviewRecorder = null;
 let reviewStream = null;
@@ -280,24 +281,36 @@ function escapeHtml(value) {
 }
 
 function getVisitorKey() {
-  let key =
-    localStorage.getItem(
-      PARCHAR_VISITOR_KEY
-    );
+  try {
+    let key =
+      localStorage.getItem(
+        PARCHAR_VISITOR_KEY
+      );
 
-  if (!key) {
-    key = `${
-      Date.now()
-    }-${Math.random()
-      .toString(16)
-      .slice(2)}`;
-    localStorage.setItem(
-      PARCHAR_VISITOR_KEY,
-      key
-    );
+    if (!key) {
+      key = `${
+        Date.now()
+      }-${Math.random()
+        .toString(16)
+        .slice(2)}`;
+      localStorage.setItem(
+        PARCHAR_VISITOR_KEY,
+        key
+      );
+    }
+
+    return key;
+  } catch {
+    if (!fallbackVisitorKey) {
+      fallbackVisitorKey = `temp-${
+        Date.now()
+      }-${Math.random()
+        .toString(16)
+        .slice(2)}`;
+    }
+
+    return fallbackVisitorKey;
   }
-
-  return key;
 }
 
 function ensureReviewModal() {

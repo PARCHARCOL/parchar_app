@@ -43,7 +43,7 @@ node server.js
 - Se guarda info completa del usuario y del negocio.
 - Moto y carro muestran lugares cercanos cuando se comparte ubicacion.
 - El boton Parchar reemplaza el "me gusta": acumula conteo por local y permite grabar una resena en video de 15 segundos.
-- Las resenas en video duran 15 dias activas; el conteo Parchar queda acumulado.
+- Las resenas en video duran 15 dias activas y se publican en el muro social `/social.html`; el conteo Parchar queda acumulado.
 
 ## Acceso interno
 

@@ -286,6 +286,10 @@ a {
   background: linear-gradient(155deg, #62d2ff, #2e72bf 74%);
 }
 
+.btn-social {
+  background: linear-gradient(155deg, #ffd35c, #cc4a9a 74%);
+}
+
 .status-muted {
   margin: 11px 2px 2px;
   min-height: 22px;
@@ -557,6 +561,64 @@ video {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.social-feed {
+  display: grid;
+  gap: 12px;
+}
+
+.social-card {
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(190, 137, 255, 0.36);
+  background:
+    linear-gradient(170deg, rgba(71, 27, 141, 0.86), rgba(26, 7, 58, 0.94));
+  box-shadow: var(--shadow-soft);
+  padding: 14px;
+}
+
+.social-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.social-card h3 {
+  margin: 7px 0 5px;
+  font-size: 1.22rem;
+}
+
+.social-card p {
+  margin: 0;
+  color: #ece1ff;
+}
+
+.social-card video {
+  max-height: 430px;
+  object-fit: contain;
+}
+
+.social-parches {
+  display: grid;
+  place-items: center;
+  min-width: 76px;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 216, 105, 0.36);
+  background: rgba(255, 142, 45, 0.13);
+  padding: 8px;
+  color: #ffe1a8;
+}
+
+.social-parches strong {
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.social-parches span {
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .form-block h2 {

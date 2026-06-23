@@ -38,6 +38,11 @@ function handleCategory(route) {
     return;
   }
 
+  if (route === "social") {
+    window.location.href = "/social.html";
+    return;
+  }
+
   if (!navigator.geolocation) {
     updateStatus(
       route === "walking"
