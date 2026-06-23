@@ -999,6 +999,55 @@ textarea {
   margin-top: 18px;
 }
 
+.app-update-banner {
+  position: fixed;
+  z-index: 50;
+  top: 14px;
+  left: 50%;
+  width: min(calc(100vw - 24px), 560px);
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 190, 106, 0.7);
+  background: rgba(25, 5, 54, 0.98);
+  box-shadow: var(--shadow-app);
+  padding: 10px;
+}
+
+.app-update-banner[hidden] {
+  display: none;
+}
+
+.app-update-banner div {
+  min-width: 0;
+}
+
+.app-update-banner strong,
+.app-update-banner span {
+  display: block;
+}
+
+.app-update-banner strong {
+  color: #fff;
+}
+
+.app-update-banner span {
+  margin-top: 2px;
+  color: var(--text-soft);
+  font-size: 0.84rem;
+}
+
+.app-update-banner .submit-btn,
+.app-update-banner .ghost-btn {
+  min-height: 38px;
+  padding: 8px 10px;
+  white-space: nowrap;
+  font-size: 0.8rem;
+}
+
 @media (min-width: 700px) {
   :root {
     --nav-height: 74px;
@@ -1149,5 +1198,13 @@ textarea {
   .ad-cta {
     font-size: 0.72rem;
     padding: 5px 8px;
+  }
+
+  .app-update-banner {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .app-update-banner div {
+    grid-column: 1 / -1;
   }
 }

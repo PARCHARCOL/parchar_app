@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v9";
+const CACHE_NAME = "parchar-shell-v11";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -8,6 +8,7 @@ const CORE_ASSETS = [
   "/clients.html",
   "/styles.css",
   "/app.js",
+  "/update.js",
   "/ads.js",
   "/places.js",
   "/clients.js",
@@ -24,8 +25,16 @@ self.addEventListener("install", (event) => {
     caches
       .open(CACHE_NAME)
       .then((cache) => cache.addAll(CORE_ASSETS))
-      .then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener("message", (event) => {
+  if (
+    event.data?.type ===
+    "SKIP_WAITING"
+  ) {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener("activate", (event) => {
@@ -64,42 +73,63 @@ self.addEventListener("fetch", (event) => {
   if (request.mode === "navigate") {
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
-        const cached =
-          (await cache.match(request, {
-            ignoreSearch: true,
-          })) ||
-          (await cache.match("/index.html")) ||
-          (await cache.match(OFFLINE_URL));
+        try {
+          const networkResponse =
+            await fetch(request);
 
-        const networkPromise = fetch(request)
-          .then((networkResponse) => {
-            if (
-              networkResponse &&
-              networkResponse.status === 200
-            ) {
-              cache.put(
-                request,
-                networkResponse.clone()
-              );
-            }
+          if (
+            networkResponse.status === 200
+          ) {
+            await cache.put(
+              request,
+              networkResponse.clone()
+            );
+          }
 
-            return networkResponse;
-          })
-          .catch(() => null);
-
-        if (cached) {
-          event.waitUntil(networkPromise);
-          return cached;
+          return networkResponse;
+        } catch {
+          return (
+            (await cache.match(request, {
+              ignoreSearch: true,
+            })) ||
+            (await cache.match("/index.html")) ||
+            (await cache.match(OFFLINE_URL))
+          );
         }
-
-        const networkResponse =
-          await networkPromise;
-
-        return (
-          networkResponse ||
-          (await cache.match(OFFLINE_URL))
-        );
       })
+    );
+    return;
+  }
+
+  const shouldRefreshFromNetwork =
+    /\.(?:css|html|js|webmanifest)$/i.test(
+      url.pathname
+    );
+
+  if (shouldRefreshFromNetwork) {
+    event.respondWith(
+      fetch(request)
+        .then((networkResponse) => {
+          if (
+            networkResponse.status === 200
+          ) {
+            const responseCopy =
+              networkResponse.clone();
+            caches
+              .open(CACHE_NAME)
+              .then((cache) =>
+                cache.put(
+                  request,
+                  responseCopy
+                )
+              );
+          }
+
+          return networkResponse;
+        })
+        .catch(() =>
+          caches.match(request)
+        )
     );
     return;
   }

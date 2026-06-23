@@ -673,10 +673,28 @@ function sendFile(
     MIME_TYPES[ext] ||
     "application/octet-stream";
 
-  res.writeHead(200, {
-    "Content-Type":
-      contentType,
-  });
+  const headers = {
+    "Content-Type": contentType,
+  };
+
+  if (
+    [".css", ".html", ".js"].includes(
+      ext
+    )
+  ) {
+    headers["Cache-Control"] =
+      "no-cache";
+  }
+
+  if (
+    path.basename(absolutePath) ===
+    "service-worker.js"
+  ) {
+    headers["Cache-Control"] =
+      "no-store, no-cache, must-revalidate";
+  }
+
+  res.writeHead(200, headers);
   fs.createReadStream(
     absolutePath
   ).pipe(res);

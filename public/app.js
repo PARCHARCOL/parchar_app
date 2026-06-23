@@ -272,20 +272,6 @@ function setupInstallFlow() {
   });
 }
 
-async function registerServiceWorker() {
-  if (!("serviceWorker" in navigator)) {
-    return;
-  }
-
-  try {
-    await navigator.serviceWorker.register("/service-worker.js", {
-      scope: "/",
-    });
-  } catch {
-    // no-op
-  }
-}
-
 for (const button of buttons) {
   button.addEventListener("click", () => {
     const route = button.dataset.route;
@@ -294,4 +280,3 @@ for (const button of buttons) {
 }
 
 setupInstallFlow();
-window.addEventListener("load", registerServiceWorker);
