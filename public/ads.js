@@ -193,6 +193,34 @@ function openAdRequestModal() {
   form?.elements.businessName?.focus();
 }
 
+function trackAdClick(campaignId) {
+  if (!campaignId) {
+    return;
+  }
+
+  fetch(
+    `/api/ads/campaigns/${campaignId}/click`,
+    {
+      method: "POST",
+      keepalive: true,
+    }
+  ).catch(() => {});
+}
+
+function openAdTarget(targetUrl, campaignId) {
+  if (!targetUrl) {
+    openAdRequestModal();
+    return;
+  }
+
+  trackAdClick(campaignId);
+  window.open(
+    targetUrl,
+    "_blank",
+    "noopener,noreferrer"
+  );
+}
+
 function bindAdRequestButtons() {
   document
     .querySelectorAll(
@@ -207,7 +235,12 @@ function bindAdRequestButtons() {
         "true";
       button.addEventListener(
         "click",
-        openAdRequestModal
+        () => {
+          openAdTarget(
+            button.dataset.adTargetUrl,
+            button.dataset.adCampaignId
+          );
+        }
       );
     });
 }
@@ -234,6 +267,8 @@ async function loadAdBanner() {
 
   if (button) {
     button.textContent = "Anunciar";
+    delete button.dataset.adTargetUrl;
+    delete button.dataset.adCampaignId;
   }
 
   try {
@@ -283,6 +318,9 @@ async function loadAdBanner() {
         banner.enabled &&
         banner.targetUrl
           ? () => {
+              trackAdClick(
+                banner.id
+              );
               window.open(
                 banner.targetUrl,
                 "_blank",
@@ -295,6 +333,21 @@ async function loadAdBanner() {
     if (button) {
       button.textContent =
         banner.ctaLabel || "Anunciar";
+
+      if (
+        banner.enabled &&
+        banner.targetUrl
+      ) {
+        button.dataset.adTargetUrl =
+          banner.targetUrl;
+        button.dataset.adCampaignId =
+          banner.id || "";
+      } else {
+        delete button.dataset
+          .adTargetUrl;
+        delete button.dataset
+          .adCampaignId;
+      }
     }
 
     let mediaContainer =
@@ -330,6 +383,11 @@ async function loadAdBanner() {
           "_blank";
         mediaContainer.rel =
           "noopener noreferrer";
+        mediaContainer.onclick = () => {
+          trackAdClick(
+            banner.id
+          );
+        };
       }
 
       const media =

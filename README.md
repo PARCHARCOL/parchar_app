@@ -57,6 +57,8 @@ Cuentas iniciales para desarrollo local:
 El usuario `admin` puede crear asesores reales desde el panel interno.
 Cada asesor entra con su propio usuario y puede cambiar su clave en `Mi acceso`.
 
+El modulo de publicidad se maneja como campanas: cada pauta tiene archivo, enlace, fecha de inicio, fecha de fin, prioridad, estado, vistas y clics. La app rota automaticamente las campanas activas y vigentes.
+
 Antes de desplegar, cambia estas credenciales con variables de entorno:
 
 - `PARCHAR_ADMIN_USERNAME`

@@ -74,6 +74,15 @@ const adPreview = document.querySelector(
   "#admin-ad-preview"
 );
 
+const adCampaignList = document.querySelector(
+  "#admin-ad-campaign-list"
+);
+
+const refreshAdCampaignsButton =
+  document.querySelector(
+    "#refresh-ad-campaigns"
+  );
+
 const adRequestList = document.querySelector(
   "#admin-ad-request-list"
 );
@@ -89,6 +98,7 @@ let staffToken = "";
 let currentStaff = null;
 let currentAdRequests = [];
 let currentStaffUsers = [];
+let currentAdCampaigns = [];
 
 function escapeHtml(value) {
 
@@ -210,6 +220,8 @@ function showAdminDashboard() {
     .forEach((element) => {
       element.hidden = !isAdmin();
     });
+
+  setDefaultCampaignDates();
 }
 
 async function staffFetch(
@@ -264,6 +276,40 @@ function formatDateTime(value) {
       timeStyle: "short",
     }
   );
+}
+
+function formatDateInput(date) {
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+
+function setDefaultCampaignDates() {
+  if (!adForm) {
+    return;
+  }
+
+  const today = new Date();
+  const endDate = new Date();
+  endDate.setDate(
+    today.getDate() + 7
+  );
+
+  if (
+    adForm.elements.startDate &&
+    !adForm.elements.startDate.value
+  ) {
+    adForm.elements.startDate.value =
+      formatDateInput(today);
+  }
+
+  if (
+    adForm.elements.endDate &&
+    !adForm.elements.endDate.value
+  ) {
+    adForm.elements.endDate.value =
+      formatDateInput(endDate);
+  }
 }
 
 tabs.forEach((tab) => {
@@ -857,18 +903,158 @@ function renderAdPreview(banner) {
   adPreview.innerHTML = `
     <strong>Archivo publicado</strong>
     ${media}
+    <p class="tiny">
+      En la app publica el banner se reproduce sin audio y no bloquea la navegacion.
+    </p>
   `;
   adPreview.hidden = false;
 }
 
-async function loadAdBannerSettings() {
-  if (!adForm) {
+function campaignStatusLabel(value) {
+  const labels = {
+    activa: "activa",
+    pausada: "pausada",
+    programada: "programada",
+    vencida: "vencida",
+  };
+
+  return labels[value] || value || "";
+}
+
+function renderAdCampaigns(items) {
+  if (!adCampaignList) {
+    return;
+  }
+
+  currentAdCampaigns = items || [];
+
+  if (!currentAdCampaigns.length) {
+    adCampaignList.innerHTML = `
+      <div class="glass-card">
+        <h3>No hay campanas publicitarias</h3>
+      </div>
+    `;
+    return;
+  }
+
+  adCampaignList.innerHTML =
+    currentAdCampaigns
+      .map((item) => {
+        const status =
+          item.computedStatus ||
+          item.status;
+        const canActivate =
+          status !== "activa" &&
+          status !== "vencida";
+        const canPause =
+          item.status === "activa";
+        const media = String(
+          item.mediaType || ""
+        ).startsWith("video/")
+          ? `
+            <video controls preload="metadata" src="${escapeHtml(
+              item.mediaPath
+            )}"></video>
+          `
+          : `
+            <img src="${escapeHtml(
+              item.mediaPath
+            )}" alt="${escapeHtml(
+              item.advertiserName
+            )}" />
+          `;
+
+        return `
+          <article class="glass-card admin-card ad-campaign-card">
+            <div class="mini-business-head">
+              <h3>${escapeHtml(
+                item.advertiserName
+              )}</h3>
+              <span class="status-pill status-${escapeHtml(
+                status
+              )}">
+                ${escapeHtml(
+                  campaignStatusLabel(
+                    status
+                  )
+                )}
+              </span>
+            </div>
+
+            <p><strong>${escapeHtml(
+              item.title
+            )}:</strong> ${escapeHtml(
+              item.message
+            )}</p>
+
+            <p class="tiny">
+              ${escapeHtml(
+                item.startDate
+              )} a ${escapeHtml(
+                item.endDate
+              )} - Prioridad ${escapeHtml(
+                item.priority
+              )}
+            </p>
+
+            <p class="tiny">
+              Vistas ${escapeHtml(
+                item.impressions
+              )} - Clics ${escapeHtml(
+                item.clicks
+              )}
+            </p>
+
+            <div class="ad-preview ad-campaign-media">
+              ${media}
+            </div>
+
+            <div class="request-actions">
+              ${
+                canActivate
+                  ? `
+                    <button class="submit-btn" onclick="setAdCampaignStatus(${Number(
+                      item.id
+                    )}, 'activa')">
+                      Activar
+                    </button>
+                  `
+                  : ""
+              }
+              ${
+                canPause
+                  ? `
+                    <button class="ghost-btn" onclick="setAdCampaignStatus(${Number(
+                      item.id
+                    )}, 'pausada')">
+                      Pausar
+                    </button>
+                  `
+                  : ""
+              }
+              <button class="ghost-btn" onclick="deleteAdCampaign(${Number(
+                item.id
+              )})">
+                Eliminar
+              </button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+}
+
+async function loadAdCampaigns() {
+  if (
+    !adCampaignList ||
+    !isAdmin()
+  ) {
     return;
   }
 
   try {
     const response = await staffFetch(
-      "/api/admin/ad-banner"
+      "/api/admin/ad-campaigns"
     );
     const data =
       await response.json();
@@ -876,59 +1062,46 @@ async function loadAdBannerSettings() {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "Error cargando banner"
+          "Error cargando campanas"
       );
     }
 
-    const banner =
-      data.banner || {};
-
-    adForm.elements.enabled.checked =
-      Boolean(banner.enabled);
-    adForm.elements.title.value =
-      banner.title || "Publicidad";
-    adForm.elements.message.value =
-      banner.message ||
-      "Espacio para aliados de Parchar";
-    adForm.elements.ctaLabel.value =
-      banner.ctaLabel || "Anunciar";
-    adForm.elements.advertiserName.value =
-      banner.advertiserName || "";
-    adForm.elements.targetUrl.value =
-      banner.targetUrl || "";
-    adForm.elements.clearMedia.checked =
-      false;
-    renderAdPreview(banner);
-  } catch (error) {
-    setFeedback(
-      adMessage,
-      error.message,
-      true
+    renderAdCampaigns(
+      data.items || []
     );
+  } catch (error) {
+    adCampaignList.innerHTML = `
+      <div class="glass-card">
+        <h3>Error</h3>
+        <p>${escapeHtml(
+          error.message
+        )}</p>
+      </div>
+    `;
   }
 }
 
-async function saveAdBannerSettings(event) {
+async function saveAdCampaign(event) {
   event.preventDefault();
 
   setFeedback(
     adMessage,
-    "Guardando banner..."
+    "Creando campana..."
   );
 
   const formData = new FormData(
     adForm
   );
   formData.set(
-    "enabled",
+    "status",
     adForm.elements.enabled.checked
-      ? "true"
-      : "false"
+      ? "activa"
+      : "pausada"
   );
 
   try {
     const response = await staffFetch(
-      "/api/admin/ad-banner",
+      "/api/admin/ad-campaigns",
       {
         method: "POST",
         body: formData,
@@ -940,21 +1113,101 @@ async function saveAdBannerSettings(event) {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "No se pudo guardar el banner"
+          "No se pudo crear la campana"
       );
+    }
+
+    adForm.reset();
+    adForm.elements.enabled.checked = true;
+    adForm.elements.title.value =
+      "Publicidad";
+    adForm.elements.ctaLabel.value =
+      "Ver oferta";
+    adForm.elements.priority.value =
+      "1";
+    setDefaultCampaignDates();
+    if (adPreview) {
+      adPreview.hidden = true;
+      adPreview.innerHTML = "";
     }
 
     setFeedback(
       adMessage,
-      "Banner actualizado."
+      "Campana creada. Se mostrara cuando este activa y dentro de fecha."
     );
-    await loadAdBannerSettings();
+    await loadAdCampaigns();
   } catch (error) {
     setFeedback(
       adMessage,
       error.message,
       true
     );
+  }
+}
+
+async function setAdCampaignStatus(
+  id,
+  status
+) {
+  try {
+    const response = await staffFetch(
+      `/api/admin/ad-campaigns/${id}/status`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          status,
+        }),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo actualizar la campana"
+      );
+    }
+
+    await loadAdCampaigns();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteAdCampaign(id) {
+  if (
+    !window.confirm(
+      "Quieres eliminar esta campana?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      `/api/admin/ad-campaigns/${id}/delete`,
+      {
+        method: "POST",
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo eliminar la campana"
+      );
+    }
+
+    await loadAdCampaigns();
+  } catch (error) {
+    alert(error.message);
   }
 }
 
@@ -1105,6 +1358,13 @@ function prepareAdFromRequest(id) {
   adForm.elements.message.value =
     `Conoce ${request.business_name} en Parchar.`;
   adForm.elements.enabled.checked = true;
+  adForm.elements.title.value =
+    "Publicidad";
+  adForm.elements.ctaLabel.value =
+    "Ver oferta";
+  adForm.elements.priority.value =
+    "1";
+  setDefaultCampaignDates();
   adForm.scrollIntoView({
     behavior: "smooth",
     block: "start",
@@ -1503,7 +1763,7 @@ async function loadDashboardData() {
 
   if (isAdmin()) {
     tasks.push(
-      loadAdBannerSettings()
+      loadAdCampaigns()
     );
     tasks.push(
       loadStaffUsers()
@@ -1646,7 +1906,12 @@ refreshStaffUsersButton?.addEventListener(
 
 adForm?.addEventListener(
   "submit",
-  saveAdBannerSettings
+  saveAdCampaign
+);
+
+refreshAdCampaignsButton?.addEventListener(
+  "click",
+  loadAdCampaigns
 );
 
 refreshAdRequestsButton?.addEventListener(

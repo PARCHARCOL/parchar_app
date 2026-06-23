@@ -112,12 +112,29 @@ const USE_CLOUDINARY =
   );
 const VIDEO_MIN_SECONDS = 15;
 const VIDEO_MAX_SECONDS = 20;
+const AD_MEDIA_MAX_BYTES =
+  15 * 1024 * 1024;
 const ALLOWED_CATEGORIES =
   new Set([
     "moto",
     "carro",
     "romantico",
     "bbb",
+  ]);
+const ALLOWED_AD_MEDIA_TYPES =
+  new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+  ]);
+const AD_CAMPAIGN_STATUSES =
+  new Set([
+    "activa",
+    "pausada",
   ]);
 const STAFF_ROLES = new Set([
   "admin",
@@ -403,6 +420,195 @@ function normalizeAdBanner(row) {
     updatedAt:
       row?.updated_at || null,
   };
+}
+
+function parseDateOnly(value) {
+  const raw = cleanText(value);
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      raw
+    )
+  ) {
+    return null;
+  }
+
+  const date = new Date(
+    `${raw}T00:00:00.000Z`
+  );
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return null;
+  }
+
+  return raw;
+}
+
+function dateOnlyToStartIso(value) {
+  return `${value}T00:00:00.000Z`;
+}
+
+function dateOnlyToEndIso(value) {
+  return `${value}T23:59:59.999Z`;
+}
+
+function formatDateOnly(value) {
+  if (!value) {
+    return "";
+  }
+
+  const match =
+    String(value).match(
+      /^(\d{4}-\d{2}-\d{2})/
+    );
+
+  if (match) {
+    return match[1];
+  }
+
+  const date = new Date(value);
+
+  if (
+    Number.isNaN(date.getTime())
+  ) {
+    return "";
+  }
+
+  return date
+    .toISOString()
+    .slice(0, 10);
+}
+
+function getCampaignComputedStatus(row) {
+  const baseStatus =
+    row?.status || "pausada";
+
+  if (baseStatus !== "activa") {
+    return baseStatus;
+  }
+
+  const now = Date.now();
+  const startsAt = new Date(
+    row.starts_at || row.startsAt || ""
+  ).getTime();
+  const endsAt = new Date(
+    row.ends_at || row.endsAt || ""
+  ).getTime();
+
+  if (
+    Number.isFinite(startsAt) &&
+    startsAt > now
+  ) {
+    return "programada";
+  }
+
+  if (
+    Number.isFinite(endsAt) &&
+    endsAt < now
+  ) {
+    return "vencida";
+  }
+
+  return "activa";
+}
+
+function normalizeAdCampaign(row) {
+  if (!row) {
+    return null;
+  }
+
+  const priority = Math.max(
+    1,
+    Math.min(
+      10,
+      Number(row.priority || 1)
+    )
+  );
+
+  return {
+    id: row.id,
+    enabled:
+      getCampaignComputedStatus(row) ===
+      "activa",
+    status:
+      row.status || "pausada",
+    computedStatus:
+      getCampaignComputedStatus(row),
+    advertiserName:
+      row.advertiser_name || "",
+    title:
+      row.title || "Publicidad",
+    message:
+      row.message || "",
+    ctaLabel:
+      row.cta_label || "Anunciar",
+    mediaPath:
+      row.media_path || "",
+    mediaType:
+      row.media_type || "",
+    targetUrl:
+      row.target_url || "",
+    startsAt:
+      row.starts_at || null,
+    endsAt:
+      row.ends_at || null,
+    startDate: formatDateOnly(
+      row.starts_at
+    ),
+    endDate: formatDateOnly(
+      row.ends_at
+    ),
+    priority,
+    impressions: Number(
+      row.impressions || 0
+    ),
+    clicks: Number(
+      row.clicks || 0
+    ),
+    createdAt:
+      row.created_at || null,
+    updatedAt:
+      row.updated_at || null,
+  };
+}
+
+function selectRotatingCampaign(rows) {
+  const active = rows
+    .map(normalizeAdCampaign)
+    .filter(
+      (item) =>
+        item &&
+        item.computedStatus ===
+          "activa" &&
+        item.mediaPath
+    );
+
+  if (!active.length) {
+    return null;
+  }
+
+  const totalWeight =
+    active.reduce(
+      (sum, item) =>
+        sum + item.priority,
+      0
+    );
+  let cursor =
+    Math.floor(
+      Math.random() * totalWeight
+    );
+
+  for (const item of active) {
+    cursor -= item.priority;
+
+    if (cursor < 0) {
+      return item;
+    }
+  }
+
+  return active[0];
 }
 
 function normalizeStaffUsername(value) {
@@ -1359,6 +1565,28 @@ async function initializeSqliteDatabase() {
   `);
 
   await pool.exec(`
+    CREATE TABLE IF NOT EXISTS ad_campaigns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      advertiser_name TEXT NOT NULL,
+      title TEXT DEFAULT 'Publicidad',
+      message TEXT NOT NULL,
+      cta_label TEXT DEFAULT 'Anunciar',
+      media_path TEXT NOT NULL,
+      media_type TEXT NOT NULL,
+      target_url TEXT,
+      starts_at TEXT NOT NULL,
+      ends_at TEXT NOT NULL,
+      priority INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'pausada',
+      impressions INTEGER DEFAULT 0,
+      clicks INTEGER DEFAULT 0,
+      created_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
     CREATE TABLE IF NOT EXISTS ad_requests (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       full_name TEXT NOT NULL,
@@ -1585,6 +1813,28 @@ async function initializeDatabase() {
       media_path TEXT,
       media_type TEXT,
       target_url TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS ad_campaigns (
+      id SERIAL PRIMARY KEY,
+      advertiser_name TEXT NOT NULL,
+      title TEXT DEFAULT 'Publicidad',
+      message TEXT NOT NULL,
+      cta_label TEXT DEFAULT 'Anunciar',
+      media_path TEXT NOT NULL,
+      media_type TEXT NOT NULL,
+      target_url TEXT,
+      starts_at TIMESTAMP NOT NULL,
+      ends_at TIMESTAMP NOT NULL,
+      priority INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'pausada',
+      impressions INTEGER DEFAULT 0,
+      clicks INTEGER DEFAULT 0,
+      created_by TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1977,6 +2227,35 @@ const server =
             "/api/ads/banner" &&
           req.method === "GET"
         ) {
+          const campaignResult =
+            await pool.query(`
+              SELECT *
+              FROM ad_campaigns
+              WHERE status = 'activa'
+              ORDER BY priority DESC, created_at DESC
+            `);
+          const campaign =
+            selectRotatingCampaign(
+              campaignResult.rows
+            );
+
+          if (campaign) {
+            await pool.query(
+              `
+              UPDATE ad_campaigns
+              SET impressions = COALESCE(impressions, 0) + 1,
+                  updated_at = NOW()
+              WHERE id = $1
+              `,
+              [campaign.id]
+            );
+
+            sendJson(res, 200, {
+              banner: campaign,
+            });
+            return;
+          }
+
           const result =
             await pool.query(`
               SELECT *
@@ -1986,10 +2265,39 @@ const server =
             `);
 
           sendJson(res, 200, {
-            banner:
-              normalizeAdBanner(
+            banner: {
+              ...normalizeAdBanner(
                 result.rows[0]
               ),
+              enabled: false,
+            },
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/ads\/campaigns\/\d+\/click$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await pool.query(
+            `
+            UPDATE ad_campaigns
+            SET clicks = COALESCE(clicks, 0) + 1,
+                updated_at = NOW()
+            WHERE id = $1
+            `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
           });
           return;
         }
@@ -3202,6 +3510,386 @@ const server =
 
         if (
           pathname ===
+            "/api/admin/ad-campaigns" &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM ad_campaigns
+              ORDER BY created_at DESC
+            `);
+
+          sendJson(res, 200, {
+            items: result.rows.map(
+              normalizeAdCampaign
+            ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/ad-campaigns" &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          await runMiddleware(
+            req,
+            res,
+            upload.single("media")
+          );
+
+          const body = req.body || {};
+          const advertiserName =
+            cleanLimitedText(
+              body.advertiserName,
+              120
+            );
+          const title =
+            cleanLimitedText(
+              body.title ||
+                "Publicidad",
+              60
+            );
+          const message =
+            cleanLimitedText(
+              body.message,
+              180
+            );
+          const ctaLabel =
+            cleanLimitedText(
+              body.ctaLabel ||
+                "Anunciar",
+              40
+            );
+          const targetUrl =
+            normalizeExternalUrl(
+              body.targetUrl
+            );
+          const startDate =
+            parseDateOnly(
+              body.startDate
+            );
+          const endDate =
+            parseDateOnly(
+              body.endDate
+            );
+          const startsAt =
+            startDate
+              ? dateOnlyToStartIso(
+                  startDate
+                )
+              : "";
+          const endsAt =
+            endDate
+              ? dateOnlyToEndIso(
+                  endDate
+                )
+              : "";
+          const priority = Math.max(
+            1,
+            Math.min(
+              10,
+              Number(
+                body.priority || 1
+              )
+            )
+          );
+          const status =
+            AD_CAMPAIGN_STATUSES.has(
+              cleanText(body.status)
+            )
+              ? cleanText(body.status)
+              : "pausada";
+
+          if (
+            !advertiserName ||
+            !message
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Escribe cliente o marca y texto del banner.",
+            });
+            return;
+          }
+
+          if (targetUrl === null) {
+            sendJson(res, 400, {
+              error:
+                "El enlace del anunciante debe comenzar con http:// o https://.",
+            });
+            return;
+          }
+
+          if (
+            !startDate ||
+            !endDate
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Selecciona fecha de inicio y fecha de fin.",
+            });
+            return;
+          }
+
+          if (
+            new Date(startsAt).getTime() >
+            new Date(endsAt).getTime()
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La fecha de inicio no puede ser posterior a la fecha de fin.",
+            });
+            return;
+          }
+
+          if (
+            new Date(endsAt).getTime() <
+            Date.now()
+          ) {
+            sendJson(res, 400, {
+              error:
+                "No puedes crear una campana vencida.",
+            });
+            return;
+          }
+
+          const mediaFile = req.file;
+
+          if (!mediaFile) {
+            sendJson(res, 400, {
+              error:
+                "Sube la imagen o video de la pauta.",
+            });
+            return;
+          }
+
+          if (
+            !ALLOWED_AD_MEDIA_TYPES.has(
+              mediaFile.mimetype || ""
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La publicidad debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV.",
+            });
+            return;
+          }
+
+          if (
+            mediaFile.size >
+            AD_MEDIA_MAX_BYTES
+          ) {
+            sendJson(res, 400, {
+              error:
+                "El archivo de publicidad no debe superar 15 MB.",
+            });
+            return;
+          }
+
+          const uploadedMedia =
+            await uploadToCloudinary(
+              mediaFile,
+              {
+                resource_type:
+                  "auto",
+                folder:
+                  "parchar/ads",
+              }
+            );
+
+          await pool.query(
+            `
+            INSERT INTO ad_campaigns (
+              advertiser_name,
+              title,
+              message,
+              cta_label,
+              media_path,
+              media_type,
+              target_url,
+              starts_at,
+              ends_at,
+              priority,
+              status,
+              created_by,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+            `,
+            [
+              advertiserName,
+              title,
+              message,
+              ctaLabel,
+              uploadedMedia.secure_url,
+              mediaFile.mimetype,
+              targetUrl || "",
+              startsAt,
+              endsAt,
+              priority,
+              status,
+              staffAuth.staff.username,
+            ]
+          );
+
+          sendJson(res, 201, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/ad-campaigns\/\d+\/status$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const status =
+            cleanText(
+              body.status
+            );
+
+          if (
+            !AD_CAMPAIGN_STATUSES.has(
+              status
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Estado de campana invalido.",
+            });
+            return;
+          }
+
+          const existing =
+            await pool.query(
+              `
+              SELECT *
+              FROM ad_campaigns
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const campaign =
+            existing.rows[0];
+
+          if (!campaign) {
+            sendJson(res, 404, {
+              error:
+                "Campana no encontrada.",
+            });
+            return;
+          }
+
+          if (
+            status === "activa" &&
+            new Date(
+              campaign.ends_at
+            ).getTime() < Date.now()
+          ) {
+            sendJson(res, 400, {
+              error:
+                "No puedes activar una campana vencida.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE ad_campaigns
+            SET status = $1,
+                updated_at = NOW()
+            WHERE id = $2
+            `,
+            [
+              status,
+              id,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/ad-campaigns\/\d+\/delete$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await pool.query(
+            `
+            DELETE FROM ad_campaigns
+            WHERE id = $1
+            `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
             "/api/admin/ad-banner" &&
           req.method === "GET"
         ) {
@@ -3336,13 +4024,24 @@ const server =
 
           if (mediaFile) {
             if (
-              !/^(image|video)\//.test(
+              !ALLOWED_AD_MEDIA_TYPES.has(
                 mediaFile.mimetype || ""
               )
             ) {
               sendJson(res, 400, {
                 error:
-                  "La publicidad debe ser una imagen o un video.",
+                  "La publicidad debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV.",
+              });
+              return;
+            }
+
+            if (
+              mediaFile.size >
+              AD_MEDIA_MAX_BYTES
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El archivo de publicidad no debe superar 15 MB.",
               });
               return;
             }

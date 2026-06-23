@@ -322,10 +322,22 @@
         </h2>
 
         <p>
-          Activa el banner visible en la app y revisa solicitudes de pauta.
+          Crea campanas con fechas, prioridad y rotacion automatica en el banner.
         </p>
 
         <div class="admin-only">
+          <div class="ad-admin-guide">
+            <strong>
+              Recomendacion de pauta
+            </strong>
+            <p>
+              Usa imagen o video corto, claro y liviano. El banner se muestra abajo sin bloquear la app; si subes video, se reproducira en silencio para no molestar la navegacion.
+            </p>
+            <p>
+              Formatos: JPG, PNG, WEBP, GIF, MP4, WEBM o MOV. Peso maximo recomendado: 15 MB. Si hay varias campanas activas, Parchar las rota por prioridad.
+            </p>
+          </div>
+
           <form
             id="admin-ad-form"
             class="form-grid"
@@ -337,8 +349,9 @@
                 id="admin-ad-enabled"
                 name="enabled"
                 type="checkbox"
+                checked
               />
-              Campana activa en el banner
+              Crear campana activa
             </label>
 
             <label>
@@ -380,11 +393,44 @@
             </label>
 
             <label>
-              Texto para solicitar pauta
+              Inicio de pauta
+              <input
+                name="startDate"
+                type="date"
+                required
+              />
+            </label>
+
+            <label>
+              Fin de pauta
+              <input
+                name="endDate"
+                type="date"
+                required
+              />
+            </label>
+
+            <label>
+              Prioridad
+              <input
+                name="priority"
+                type="number"
+                min="1"
+                max="10"
+                value="1"
+                required
+              />
+              <span class="field-hint">
+                1 normal, 10 maxima exposicion cuando hay varias campanas.
+              </span>
+            </label>
+
+            <label>
+              Texto del boton
               <input
                 name="ctaLabel"
                 maxlength="40"
-                value="Anunciar"
+                value="Ver oferta"
                 required
               />
             </label>
@@ -396,23 +442,18 @@
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
               />
+              <span class="field-hint">
+                El banner publico no reproduce audio. Para mejor experiencia usa videos cortos y sin texto pequeno.
+              </span>
             </label>
 
             <div id="admin-ad-preview" class="ad-preview full-row" hidden></div>
-
-            <label class="full-row legal-check">
-              <input
-                name="clearMedia"
-                type="checkbox"
-              />
-              Quitar archivo actual
-            </label>
 
             <button
               type="submit"
               class="submit-btn"
             >
-              Publicar banner
+              Crear campana
             </button>
 
           </form>
@@ -421,6 +462,31 @@
             id="admin-ad-message"
             class="feedback"
           ></p>
+
+          <div class="my-businesses-head ad-campaigns-head">
+            <h3>
+              Campanas publicitarias
+            </h3>
+
+            <button
+              id="refresh-ad-campaigns"
+              type="button"
+              class="ghost-btn"
+            >
+              Actualizar
+            </button>
+          </div>
+
+          <div
+            id="admin-ad-campaign-list"
+            class="admin-list"
+          >
+
+            <p class="loading">
+              Cargando campanas...
+            </p>
+
+          </div>
         </div>
 
         <div class="my-businesses-head ad-requests-head">

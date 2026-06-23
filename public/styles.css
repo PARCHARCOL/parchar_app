@@ -748,6 +748,14 @@ textarea {
   background: linear-gradient(145deg, #4bd4ff, #2f77c8);
 }
 
+.status-programada {
+  background: linear-gradient(145deg, #b590ff, #6c45c8);
+}
+
+.status-vencida {
+  background: linear-gradient(145deg, #8d839d, #5b5368);
+}
+
 .staff-role-admin {
   background: linear-gradient(145deg, #ffb747, #e36021);
 }
@@ -791,6 +799,37 @@ textarea {
   padding: 10px;
 }
 
+.ad-admin-guide {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 190, 106, 0.36);
+  background: rgba(255, 142, 45, 0.12);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.ad-admin-guide strong {
+  display: block;
+  color: #ffe1a8;
+  margin-bottom: 4px;
+}
+
+.ad-admin-guide p {
+  margin: 0 0 6px;
+  color: #f2ddff;
+  font-size: 0.88rem;
+}
+
+.ad-admin-guide p:last-child {
+  margin-bottom: 0;
+}
+
+.field-hint {
+  color: #dbc4ff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
 .ad-preview img,
 .ad-preview video {
   width: 100%;
@@ -798,6 +837,16 @@ textarea {
   object-fit: contain;
   margin-top: 8px;
   border-radius: 10px;
+}
+
+.ad-campaign-media {
+  margin-top: 8px;
+  padding: 8px;
+}
+
+.ad-campaign-media img,
+.ad-campaign-media video {
+  max-height: 180px;
 }
 
 .request-actions {
