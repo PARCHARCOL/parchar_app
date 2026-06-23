@@ -58,6 +58,16 @@ function ensureAdModal() {
         Dejanos tus datos y el equipo de Parchar te contactara para activar publicidad.
       </p>
 
+      <section class="ad-spec-card" aria-label="Formato recomendado para pauta">
+        <strong>Formato recomendado del anuncio</strong>
+        <p>
+          Envia imagen o video horizontal tipo banner, no vertical. Medida sugerida: 1600 x 600 px o 1920 x 720 px. Video MP4 de 6 a 12 segundos, maximo 15 MB, sin audio importante.
+        </p>
+        <p>
+          Mantén producto, logo y texto principal en el centro. Evita letras pequenas y bordes con informacion, porque el banner se adapta a celular y PC.
+        </p>
+      </section>
+
       <form id="ad-request-form" class="form-grid">
         <label>
           Nombre

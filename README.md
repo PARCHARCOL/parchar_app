@@ -59,6 +59,15 @@ Cada asesor entra con su propio usuario y puede cambiar su clave en `Mi acceso`.
 
 El modulo de publicidad se maneja como campanas: cada pauta tiene archivo, enlace, fecha de inicio, fecha de fin, prioridad, estado, vistas y clics. La app rota automaticamente las campanas activas y vigentes.
 
+Formato recomendado para piezas publicitarias:
+
+- Imagen o video horizontal tipo banner, no vertical.
+- Medida sugerida: 1600 x 600 px o 1920 x 720 px.
+- Video MP4 de 6 a 12 segundos, maximo 15 MB.
+- El audio no se reproduce en el banner publico.
+- Mantener producto, logo y texto principal en el centro.
+- Evitar letras pequenas, reels, stories y bordes con informacion importante, porque el banner se adapta a celular y PC.
+
 Antes de desplegar, cambia estas credenciales con variables de entorno:
 
 - `PARCHAR_ADMIN_USERNAME`

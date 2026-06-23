@@ -1140,6 +1140,31 @@ textarea {
   color: var(--text-soft);
 }
 
+.ad-spec-card {
+  border-radius: 13px;
+  border: 1px solid rgba(255, 190, 106, 0.38);
+  background: rgba(255, 142, 45, 0.12);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.ad-spec-card strong {
+  display: block;
+  color: #ffe1a8;
+  margin-bottom: 5px;
+}
+
+.ad-spec-card p {
+  margin: 0 0 7px;
+  color: #f2ddff;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.ad-spec-card p:last-child {
+  margin-bottom: 0;
+}
+
 .ad-close {
   border: 0;
   cursor: pointer;
