@@ -367,6 +367,12 @@ async function loadAdBanner() {
   adBanner.classList.remove(
     "has-media"
   );
+  adBanner.removeAttribute("style");
+  [pill, text, button].forEach(
+    (element) => {
+      element?.removeAttribute("style");
+    }
+  );
   adBanner.removeAttribute("role");
   adBanner.removeAttribute("tabindex");
   delete adBanner.dataset.adTargetUrl;
@@ -498,6 +504,9 @@ async function loadAdBanner() {
       adBanner.querySelector(
         ".ad-media"
       );
+    mediaContainer?.removeAttribute(
+      "style"
+    );
 
     if (
       banner.enabled &&
@@ -535,6 +544,60 @@ async function loadAdBanner() {
       }
 
       mediaContainer.replaceChildren();
+      Object.assign(
+        adBanner.style,
+        {
+          background: "#130227",
+          display: "grid",
+          gridTemplateColumns:
+            "minmax(0, 1fr) auto",
+          gridTemplateAreas:
+            '"pill cta" "text cta"',
+          alignItems: "center",
+          gap: "7px 14px",
+          overflow: "hidden",
+        }
+      );
+      Object.assign(
+        mediaContainer.style,
+        {
+          position: "absolute",
+          inset: "0",
+          zIndex: "0",
+          width: "100%",
+          height: "100%",
+          border: "0",
+          borderRadius: "inherit",
+          opacity: "0.88",
+          pointerEvents: "none",
+        }
+      );
+      [pill, text, button].forEach(
+        (element) => {
+          if (!element) {
+            return;
+          }
+          Object.assign(element.style, {
+            position: "relative",
+            zIndex: "1",
+          });
+        }
+      );
+      if (pill) {
+        Object.assign(pill.style, {
+          gridArea: "pill",
+          justifySelf: "start",
+        });
+      }
+      if (text) {
+        text.style.gridArea = "text";
+      }
+      if (button) {
+        Object.assign(button.style, {
+          gridArea: "cta",
+          justifySelf: "end",
+        });
+      }
 
       if (banner.targetUrl) {
         mediaContainer.href =

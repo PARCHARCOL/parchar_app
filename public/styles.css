@@ -961,7 +961,8 @@ textarea {
   border-radius: 0;
 }
 
-.ad-banner.has-media {
+.ad-banner.has-media,
+.ad-banner:has(.ad-media:not([hidden])) {
   background: #130227;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -972,7 +973,8 @@ textarea {
   gap: 7px 14px;
 }
 
-.ad-banner.has-media::after {
+.ad-banner.has-media::after,
+.ad-banner:has(.ad-media:not([hidden]))::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -983,7 +985,8 @@ textarea {
   pointer-events: none;
 }
 
-.ad-banner.has-media .ad-media {
+.ad-banner.has-media .ad-media,
+.ad-banner:has(.ad-media:not([hidden])) .ad-media {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -998,21 +1001,27 @@ textarea {
 
 .ad-banner.has-media .ad-pill,
 .ad-banner.has-media p,
-.ad-banner.has-media .ad-cta {
+.ad-banner.has-media .ad-cta,
+.ad-banner:has(.ad-media:not([hidden])) .ad-pill,
+.ad-banner:has(.ad-media:not([hidden])) p,
+.ad-banner:has(.ad-media:not([hidden])) .ad-cta {
   position: relative;
   z-index: 1;
 }
 
-.ad-banner.has-media .ad-pill {
+.ad-banner.has-media .ad-pill,
+.ad-banner:has(.ad-media:not([hidden])) .ad-pill {
   grid-area: pill;
   justify-self: start;
 }
 
-.ad-banner.has-media p {
+.ad-banner.has-media p,
+.ad-banner:has(.ad-media:not([hidden])) p {
   grid-area: text;
 }
 
-.ad-banner.has-media .ad-cta {
+.ad-banner.has-media .ad-cta,
+.ad-banner:has(.ad-media:not([hidden])) .ad-cta {
   grid-area: cta;
   justify-self: end;
 }

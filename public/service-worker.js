@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v24";
+const CACHE_NAME = "parchar-shell-v26";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -130,7 +130,9 @@ self.addEventListener("fetch", (event) => {
           return networkResponse;
         })
         .catch(() =>
-          caches.match(request)
+          caches.match(request, {
+            ignoreSearch: true,
+          })
         )
     );
     return;
