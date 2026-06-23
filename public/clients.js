@@ -20,6 +20,8 @@ const logoutButton = document.querySelector("#client-logout");
 
 const businessForm = document.querySelector("#business-form");
 const businessMessage = document.querySelector("#business-message");
+const rutInput = document.querySelector("input[name='rutDocument']");
+const commerceInput = document.querySelector("input[name='commerceDocument']");
 
 const videoInput = document.querySelector("#video-input");
 const videoStatus = document.querySelector("#video-status");
@@ -249,6 +251,17 @@ function statusLabel(status) {
     default:
       return status || "Sin estado";
   }
+}
+
+function isPdfFile(file) {
+  return Boolean(
+    file &&
+      (file.type ===
+        "application/pdf" ||
+        file.name
+          ?.toLowerCase()
+          .endsWith(".pdf"))
+  );
 }
 
 function renderMyBusinesses(items) {
@@ -585,6 +598,29 @@ businessForm?.addEventListener("submit", async (event) => {
 
   const formData = new FormData(businessForm);
   const duration = Number(formData.get("videoDurationSeconds"));
+  const rutFile = rutInput?.files?.[0];
+  const commerceFile = commerceInput?.files?.[0];
+
+  if (!isPdfFile(rutFile)) {
+    setMessage(
+      businessMessage,
+      "El RUT debe estar en formato PDF.",
+      true
+    );
+    return;
+  }
+
+  if (
+    commerceFile &&
+    !isPdfFile(commerceFile)
+  ) {
+    setMessage(
+      businessMessage,
+      "La Camara de Comercio debe estar en formato PDF.",
+      true
+    );
+    return;
+  }
 
   if (
     !Number.isFinite(duration) ||

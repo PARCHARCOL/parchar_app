@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clientes | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=29" />
+    <link rel="stylesheet" href="/styles.css?v=30" />
   </head>
 
   <body class="theme-body clients-body">
@@ -234,12 +234,14 @@
 
           <label class="full-row">
             RUT del negocio
-            <input name="rutDocument" type="file" accept=".pdf,image/*" required />
+            <input name="rutDocument" type="file" accept="application/pdf,.pdf" required />
+            <span class="field-hint">Solo PDF.</span>
           </label>
 
           <label class="full-row">
             Camara de comercio
-            <input name="commerceDocument" type="file" accept=".pdf,image/*" />
+            <input name="commerceDocument" type="file" accept="application/pdf,.pdf" />
+            <span class="field-hint">Solo PDF.</span>
           </label>
 
           <label class="full-row">
@@ -321,8 +323,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=29"></script>
-    <script src="/update.js?v=29"></script>
-    <script src="/clients.js?v=29"></script>
+    <script src="/ads.js?v=30"></script>
+    <script src="/update.js?v=30"></script>
+    <script src="/clients.js?v=30"></script>
   </body>
 </html>

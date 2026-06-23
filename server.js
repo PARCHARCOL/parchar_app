@@ -155,8 +155,13 @@ const USE_CLOUDINARY =
   CLOUDINARY_CONFIGURED;
 const VIDEO_MIN_SECONDS = 15;
 const VIDEO_MAX_SECONDS = 20;
+const REVIEW_VIDEO_SECONDS = 15;
+const REVIEW_VIDEO_TOLERANCE_SECONDS = 1;
+const REVIEW_ACTIVE_DAYS = 15;
 const AD_MEDIA_MAX_BYTES =
   15 * 1024 * 1024;
+const REVIEW_VIDEO_MAX_BYTES =
+  25 * 1024 * 1024;
 const ALLOWED_CATEGORIES =
   new Set([
     "moto",
@@ -170,6 +175,16 @@ const ALLOWED_AD_MEDIA_TYPES =
     "image/png",
     "image/webp",
     "image/gif",
+    "video/mp4",
+    "video/webm",
+    "video/quicktime",
+  ]);
+const ALLOWED_DOCUMENT_TYPES =
+  new Set([
+    "application/pdf",
+  ]);
+const ALLOWED_REVIEW_VIDEO_TYPES =
+  new Set([
     "video/mp4",
     "video/webm",
     "video/quicktime",
@@ -1056,6 +1071,32 @@ function safeUploadFolder(
     .join("/");
 }
 
+function isPdfDocument(file) {
+  if (!file) {
+    return false;
+  }
+
+  return (
+    ALLOWED_DOCUMENT_TYPES.has(
+      file.mimetype
+    ) ||
+    path
+      .extname(
+        file.originalname || ""
+      )
+      .toLowerCase() === ".pdf"
+  );
+}
+
+function isAllowedReviewVideo(file) {
+  return Boolean(
+    file &&
+      ALLOWED_REVIEW_VIDEO_TYPES.has(
+        file.mimetype
+      )
+  );
+}
+
 async function saveLocalUpload(
   file,
   options = {}
@@ -1739,6 +1780,29 @@ async function initializeSqliteDatabase() {
     );
   `);
 
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS business_parches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      visitor_key TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(business_id, visitor_key)
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS business_reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      visitor_key TEXT,
+      video_path TEXT NOT NULL,
+      video_seconds REAL NOT NULL,
+      status TEXT DEFAULT 'activa',
+      expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   await ensureSqliteColumn(
     "clients",
     "phone_normalized",
@@ -1794,6 +1858,14 @@ async function initializeSqliteDatabase() {
     "review_note",
     "TEXT"
   );
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_business_parches_business
+    ON business_parches (business_id);
+  `);
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_business_reviews_active
+    ON business_reviews (business_id, status, expires_at);
+  `);
   await ensureSqliteColumn(
     "ad_banner_settings",
     "advertiser_name",
@@ -1993,6 +2065,29 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_parches (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      visitor_key TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(business_id, visitor_key)
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_reviews (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      visitor_key TEXT,
+      video_path TEXT NOT NULL,
+      video_seconds DOUBLE PRECISION NOT NULL,
+      status TEXT DEFAULT 'activa',
+      expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     ALTER TABLE clients
     ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
   `);
@@ -2027,6 +2122,16 @@ async function initializeDatabase() {
     ALTER TABLE ad_requests
     ADD COLUMN IF NOT EXISTS contacted_by TEXT,
     ADD COLUMN IF NOT EXISTS contacted_at TIMESTAMP;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_business_parches_business
+    ON business_parches (business_id);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_business_reviews_active
+    ON business_reviews (business_id, status, expires_at);
   `);
 
   await pool.query(`
@@ -3234,6 +3339,25 @@ const server =
             return;
           }
 
+          if (!isPdfDocument(rutFile)) {
+            sendJson(res, 400, {
+              error:
+                "El RUT debe subirse en formato PDF.",
+            });
+            return;
+          }
+
+          if (
+            commerceFile &&
+            !isPdfDocument(commerceFile)
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La Camara de Comercio debe subirse en formato PDF.",
+            });
+            return;
+          }
+
           const duplicated =
             await pool.query(
               `
@@ -3272,7 +3396,7 @@ const server =
               rutFile,
               {
                 resource_type:
-                  "auto",
+                  "raw",
                 folder:
                   "parchar/rut",
               }
@@ -3285,7 +3409,7 @@ const server =
                 commerceFile,
                 {
                   resource_type:
-                    "auto",
+                    "raw",
                   folder:
                     "parchar/commerce",
                 }
@@ -4579,6 +4703,237 @@ const server =
         }
 
         if (
+          pathname.match(
+            /^\/api\/businesses\/\d+\/parchar$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const id =
+            pathname.split(
+              "/"
+            )[3];
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const visitorKey =
+            cleanLimitedText(
+              body.visitorKey,
+              100
+            );
+
+          if (!visitorKey) {
+            sendJson(res, 400, {
+              error:
+                "No se pudo identificar este dispositivo.",
+            });
+            return;
+          }
+
+          const business =
+            await pool.query(
+              `
+              SELECT id
+              FROM businesses
+              WHERE id = $1 AND status = 'activo'
+              LIMIT 1
+              `,
+              [id]
+            );
+
+          if (!business.rows.length) {
+            sendJson(res, 404, {
+              error:
+                "Local no disponible.",
+            });
+            return;
+          }
+
+          let already = false;
+
+          try {
+            await pool.query(
+              `
+              INSERT INTO business_parches (
+                business_id,
+                visitor_key
+              )
+              VALUES ($1,$2)
+              `,
+              [id, visitorKey]
+            );
+          } catch {
+            already = true;
+          }
+
+          const countResult =
+            await pool.query(
+              `
+              SELECT COUNT(*) AS count
+              FROM business_parches
+              WHERE business_id = $1
+              `,
+              [id]
+            );
+
+          sendJson(res, 200, {
+            ok: true,
+            already,
+            count: Number(
+              countResult.rows[0]
+                ?.count || 0
+            ),
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/businesses\/\d+\/reviews$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const id =
+            pathname.split(
+              "/"
+            )[3];
+
+          await runMiddleware(
+            req,
+            res,
+            upload.single("reviewVideo")
+          );
+
+          const business =
+            await pool.query(
+              `
+              SELECT id
+              FROM businesses
+              WHERE id = $1 AND status = 'activo'
+              LIMIT 1
+              `,
+              [id]
+            );
+
+          if (!business.rows.length) {
+            sendJson(res, 404, {
+              error:
+                "Local no disponible.",
+            });
+            return;
+          }
+
+          const videoFile = req.file;
+          const visitorKey =
+            cleanLimitedText(
+              req.body?.visitorKey,
+              100
+            );
+          const videoSeconds =
+            Number(
+              req.body
+                ?.videoDurationSeconds
+            );
+
+          if (!videoFile) {
+            sendJson(res, 400, {
+              error:
+                "Debes grabar una resena en video.",
+            });
+            return;
+          }
+
+          if (
+            !isAllowedReviewVideo(
+              videoFile
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La resena debe ser video MP4, WEBM o MOV.",
+            });
+            return;
+          }
+
+          if (
+            videoFile.size >
+            REVIEW_VIDEO_MAX_BYTES
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La resena no debe superar 25 MB.",
+            });
+            return;
+          }
+
+          if (
+            !Number.isFinite(
+              videoSeconds
+            ) ||
+            Math.abs(
+              videoSeconds -
+                REVIEW_VIDEO_SECONDS
+            ) >
+              REVIEW_VIDEO_TOLERANCE_SECONDS
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La resena debe durar 15 segundos.",
+            });
+            return;
+          }
+
+          const uploadedReview =
+            await uploadToCloudinary(
+              videoFile,
+              {
+                resource_type:
+                  "video",
+                folder:
+                  "parchar/reviews",
+              }
+            );
+
+          const expiresAtSql =
+            USE_POSTGRES
+              ? "NOW() + INTERVAL '15 days'"
+              : "datetime('now', '+15 days')";
+
+          await pool.query(
+            `
+            INSERT INTO business_reviews (
+              business_id,
+              visitor_key,
+              video_path,
+              video_seconds,
+              status,
+              expires_at
+            )
+            VALUES (
+              $1,$2,$3,$4,'activa',${expiresAtSql}
+            )
+            `,
+            [
+              id,
+              visitorKey,
+              uploadedReview.secure_url,
+              Number(
+                videoSeconds.toFixed(
+                  2
+                )
+              ),
+            ]
+          );
+
+          sendJson(res, 201, {
+            ok: true,
+            message:
+              "Resena publicada por 15 dias.",
+          });
+          return;
+        }
+
+        if (
           pathname ===
             "/api/businesses/approved" &&
           req.method === "GET"
@@ -4590,10 +4945,52 @@ const server =
               WHERE status = 'activo'
               ORDER BY created_at DESC
             `);
+          const items =
+            result.rows;
+
+          for (const item of items) {
+            const parches =
+              await pool.query(
+                `
+                SELECT COUNT(*) AS count
+                FROM business_parches
+                WHERE business_id = $1
+                `,
+                [item.id]
+              );
+
+            const reviews =
+              await pool.query(
+                `
+                SELECT
+                  id,
+                  video_path,
+                  video_seconds,
+                  expires_at,
+                  created_at
+                FROM business_reviews
+                WHERE
+                  business_id = $1
+                  AND status = 'activa'
+                  AND expires_at > CURRENT_TIMESTAMP
+                ORDER BY created_at DESC
+                LIMIT 3
+                `,
+                [item.id]
+              );
+
+            item.parchar_count =
+              Number(
+                parches.rows[0]
+                  ?.count || 0
+              );
+            item.active_reviews =
+              reviews.rows;
+          }
 
           sendJson(res, 200, {
             items:
-              result.rows,
+              items,
           });
           return;
         }

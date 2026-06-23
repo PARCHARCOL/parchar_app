@@ -39,8 +39,11 @@ node server.js
   - Clientes
 - Los negocios deben ser registrados por clientes (duenos de locales).
 - El formulario de negocio exige video y valida que dure de 15 a 20 segundos.
+- RUT y Camara de Comercio se reciben solo en PDF.
 - Se guarda info completa del usuario y del negocio.
 - Moto y carro muestran lugares cercanos cuando se comparte ubicacion.
+- El boton Parchar reemplaza el "me gusta": acumula conteo por local y permite grabar una resena en video de 15 segundos.
+- Las resenas en video duran 15 dias activas; el conteo Parchar queda acumulado.
 
 ## Acceso interno
 
