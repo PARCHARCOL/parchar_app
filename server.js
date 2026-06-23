@@ -1425,6 +1425,101 @@ async function ensureStaffAccounts() {
       ]
     );
   }
+
+  await resetAdminPasswordFromEnv();
+}
+
+async function resetAdminPasswordFromEnv() {
+  const recoveryPassword =
+    cleanText(
+      process.env
+        .PARCHAR_ADMIN_RESET_PASSWORD
+    );
+
+  if (!recoveryPassword) {
+    return;
+  }
+
+  if (recoveryPassword.length < 8) {
+    throw new Error(
+      "PARCHAR_ADMIN_RESET_PASSWORD debe tener minimo 8 caracteres."
+    );
+  }
+
+  const recoveryUsername =
+    normalizeStaffUsername(
+      process.env
+        .PARCHAR_ADMIN_RESET_USERNAME ||
+        process.env
+          .PARCHAR_ADMIN_USERNAME ||
+        "admin"
+    );
+
+  const existing = await pool.query(
+    `
+    SELECT id
+    FROM staff_users
+    WHERE LOWER(username) = LOWER($1)
+    LIMIT 1
+    `,
+    [recoveryUsername]
+  );
+
+  if (existing.rows.length) {
+    const staffId =
+      existing.rows[0].id;
+
+    await pool.query(
+      `
+      UPDATE staff_users
+      SET
+        password_hash = $1,
+        role = 'admin',
+        active = TRUE
+      WHERE id = $2
+      `,
+      [
+        hashPassword(
+          recoveryPassword
+        ),
+        staffId,
+      ]
+    );
+
+    await pool.query(
+      `
+      DELETE FROM staff_sessions
+      WHERE staff_user_id = $1
+      `,
+      [staffId]
+    );
+  } else {
+    await pool.query(
+      `
+      INSERT INTO staff_users (
+        username,
+        password_hash,
+        display_name,
+        role,
+        active
+      )
+      VALUES ($1,$2,$3,$4,$5)
+      `,
+      [
+        recoveryUsername,
+        hashPassword(
+          recoveryPassword
+        ),
+        "Administrador Parchar",
+        "admin",
+        true,
+      ]
+    );
+  }
+
+  console.warn(
+    `Clave de admin reseteada desde PARCHAR_ADMIN_RESET_PASSWORD para ${recoveryUsername}. Retira esa variable despues de entrar.`
+  );
 }
 
 async function ensureDefaultAdBanner() {

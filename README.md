@@ -66,6 +66,13 @@ Antes de desplegar, cambia estas credenciales con variables de entorno:
 - `PARCHAR_ADVISOR_USERNAME`
 - `PARCHAR_ADVISOR_PASSWORD`
 
+Si pierdes la clave del admin, puedes recuperarla temporalmente desde Render:
+
+- Agrega `PARCHAR_ADMIN_RESET_PASSWORD` con una clave nueva de minimo 8 caracteres.
+- Si el usuario admin no es `admin`, agrega tambien `PARCHAR_ADMIN_RESET_USERNAME`.
+- Redespliega la app e inicia sesion con esa clave nueva.
+- Despues de entrar, borra `PARCHAR_ADMIN_RESET_PASSWORD` de Render para que no quede reseteando en cada reinicio.
+
 ## Despliegue en la nube
 
 Se puede subir a Render o Railway como servicio Node.
