@@ -867,6 +867,59 @@ textarea {
   margin-top: 14px;
 }
 
+.admin-business-summary {
+  display: grid;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.business-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.business-counts span {
+  border-radius: 999px;
+  border: 1px solid rgba(183, 132, 245, 0.34);
+  background: rgba(22, 6, 48, 0.62);
+  color: #f2ddff;
+  font-size: 0.84rem;
+  padding: 6px 10px;
+}
+
+.latest-businesses {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 190, 106, 0.28);
+  background: rgba(255, 142, 45, 0.09);
+  padding: 10px 12px;
+}
+
+.latest-businesses > strong {
+  display: block;
+  color: #ffe1a8;
+  margin-bottom: 8px;
+}
+
+.latest-businesses ul {
+  display: grid;
+  gap: 7px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.latest-businesses li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.latest-businesses small {
+  color: var(--text-soft);
+}
+
 .staff-user-card p {
   margin: 0 0 6px;
 }

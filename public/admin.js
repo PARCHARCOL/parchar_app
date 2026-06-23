@@ -1,6 +1,10 @@
 const businessList = document.querySelector(
   "#admin-business-list"
 );
+const businessSummary =
+  document.querySelector(
+    "#admin-business-summary"
+  );
 
 const STAFF_SESSION_KEY =
   "parchar_staff_session";
@@ -96,9 +100,18 @@ let currentStatus =
   "pendiente";
 let staffToken = "";
 let currentStaff = null;
+let currentBusinesses = [];
 let currentAdRequests = [];
 let currentStaffUsers = [];
 let currentAdCampaigns = [];
+
+const BUSINESS_STATUS_LABELS = {
+  todos: "Todos",
+  pendiente: "Pendientes",
+  activo: "Activos",
+  pausado: "Pausados",
+  rechazado: "Rechazados",
+};
 
 function escapeHtml(value) {
 
@@ -682,24 +695,50 @@ function renderActionButtons(item) {
 }
 
 function renderBusinesses(items) {
+  currentBusinesses =
+    items || [];
+
+  renderBusinessSummary(
+    currentBusinesses
+  );
 
   const filtered =
     (
       items || []
     ).filter(
       (item) =>
+        currentStatus ===
+          "todos" ||
         item.status ===
-        currentStatus
+          currentStatus
     );
 
   if (!filtered.length) {
+    const total =
+      (items || []).length;
+    const label =
+      BUSINESS_STATUS_LABELS[
+        currentStatus
+      ] || currentStatus;
 
     businessList.innerHTML = `
       <div class="glass-card">
 
         <h3>
-          No hay negocios
+          No hay negocios en ${escapeHtml(
+            label.toLowerCase()
+          )}
         </h3>
+
+        <p>
+          Total registrados en la base actual: ${escapeHtml(
+            total
+          )}
+        </p>
+
+        <p class="tiny">
+          Si el cliente dice que lo creo y no aparece aqui, probablemente no termino el envio, esta usando cache vieja de la app, o lo registro antes del cambio a Neon.
+        </p>
 
       </div>
     `;
@@ -873,6 +912,104 @@ function renderBusinesses(items) {
     `
       )
       .join("");
+}
+
+function countBusinessesByStatus(
+  items
+) {
+  return (items || []).reduce(
+    (acc, item) => {
+      const status =
+        item.status ||
+        "sin_estado";
+      acc[status] =
+        (acc[status] || 0) + 1;
+      acc.todos =
+        (acc.todos || 0) + 1;
+      return acc;
+    },
+    { todos: 0 }
+  );
+}
+
+function renderBusinessSummary(
+  items
+) {
+  if (!businessSummary) {
+    return;
+  }
+
+  const counts =
+    countBusinessesByStatus(
+      items
+    );
+
+  tabs.forEach((tab) => {
+    const status =
+      tab.dataset.status;
+    const label =
+      BUSINESS_STATUS_LABELS[
+        status
+      ] || status;
+
+    tab.textContent = `${label} (${
+      counts[status] || 0
+    })`;
+  });
+
+  const latest = (items || [])
+    .slice(0, 5)
+    .map(
+      (item) => `
+        <li>
+          <strong>${escapeHtml(
+            item.business_name
+          )}</strong>
+          <span class="status-pill status-${escapeHtml(
+            item.status
+          )}">${escapeHtml(
+            item.status ||
+              "sin estado"
+          )}</span>
+          <small>${escapeHtml(
+            item.created_at
+              ? formatDateTime(
+                  item.created_at
+                )
+              : ""
+          )}</small>
+        </li>
+      `
+    )
+    .join("");
+
+  businessSummary.innerHTML = `
+    <div class="business-counts">
+      ${Object.entries(
+        BUSINESS_STATUS_LABELS
+      )
+        .map(
+          ([status, label]) => `
+          <span>
+            ${escapeHtml(label)}:
+            <strong>${escapeHtml(
+              counts[status] || 0
+            )}</strong>
+          </span>
+        `
+        )
+        .join("")}
+    </div>
+
+    <div class="latest-businesses">
+      <strong>Ultimos recibidos</strong>
+      ${
+        latest
+          ? `<ul>${latest}</ul>`
+          : `<p class="tiny">No hay locales registrados en esta base.</p>`
+      }
+    </div>
+  `;
 }
 
 function renderAdPreview(banner) {
