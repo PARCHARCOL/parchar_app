@@ -412,6 +412,33 @@ function normalizeStaffUsername(value) {
   ).toLowerCase();
 }
 
+function isValidStaffUsername(value) {
+  return /^[a-z0-9._-]{3,60}$/.test(
+    String(value || "")
+  );
+}
+
+function normalizeStaffUser(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    username: row.username,
+    displayName:
+      row.displayName ||
+      row.display_name ||
+      row.username,
+    role: row.role,
+    active: Boolean(
+      Number(row.active)
+    ),
+    createdAt:
+      row.created_at || null,
+  };
+}
+
 function normalizeExternalUrl(value) {
   const raw = cleanText(value);
 
@@ -1309,6 +1336,9 @@ async function initializeSqliteDatabase() {
       video_path TEXT NOT NULL,
       video_seconds REAL NOT NULL,
       status TEXT DEFAULT 'pendiente',
+      reviewed_by TEXT,
+      reviewed_at TEXT,
+      review_note TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1383,6 +1413,21 @@ async function initializeSqliteDatabase() {
     "businesses",
     "status",
     "TEXT DEFAULT 'activo'"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "reviewed_by",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "reviewed_at",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "businesses",
+    "review_note",
+    "TEXT"
   );
   await ensureSqliteColumn(
     "ad_banner_settings",
@@ -1522,6 +1567,9 @@ async function initializeDatabase() {
       video_path TEXT NOT NULL,
       video_seconds DOUBLE PRECISION NOT NULL,
       status TEXT DEFAULT 'pendiente',
+      reviewed_by TEXT,
+      reviewed_at TIMESTAMP,
+      review_note TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -1571,6 +1619,13 @@ async function initializeDatabase() {
   await pool.query(`
     ALTER TABLE businesses
     ADD COLUMN IF NOT EXISTS client_id INTEGER;
+  `);
+
+  await pool.query(`
+    ALTER TABLE businesses
+    ADD COLUMN IF NOT EXISTS reviewed_by TEXT,
+    ADD COLUMN IF NOT EXISTS reviewed_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS review_note TEXT;
   `);
 
   await pool.query(`
@@ -1789,6 +1844,106 @@ const server =
           sendJson(res, 200, {
             ok: true,
             staff: auth.staff,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/staff/password" &&
+          req.method === "POST"
+        ) {
+          const auth =
+            await requireStaffAuth(
+              req,
+              res
+            );
+
+          if (!auth) {
+            return;
+          }
+
+          const body = await parseJsonBody(
+            req
+          );
+          const currentPassword =
+            cleanText(
+              body.currentPassword
+            );
+          const newPassword = cleanText(
+            body.newPassword
+          );
+
+          if (
+            !currentPassword ||
+            !newPassword
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Escribe la clave actual y la nueva clave.",
+            });
+            return;
+          }
+
+          if (newPassword.length < 8) {
+            sendJson(res, 400, {
+              error:
+                "La nueva clave debe tener minimo 8 caracteres.",
+            });
+            return;
+          }
+
+          const result = await pool.query(
+            `
+            SELECT password_hash
+            FROM staff_users
+            WHERE id = $1 AND active = TRUE
+            LIMIT 1
+            `,
+            [auth.staff.id]
+          );
+          const staffRow = result.rows[0];
+
+          if (
+            !staffRow ||
+            !verifyPassword(
+              currentPassword,
+              staffRow.password_hash
+            )
+          ) {
+            sendJson(res, 401, {
+              error:
+                "La clave actual no es correcta.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE staff_users
+            SET password_hash = $1
+            WHERE id = $2
+            `,
+            [
+              hashPassword(newPassword),
+              auth.staff.id,
+            ]
+          );
+
+          await pool.query(
+            `
+            DELETE FROM staff_sessions
+            WHERE staff_user_id = $1
+              AND token_hash <> $2
+            `,
+            [
+              auth.staff.id,
+              hashToken(auth.token),
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
           });
           return;
         }
@@ -2793,6 +2948,260 @@ const server =
 
         if (
           pathname ===
+            "/api/admin/staff-users" &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const result =
+            await pool.query(`
+              SELECT
+                id,
+                username,
+                display_name AS "displayName",
+                role,
+                active,
+                created_at
+              FROM staff_users
+              ORDER BY role ASC, display_name ASC
+            `);
+
+          sendJson(res, 200, {
+            items: result.rows.map(
+              normalizeStaffUser
+            ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/staff-users" &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const username =
+            normalizeStaffUsername(
+              body.username
+            );
+          const displayName =
+            cleanLimitedText(
+              body.displayName,
+              120
+            ) || username;
+          const password = cleanText(
+            body.password
+          );
+
+          if (
+            !username ||
+            !isValidStaffUsername(
+              username
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "El usuario debe tener minimo 3 caracteres y usar solo letras, numeros, punto, guion o guion bajo.",
+            });
+            return;
+          }
+
+          if (password.length < 8) {
+            sendJson(res, 400, {
+              error:
+                "La clave debe tener minimo 8 caracteres.",
+            });
+            return;
+          }
+
+          const duplicated =
+            await pool.query(
+              `
+              SELECT id
+              FROM staff_users
+              WHERE LOWER(username) = LOWER($1)
+              LIMIT 1
+              `,
+              [username]
+            );
+
+          if (
+            duplicated.rows.length
+          ) {
+            sendJson(res, 409, {
+              error:
+                "Ese usuario interno ya existe.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            INSERT INTO staff_users (
+              username,
+              password_hash,
+              display_name,
+              role,
+              active
+            )
+            VALUES ($1,$2,$3,$4,$5)
+            `,
+            [
+              username,
+              hashPassword(password),
+              displayName,
+              "asesor",
+              true,
+            ]
+          );
+
+          const created =
+            await pool.query(
+              `
+              SELECT
+                id,
+                username,
+                display_name AS "displayName",
+                role,
+                active,
+                created_at
+              FROM staff_users
+              WHERE LOWER(username) = LOWER($1)
+              LIMIT 1
+              `,
+              [username]
+            );
+
+          sendJson(res, 201, {
+            ok: true,
+            staff:
+              normalizeStaffUser(
+                created.rows[0]
+              ),
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/staff-users\/\d+\/status$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          if (
+            Number(id) ===
+            Number(staffAuth.staff.id)
+          ) {
+            sendJson(res, 400, {
+              error:
+                "No puedes desactivar tu propia cuenta.",
+            });
+            return;
+          }
+
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const active =
+            parseBooleanFlag(
+              body.active
+            );
+
+          const existing =
+            await pool.query(
+              `
+              SELECT id, role
+              FROM staff_users
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const staffRow =
+            existing.rows[0];
+
+          if (!staffRow) {
+            sendJson(res, 404, {
+              error:
+                "Usuario interno no encontrado.",
+            });
+            return;
+          }
+
+          if (
+            staffRow.role !== "asesor"
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Desde este panel solo se activan o desactivan asesores.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE staff_users
+            SET active = $1
+            WHERE id = $2
+            `,
+            [active, id]
+          );
+
+          if (!active) {
+            await pool.query(
+              `
+              DELETE FROM staff_sessions
+              WHERE staff_user_id = $1
+              `,
+              [id]
+            );
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
             "/api/admin/ad-banner" &&
           req.method === "GET"
         ) {
@@ -3069,10 +3478,18 @@ const server =
           await pool.query(
             `
             UPDATE businesses
-            SET status = 'activo'
-            WHERE id = $1
+            SET
+              status = 'activo',
+              reviewed_by = $1,
+              reviewed_at = NOW(),
+              review_note = $2
+            WHERE id = $3
             `,
-            [id]
+            [
+              staffAuth.staff.username,
+              "Aprobado",
+              id,
+            ]
           );
 
           sendJson(res, 200, {
@@ -3107,17 +3524,26 @@ const server =
               req
             );
           const reason =
-            cleanText(
-              body.reason
+            cleanLimitedText(
+              body.reason,
+              180
             );
 
           await pool.query(
             `
             UPDATE businesses
-            SET status = 'rechazado'
-            WHERE id = $1
+            SET
+              status = 'rechazado',
+              reviewed_by = $1,
+              reviewed_at = NOW(),
+              review_note = $2
+            WHERE id = $3
             `,
-            [id]
+            [
+              staffAuth.staff.username,
+              reason || "Rechazado",
+              id,
+            ]
           );
 
           sendJson(res, 200, {
@@ -3153,10 +3579,18 @@ const server =
           await pool.query(
             `
             UPDATE businesses
-            SET status = 'pausado'
-            WHERE id = $1
+            SET
+              status = 'pausado',
+              reviewed_by = $1,
+              reviewed_at = NOW(),
+              review_note = $2
+            WHERE id = $3
             `,
-            [id]
+            [
+              staffAuth.staff.username,
+              "Pausado por admin",
+              id,
+            ]
           );
 
           sendJson(res, 200, {
@@ -3189,10 +3623,18 @@ const server =
           await pool.query(
             `
             UPDATE businesses
-            SET status = 'activo'
-            WHERE id = $1
+            SET
+              status = 'activo',
+              reviewed_by = $1,
+              reviewed_at = NOW(),
+              review_note = $2
+            WHERE id = $3
             `,
-            [id]
+            [
+              staffAuth.staff.username,
+              "Activado por admin",
+              id,
+            ]
           );
 
           sendJson(res, 200, {

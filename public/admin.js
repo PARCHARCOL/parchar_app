@@ -33,6 +33,30 @@ const staffLogoutButton =
   document.querySelector(
     "#staff-logout"
   );
+const staffPasswordForm =
+  document.querySelector(
+    "#staff-password-form"
+  );
+const staffPasswordMessage =
+  document.querySelector(
+    "#staff-password-message"
+  );
+const staffCreateForm =
+  document.querySelector(
+    "#staff-create-form"
+  );
+const staffCreateMessage =
+  document.querySelector(
+    "#staff-create-message"
+  );
+const staffUserList =
+  document.querySelector(
+    "#staff-user-list"
+  );
+const refreshStaffUsersButton =
+  document.querySelector(
+    "#refresh-staff-users"
+  );
 
 const tabs = document.querySelectorAll(
   ".admin-tab"
@@ -64,6 +88,7 @@ let currentStatus =
 let staffToken = "";
 let currentStaff = null;
 let currentAdRequests = [];
+let currentStaffUsers = [];
 
 function escapeHtml(value) {
 
@@ -663,6 +688,32 @@ function renderBusinesses(items) {
           )}
         </p>
 
+        ${
+          item.reviewed_by
+            ? `
+        <p>
+          <strong>Revisado por:</strong>
+          ${escapeHtml(
+            item.reviewed_by
+          )}
+        </p>
+
+        <p class="tiny">
+          ${escapeHtml(
+            item.review_note ||
+              "Revision registrada"
+          )} ${escapeHtml(
+              item.reviewed_at
+                ? `- ${formatDateTime(
+                    item.reviewed_at
+                  )}`
+                : ""
+            )}
+        </p>
+        `
+            : ""
+        }
+
         <p>
           <strong>Telefono:</strong>
           ${escapeHtml(
@@ -1123,6 +1174,281 @@ async function resolveAdRequest(id) {
   }
 }
 
+function renderStaffUsers(items) {
+  if (!staffUserList) {
+    return;
+  }
+
+  currentStaffUsers = items || [];
+
+  const advisors =
+    currentStaffUsers.filter(
+      (item) => item.role === "asesor"
+    );
+
+  if (!advisors.length) {
+    staffUserList.innerHTML = `
+      <div class="glass-card">
+        <h3>No hay asesores creados</h3>
+      </div>
+    `;
+    return;
+  }
+
+  staffUserList.innerHTML =
+    advisors
+      .map((item) => {
+        const active =
+          Boolean(item.active);
+        return `
+          <article class="glass-card admin-card staff-user-card">
+            <div class="mini-business-head">
+              <h3>${escapeHtml(
+                item.displayName
+              )}</h3>
+              <span class="status-pill ${
+                active
+                  ? "status-activo"
+                  : "status-pausado"
+              }">
+                ${active ? "activo" : "inactivo"}
+              </span>
+            </div>
+
+            <p><strong>Usuario:</strong> ${escapeHtml(
+              item.username
+            )}</p>
+            <p class="tiny">
+              Creado: ${escapeHtml(
+                formatDateTime(
+                  item.createdAt
+                )
+              )}
+            </p>
+
+            <div class="request-actions">
+              <button
+                type="button"
+                class="${
+                  active
+                    ? "ghost-btn"
+                    : "submit-btn"
+                }"
+                onclick="setStaffUserStatus(${Number(
+                  item.id
+                )}, ${active ? "false" : "true"})"
+              >
+                ${active ? "Desactivar" : "Reactivar"}
+              </button>
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+}
+
+async function loadStaffUsers() {
+  if (
+    !staffUserList ||
+    !isAdmin()
+  ) {
+    return;
+  }
+
+  staffUserList.innerHTML = `
+    <p class="loading">
+      Cargando asesores...
+    </p>
+  `;
+
+  try {
+    const response = await staffFetch(
+      "/api/admin/staff-users"
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Error cargando asesores"
+      );
+    }
+
+    renderStaffUsers(
+      data.items || []
+    );
+  } catch (error) {
+    staffUserList.innerHTML = `
+      <div class="glass-card">
+        <h3>Error</h3>
+        <p>${escapeHtml(
+          error.message
+        )}</p>
+      </div>
+    `;
+  }
+}
+
+async function createStaffUser(event) {
+  event.preventDefault();
+
+  if (!isAdmin()) {
+    return;
+  }
+
+  setFeedback(
+    staffCreateMessage,
+    "Creando asesor..."
+  );
+
+  const payload = Object.fromEntries(
+    new FormData(
+      staffCreateForm
+    ).entries()
+  );
+
+  try {
+    const response = await staffFetch(
+      "/api/admin/staff-users",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify(
+          payload
+        ),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo crear el asesor"
+      );
+    }
+
+    staffCreateForm.reset();
+    setFeedback(
+      staffCreateMessage,
+      "Asesor creado. Entregale su usuario y clave temporal."
+    );
+    await loadStaffUsers();
+  } catch (error) {
+    setFeedback(
+      staffCreateMessage,
+      error.message,
+      true
+    );
+  }
+}
+
+async function setStaffUserStatus(
+  id,
+  active
+) {
+  if (!isAdmin()) {
+    return;
+  }
+
+  const actionText = active
+    ? "reactivar"
+    : "desactivar";
+
+  if (
+    !window.confirm(
+      `Quieres ${actionText} este asesor?`
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      `/api/admin/staff-users/${id}/status`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          active,
+        }),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo actualizar el asesor"
+      );
+    }
+
+    await loadStaffUsers();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function changeStaffPassword(event) {
+  event.preventDefault();
+
+  setFeedback(
+    staffPasswordMessage,
+    "Actualizando clave..."
+  );
+
+  const payload = Object.fromEntries(
+    new FormData(
+      staffPasswordForm
+    ).entries()
+  );
+
+  try {
+    const response = await staffFetch(
+      "/api/staff/password",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify(
+          payload
+        ),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo cambiar la clave"
+      );
+    }
+
+    staffPasswordForm.reset();
+    setFeedback(
+      staffPasswordMessage,
+      "Clave actualizada."
+    );
+  } catch (error) {
+    setFeedback(
+      staffPasswordMessage,
+      error.message,
+      true
+    );
+  }
+}
+
 async function loadBusinesses() {
 
   try {
@@ -1178,6 +1504,9 @@ async function loadDashboardData() {
   if (isAdmin()) {
     tasks.push(
       loadAdBannerSettings()
+    );
+    tasks.push(
+      loadStaffUsers()
     );
   }
 
@@ -1298,6 +1627,21 @@ staffLogoutButton?.addEventListener(
       );
     }
   }
+);
+
+staffPasswordForm?.addEventListener(
+  "submit",
+  changeStaffPassword
+);
+
+staffCreateForm?.addEventListener(
+  "submit",
+  createStaffUser
+);
+
+refreshStaffUsersButton?.addEventListener(
+  "click",
+  loadStaffUsers
 );
 
 adForm?.addEventListener(

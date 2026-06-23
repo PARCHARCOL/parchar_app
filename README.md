@@ -54,6 +54,9 @@ Cuentas iniciales para desarrollo local:
 - Admin: usuario `admin`, clave `ParcharAdmin2026!`
 - Asesor: usuario `asesor`, clave `ParcharAsesor2026!`
 
+El usuario `admin` puede crear asesores reales desde el panel interno.
+Cada asesor entra con su propio usuario y puede cambiar su clave en `Mi acceso`.
+
 Antes de desplegar, cambia estas credenciales con variables de entorno:
 
 - `PARCHAR_ADMIN_USERNAME`

@@ -115,6 +115,150 @@
           </button>
         </section>
 
+      <section class="form-block glass-card">
+
+        <h2>
+          Mi acceso
+        </h2>
+
+        <p>
+          Cambia la clave del usuario interno con el que iniciaste sesion.
+        </p>
+
+        <form
+          id="staff-password-form"
+          class="form-grid"
+        >
+
+          <label>
+            Clave actual
+            <input
+              name="currentPassword"
+              type="password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+
+          <label>
+            Nueva clave
+            <input
+              name="newPassword"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Cambiar clave
+          </button>
+
+        </form>
+
+        <p
+          id="staff-password-message"
+          class="feedback"
+        ></p>
+
+      </section>
+
+      <section
+        id="staff-users-section"
+        class="form-block glass-card admin-only"
+      >
+
+        <h2>
+          Personal
+        </h2>
+
+        <p>
+          Crea asesores con usuario propio para aprobar locales y atender solicitudes.
+        </p>
+
+        <form
+          id="staff-create-form"
+          class="form-grid"
+        >
+
+          <label>
+            Usuario
+            <input
+              name="username"
+              autocomplete="off"
+              minlength="3"
+              pattern="[a-zA-Z0-9._-]+"
+              placeholder="asesor-norte"
+              required
+            />
+          </label>
+
+          <label>
+            Nombre del asesor
+            <input
+              name="displayName"
+              maxlength="120"
+              placeholder="Nombre visible"
+              required
+            />
+          </label>
+
+          <label>
+            Clave temporal
+            <input
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              minlength="8"
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Crear asesor
+          </button>
+
+        </form>
+
+        <p
+          id="staff-create-message"
+          class="feedback"
+        ></p>
+
+        <div class="my-businesses-head staff-users-head">
+          <h3>
+            Asesores
+          </h3>
+
+          <button
+            id="refresh-staff-users"
+            type="button"
+            class="ghost-btn"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <div
+          id="staff-user-list"
+          class="admin-list"
+        >
+
+          <p class="loading">
+            Cargando asesores...
+          </p>
+
+        </div>
+
+      </section>
+
       <section id="admin-business-section" class="form-block glass-card">
 
         <h2>

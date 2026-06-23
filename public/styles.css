@@ -810,6 +810,14 @@ textarea {
   text-decoration: none;
 }
 
+.staff-users-head {
+  margin-top: 14px;
+}
+
+.staff-user-card p {
+  margin: 0 0 6px;
+}
+
 .bottom-nav {
   position: absolute;
   left: 12px;
