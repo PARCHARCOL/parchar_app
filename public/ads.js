@@ -364,6 +364,9 @@ async function loadAdBanner() {
   adBanner.classList.remove(
     "is-clickable"
   );
+  adBanner.classList.remove(
+    "has-media"
+  );
   adBanner.removeAttribute("role");
   adBanner.removeAttribute("tabindex");
   delete adBanner.dataset.adTargetUrl;
@@ -500,6 +503,10 @@ async function loadAdBanner() {
       banner.enabled &&
       banner.mediaPath
     ) {
+      adBanner.classList.add(
+        "has-media"
+      );
+
       if (!mediaContainer) {
         mediaContainer =
           document.createElement(

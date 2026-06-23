@@ -938,6 +938,7 @@ textarea {
   align-items: center;
   gap: 8px;
   padding: 8px 10px;
+  overflow: hidden;
 }
 
 .ad-media {
@@ -958,6 +959,62 @@ textarea {
   margin: 0;
   border: 0;
   border-radius: 0;
+}
+
+.ad-banner.has-media {
+  background: #130227;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "pill cta"
+    "text cta";
+  align-items: center;
+  gap: 7px 14px;
+}
+
+.ad-banner.has-media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, rgba(10, 1, 24, 0.56), rgba(36, 4, 67, 0.34) 42%, rgba(10, 1, 24, 0.68)),
+    linear-gradient(0deg, rgba(10, 1, 24, 0.38), rgba(10, 1, 24, 0.08));
+  pointer-events: none;
+}
+
+.ad-banner.has-media .ad-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  flex: none;
+  border: 0;
+  border-radius: inherit;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.ad-banner.has-media .ad-pill,
+.ad-banner.has-media p,
+.ad-banner.has-media .ad-cta {
+  position: relative;
+  z-index: 1;
+}
+
+.ad-banner.has-media .ad-pill {
+  grid-area: pill;
+  justify-self: start;
+}
+
+.ad-banner.has-media p {
+  grid-area: text;
+}
+
+.ad-banner.has-media .ad-cta {
+  grid-area: cta;
+  justify-self: end;
 }
 
 .ad-link-copy {
@@ -991,10 +1048,11 @@ textarea {
 }
 
 .ad-pill {
-  color: #ffdca8;
+  color: #fff8df;
   border-radius: 6px;
-  border: 1px solid rgba(255, 220, 168, 0.34);
-  background: rgba(255, 220, 168, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.38);
+  background: rgba(24, 4, 52, 0.5);
+  backdrop-filter: blur(6px);
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -1007,8 +1065,9 @@ textarea {
   margin: 0;
   font-size: 0.82rem;
   font-weight: 700;
-  color: #ffe9c8;
+  color: #fff8e8;
   flex: 1;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.55);
 }
 
 .ad-cta {
@@ -1133,7 +1192,7 @@ textarea {
 @media (min-width: 700px) {
   :root {
     --nav-height: 74px;
-    --ad-height: 104px;
+    --ad-height: 122px;
   }
 
   .theme-body {
@@ -1227,7 +1286,7 @@ textarea {
 @media (min-width: 1100px) {
   :root {
     --nav-height: 76px;
-    --ad-height: 116px;
+    --ad-height: 138px;
   }
 
   .app-shell {
@@ -1308,7 +1367,7 @@ textarea {
 @media (max-width: 540px) {
   :root {
     --nav-height: 70px;
-    --ad-height: 132px;
+    --ad-height: 150px;
   }
 
   .app-shell {
