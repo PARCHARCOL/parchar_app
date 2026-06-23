@@ -3736,6 +3736,14 @@ const server =
             return;
           }
 
+          if (!targetUrl) {
+            sendJson(res, 400, {
+              error:
+                "Agrega el enlace de destino para el boton Ver oferta.",
+            });
+            return;
+          }
+
           if (
             !startDate ||
             !endDate

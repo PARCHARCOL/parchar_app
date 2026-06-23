@@ -207,8 +207,16 @@ function trackAdClick(campaignId) {
   ).catch(() => {});
 }
 
-function openAdTarget(targetUrl, campaignId) {
+function openAdTarget(
+  targetUrl,
+  campaignId,
+  isCampaign = false
+) {
   if (!targetUrl) {
+    if (isCampaign) {
+      return;
+    }
+
     openAdRequestModal();
     return;
   }
@@ -238,7 +246,10 @@ function bindAdRequestButtons() {
         () => {
           openAdTarget(
             button.dataset.adTargetUrl,
-            button.dataset.adCampaignId
+            button.dataset.adCampaignId,
+            button.dataset
+              .adCampaignActive ===
+              "true"
           );
         }
       );
@@ -267,8 +278,10 @@ async function loadAdBanner() {
 
   if (button) {
     button.textContent = "Anunciar";
+    button.disabled = false;
     delete button.dataset.adTargetUrl;
     delete button.dataset.adCampaignId;
+    delete button.dataset.adCampaignActive;
   }
 
   try {
@@ -289,10 +302,7 @@ async function loadAdBanner() {
       data.banner || {};
 
     if (pill) {
-      pill.textContent =
-        banner.enabled
-          ? banner.title || "Publicidad"
-          : "Publicidad";
+      pill.textContent = "Anuncio";
     }
 
     if (text) {
@@ -333,20 +343,33 @@ async function loadAdBanner() {
     if (button) {
       button.textContent =
         banner.ctaLabel || "Anunciar";
+      button.disabled = false;
 
       if (
-        banner.enabled &&
-        banner.targetUrl
+        banner.enabled
       ) {
-        button.dataset.adTargetUrl =
-          banner.targetUrl;
         button.dataset.adCampaignId =
           banner.id || "";
+        button.dataset.adCampaignActive =
+          "true";
+
+        if (banner.targetUrl) {
+          button.dataset.adTargetUrl =
+            banner.targetUrl;
+        } else {
+          button.textContent =
+            "Sin enlace";
+          button.disabled = true;
+          delete button.dataset
+            .adTargetUrl;
+        }
       } else {
         delete button.dataset
           .adTargetUrl;
         delete button.dataset
           .adCampaignId;
+        delete button.dataset
+          .adCampaignActive;
       }
     }
 
@@ -372,6 +395,18 @@ async function loadAdBanner() {
           mediaContainer,
           pill
         );
+      } else if (
+        banner.targetUrl &&
+        mediaContainer.tagName !== "A"
+      ) {
+        const replacement =
+          document.createElement("a");
+        replacement.className =
+          "ad-media";
+        mediaContainer.replaceWith(
+          replacement
+        );
+        mediaContainer = replacement;
       }
 
       mediaContainer.replaceChildren();
@@ -402,7 +437,7 @@ async function loadAdBanner() {
       media.setAttribute(
         "aria-label",
         banner.advertiserName ||
-          "Publicidad"
+          "Anuncio"
       );
 
       if (media.tagName === "VIDEO") {
@@ -413,7 +448,7 @@ async function loadAdBanner() {
       } else {
         media.alt =
           banner.advertiserName ||
-          "Publicidad";
+          "Anuncio";
       }
 
       mediaContainer.appendChild(media);
@@ -423,7 +458,7 @@ async function loadAdBanner() {
     }
   } catch {
     if (pill) {
-      pill.textContent = "Publicidad";
+      pill.textContent = "Anuncio";
     }
     if (text) {
       text.textContent =
