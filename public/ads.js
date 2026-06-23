@@ -578,7 +578,7 @@ async function loadAdBanner() {
           height: "100%",
           border: "0",
           borderRadius: "inherit",
-          opacity: "0.88",
+          opacity: "1",
           pointerEvents: "none",
         }
       );

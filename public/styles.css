@@ -980,8 +980,8 @@ textarea {
   inset: 0;
   z-index: 0;
   background:
-    linear-gradient(90deg, rgba(10, 1, 24, 0.56), rgba(36, 4, 67, 0.34) 42%, rgba(10, 1, 24, 0.68)),
-    linear-gradient(0deg, rgba(10, 1, 24, 0.38), rgba(10, 1, 24, 0.08));
+    linear-gradient(90deg, rgba(10, 1, 24, 0.42), rgba(36, 4, 67, 0.12) 42%, rgba(10, 1, 24, 0.46)),
+    linear-gradient(0deg, rgba(10, 1, 24, 0.22), rgba(10, 1, 24, 0.02));
   pointer-events: none;
 }
 
@@ -995,7 +995,7 @@ textarea {
   flex: none;
   border: 0;
   border-radius: inherit;
-  opacity: 0.88;
+  opacity: 1;
   pointer-events: none;
 }
 
@@ -1013,11 +1013,17 @@ textarea {
 .ad-banner:has(.ad-media:not([hidden])) .ad-pill {
   grid-area: pill;
   justify-self: start;
+  background: rgba(8, 1, 18, 0.48);
 }
 
 .ad-banner.has-media p,
 .ad-banner:has(.ad-media:not([hidden])) p {
   grid-area: text;
+  width: fit-content;
+  max-width: min(100%, 680px);
+  border-radius: 10px;
+  background: rgba(8, 1, 18, 0.42);
+  padding: 7px 9px;
 }
 
 .ad-banner.has-media .ad-cta,
