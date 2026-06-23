@@ -17,7 +17,12 @@ function updateStatus(message) {
 
 function redirectWithCategory(category, coords) {
   const url = new URL("/places.html", window.location.origin);
-  url.searchParams.set("category", category);
+
+  if (category === "walking") {
+    url.searchParams.set("mode", "walking");
+  } else {
+    url.searchParams.set("category", category);
+  }
 
   if (coords) {
     url.searchParams.set("lat", String(coords.latitude));
@@ -35,13 +40,22 @@ function handleCategory(route) {
 
   if (!navigator.geolocation) {
     updateStatus(
-      "No se pudo leer tu ubicacion. Te mostrare sitios generales por categoria."
+      route === "walking"
+        ? "Para mostrar sitios a pie necesitamos tu ubicacion."
+        : "No se pudo leer tu ubicacion. Te mostrare sitios generales por categoria."
     );
-    redirectWithCategory(route, null);
+
+    if (route !== "walking") {
+      redirectWithCategory(route, null);
+    }
     return;
   }
 
-  updateStatus("Buscando tu ubicacion para mostrar lugares cercanos...");
+  updateStatus(
+    route === "walking"
+      ? "Buscando sitios para ir caminando desde donde estas..."
+      : "Buscando tu ubicacion para mostrar lugares cercanos..."
+  );
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -50,9 +64,14 @@ function handleCategory(route) {
     },
     () => {
       updateStatus(
-        "No autorizaste ubicacion. Te mostrare sitios generales por categoria."
+        route === "walking"
+          ? "No autorizaste ubicacion. No puedo calcular sitios para ir a pie."
+          : "No autorizaste ubicacion. Te mostrare sitios generales por categoria."
       );
-      redirectWithCategory(route, null);
+
+      if (route !== "walking") {
+        redirectWithCategory(route, null);
+      }
     },
     {
       enableHighAccuracy: true,

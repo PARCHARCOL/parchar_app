@@ -10,6 +10,9 @@ const resultsEl = document.querySelector(
   "#results"
 );
 
+const WALKING_MODE = "walking";
+const WALKING_DISTANCE_KM = 1.5;
+
 const titleByCategory = {
   moto: "Planes en moto",
 
@@ -191,7 +194,8 @@ function formatDistance(
 
 function buildRouteUrl(
   item,
-  userCoords
+  userCoords,
+  travelMode = "driving"
 ) {
   const destinationLatitude =
     Number(item.latitude);
@@ -207,7 +211,7 @@ function buildRouteUrl(
   );
   url.searchParams.set(
     "travelmode",
-    "driving"
+    travelMode
   );
 
   if (
@@ -266,10 +270,20 @@ function escapeHtml(value) {
 
 function renderCards(
   items,
-  userCoords
+  userCoords,
+  options = {}
 ) {
   const hasUserCoords =
     Boolean(userCoords);
+  const routeMode =
+    options.routeMode ||
+    "driving";
+  const emptyTitle =
+    options.emptyTitle ||
+    "Aun no hay sitios activos en esta categoria.";
+  const emptyMessage =
+    options.emptyMessage ||
+    "Parchar mostrara solo negocios seleccionados y aprobados.";
 
   if (!items.length) {
 
@@ -277,12 +291,15 @@ function renderCards(
       <article class="empty-card">
 
         <h3>
-          Aun no hay sitios activos en esta categoria.
+          ${escapeHtml(
+            emptyTitle
+          )}
         </h3>
 
         <p>
-          Parchar mostrara solo negocios
-          seleccionados y aprobados.
+          ${escapeHtml(
+            emptyMessage
+          )}
         </p>
 
       </article>
@@ -297,7 +314,8 @@ function renderCards(
         const routeUrl =
           buildRouteUrl(
             item,
-            userCoords
+            userCoords,
+            routeMode
           );
 
         return `
@@ -430,18 +448,26 @@ async function loadPlaces() {
     params.get(
       "category"
     ) || "";
+  const mode =
+    params.get("mode") || "";
+  const isWalkingMode =
+    mode === WALKING_MODE;
 
   titleEl.textContent =
-    titleByCategory[
-      category
-    ] ||
-    "Sitios disponibles";
+    isWalkingMode
+      ? "Planes a pie"
+      : titleByCategory[
+          category
+        ] ||
+        "Sitios disponibles";
 
   subtitleEl.textContent =
-    subtitleByCategory[
-      category
-    ] ||
-    "Negocios seleccionados por Parchar.";
+    isWalkingMode
+      ? "Sitios cercanos para ir caminando desde donde estas."
+      : subtitleByCategory[
+          category
+        ] ||
+        "Negocios seleccionados por Parchar.";
 
   resultsEl.innerHTML =
     `
@@ -459,9 +485,29 @@ async function loadPlaces() {
 
     if (!userCoords) {
       subtitleEl.textContent =
-        "Calculando distancia desde tu ubicacion...";
+        isWalkingMode
+          ? "Necesitamos tu ubicacion para encontrar sitios caminables."
+          : "Calculando distancia desde tu ubicacion...";
       userCoords =
         await requestUserCoords();
+    }
+
+    if (
+      isWalkingMode &&
+      !userCoords
+    ) {
+      renderCards(
+        [],
+        null,
+        {
+          emptyTitle:
+            "Activa tu ubicacion para ver sitios a pie.",
+          emptyMessage:
+            "Este filtro necesita saber donde estas para mostrar locales cercanos caminables.",
+          routeMode: "walking",
+        }
+      );
+      return;
     }
 
     const response =
@@ -480,23 +526,10 @@ async function loadPlaces() {
       );
     }
 
-    const filtered =
+    let filtered =
       (
         data.items || []
       )
-        .filter(
-          (item) =>
-
-            String(
-              item.category
-            )
-              .toLowerCase() ===
-
-            String(
-              category
-            )
-              .toLowerCase()
-        )
         .filter(
           (item) =>
 
@@ -541,7 +574,31 @@ async function loadPlaces() {
           }
         );
 
-    if (userCoords) {
+    if (isWalkingMode) {
+      filtered = filtered.filter(
+        (item) =>
+          item.distanceKm !== null &&
+          item.distanceKm <=
+            WALKING_DISTANCE_KM
+      );
+    } else {
+      filtered = filtered.filter(
+        (item) =>
+          String(
+            item.category
+          )
+            .toLowerCase() ===
+          String(category)
+            .toLowerCase()
+      );
+    }
+
+    if (isWalkingMode) {
+      subtitleEl.textContent =
+        `Locales hasta ${WALKING_DISTANCE_KM.toFixed(
+          1
+        )} km de ti para ir caminando.`;
+    } else if (userCoords) {
       subtitleEl.textContent =
         "Sitios ordenados por cercania a tu ubicacion.";
     } else {
@@ -551,7 +608,20 @@ async function loadPlaces() {
 
     renderCards(
       filtered,
-      userCoords
+      userCoords,
+      {
+        routeMode: isWalkingMode
+          ? "walking"
+          : "driving",
+        emptyTitle: isWalkingMode
+          ? "No hay sitios caminables cerca."
+          : "Aun no hay sitios activos en esta categoria.",
+        emptyMessage: isWalkingMode
+          ? `Por ahora no hay locales activos a menos de ${WALKING_DISTANCE_KM.toFixed(
+              1
+            )} km.`
+          : "Parchar mostrara solo negocios seleccionados y aprobados.",
+      }
     );
 
   } catch (error) {
