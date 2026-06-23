@@ -1128,11 +1128,28 @@ function isPdfDocument(file) {
 }
 
 function isAllowedReviewVideo(file) {
-  return Boolean(
-    file &&
-      ALLOWED_REVIEW_VIDEO_TYPES.has(
-        file.mimetype
-      )
+  if (!file) {
+    return false;
+  }
+
+  const mimetype = String(
+    file.mimetype || ""
+  ).toLowerCase();
+  const ext = path
+    .extname(
+      file.originalname || ""
+    )
+    .toLowerCase();
+
+  return (
+    Array.from(
+      ALLOWED_REVIEW_VIDEO_TYPES
+    ).some((type) =>
+      mimetype.startsWith(type)
+    ) ||
+    [".mp4", ".webm", ".mov"].includes(
+      ext
+    )
   );
 }
 

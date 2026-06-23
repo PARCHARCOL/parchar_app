@@ -514,11 +514,15 @@ async function startReviewRecording() {
     }
 
     const mimeType =
-      MediaRecorder.isTypeSupported(
-        "video/webm"
-      )
-        ? "video/webm"
-        : "";
+      [
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+        "video/mp4",
+      ].find((type) =>
+        MediaRecorder.isTypeSupported(
+          type
+        )
+      ) || "";
 
     reviewRecorder =
       new MediaRecorder(
