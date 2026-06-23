@@ -86,7 +86,12 @@ Se puede subir a Render o Railway como servicio Node.
 - Sin credenciales Cloudinary, los archivos se guardan en `/uploads`.
 - Con credenciales Cloudinary, videos y documentos se guardan en Cloudinary.
 
-Importante para Render gratis: SQLite y `/uploads` quedan en disco temporal si no hay disco persistente pagado. En cada deploy o reinicio se pueden perder locales, campanas, solicitudes y archivos locales. Para no perder datos en plan gratis usa PostgreSQL externo, por ejemplo Neon o Supabase, con `DATABASE_MODE=postgres` y `DATABASE_URL`.
+Importante para Render gratis: SQLite y `/uploads` quedan en disco temporal. En cada deploy o reinicio se pueden perder locales, campanas, solicitudes y archivos locales. Para no perder datos en plan gratis usa PostgreSQL externo, por ejemplo Neon o Supabase, con `DATABASE_MODE=postgres` y `DATABASE_URL`, y usa Cloudinary para todos los archivos.
+
+La app trae una proteccion de produccion: si detecta que esta corriendo en Render sin PostgreSQL o sin Cloudinary, no arranca. Es mejor que falle el deploy con un mensaje claro a que arranque con datos temporales y despues borre todo. Solo desactiva esa proteccion si tienes infraestructura persistente pagada:
+
+- `ALLOW_RENDER_SQLITE=true` permite SQLite en Render bajo tu responsabilidad.
+- `ALLOW_RENDER_LOCAL_UPLOADS=true` permite archivos locales en Render bajo tu responsabilidad.
 
 ## Acceso permanente (recomendado)
 
@@ -96,16 +101,21 @@ Para que no sea temporal debes dejarla en hosting 24/7 con dominio.
 
 1. Sube esta carpeta a GitHub (repo).
 2. En Render crea un **Web Service** desde ese repo.
-3. Render detectara `render.yaml` y creara:
-   - servicio Node
-   - disco persistente para DB y videos
-4. Espera deploy completo y prueba URL `onrender.com`.
-5. En Render agrega tu dominio (ej: `parchar.co`) en `Settings > Custom Domains`.
-6. Configura DNS en tu proveedor de dominio y luego haz `Verify` en Render.
+3. Crea una base PostgreSQL externa en Neon o Supabase.
+4. En Render > Environment deja estas variables:
+   - `DATABASE_MODE=postgres`
+   - `DATABASE_URL=...` cadena de conexion de Neon/Supabase
+   - `CLOUDINARY_CLOUD_NAME=...`
+   - `CLOUDINARY_API_KEY=...`
+   - `CLOUDINARY_API_SECRET=...`
+5. Si el servicio viejo tenia `DATABASE_MODE=sqlite`, cambialo a `postgres`. Si tenia `DATA_DIR` o `UPLOADS_DIR`, ya no son necesarios para Render gratis.
+6. Espera deploy completo y prueba URL `onrender.com`.
+7. En Render agrega tu dominio (ej: `parchar.co`) en `Settings > Custom Domains`.
+8. Configura DNS en tu proveedor de dominio y luego haz `Verify` en Render.
 
 Con eso queda estable y sin vencimiento de link.
 
-Importante: en Render, los discos persistentes aplican en planes de pago. En plan gratis no uses SQLite para datos reales.
+Importante: en Render, los discos persistentes aplican en planes de pago. En plan gratis no uses SQLite ni uploads locales para datos reales.
 
 ## Publicar ya en internet (URL HTTPS)
 

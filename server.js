@@ -69,6 +69,35 @@ const DATABASE_MODE = String(
 const DATABASE_URL = String(
   process.env.DATABASE_URL || ""
 ).trim();
+const CLOUDINARY_CONFIGURED =
+  Boolean(
+    process.env
+      .CLOUDINARY_CLOUD_NAME &&
+      process.env
+        .CLOUDINARY_API_KEY &&
+      process.env
+        .CLOUDINARY_API_SECRET
+  );
+const IS_RENDER_HOST =
+  Boolean(
+    process.env.RENDER ||
+      process.env.RENDER_SERVICE_ID ||
+      process.env.RENDER_EXTERNAL_URL
+  );
+const ALLOW_RENDER_SQLITE =
+  String(
+    process.env
+      .ALLOW_RENDER_SQLITE || ""
+  )
+    .trim()
+    .toLowerCase() === "true";
+const ALLOW_RENDER_LOCAL_UPLOADS =
+  String(
+    process.env
+      .ALLOW_RENDER_LOCAL_UPLOADS || ""
+  )
+    .trim()
+    .toLowerCase() === "true";
 
 if (
   !["auto", "sqlite", "postgres"].includes(
@@ -98,18 +127,32 @@ if (
   );
 }
 
+if (
+  IS_RENDER_HOST &&
+  !ALLOW_RENDER_SQLITE &&
+  (!DATABASE_URL ||
+    DATABASE_MODE === "sqlite")
+) {
+  throw new Error(
+    "Proteccion de datos: en Render no uses SQLite para produccion. Configura DATABASE_MODE=postgres y DATABASE_URL de Neon/Supabase. Si realmente tienes un disco persistente pago y quieres asumir el riesgo, define ALLOW_RENDER_SQLITE=true."
+  );
+}
+
+if (
+  IS_RENDER_HOST &&
+  !ALLOW_RENDER_LOCAL_UPLOADS &&
+  !CLOUDINARY_CONFIGURED
+) {
+  throw new Error(
+    "Proteccion de archivos: en Render gratis los uploads locales se pueden borrar. Configura CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET. Si realmente tienes disco persistente pago y quieres asumir el riesgo, define ALLOW_RENDER_LOCAL_UPLOADS=true."
+  );
+}
+
 const USE_POSTGRES =
   DATABASE_MODE !== "sqlite" &&
   Boolean(DATABASE_URL);
 const USE_CLOUDINARY =
-  Boolean(
-    process.env
-      .CLOUDINARY_CLOUD_NAME &&
-      process.env
-        .CLOUDINARY_API_KEY &&
-      process.env
-        .CLOUDINARY_API_SECRET
-  );
+  CLOUDINARY_CONFIGURED;
 const VIDEO_MIN_SECONDS = 15;
 const VIDEO_MAX_SECONDS = 20;
 const AD_MEDIA_MAX_BYTES =

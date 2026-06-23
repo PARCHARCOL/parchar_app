@@ -964,6 +964,20 @@ textarea {
   cursor: pointer;
 }
 
+.ad-banner.is-clickable {
+  cursor: pointer;
+}
+
+.ad-banner.is-clickable:hover {
+  border-color: rgba(255, 210, 122, 0.82);
+  box-shadow: 0 10px 24px rgba(255, 143, 39, 0.16);
+}
+
+.ad-banner.is-clickable:focus-visible {
+  outline: 2px solid rgba(255, 216, 105, 0.95);
+  outline-offset: 3px;
+}
+
 .ad-banner[hidden] {
   display: none;
 }
@@ -1119,7 +1133,7 @@ textarea {
 @media (min-width: 700px) {
   :root {
     --nav-height: 74px;
-    --ad-height: 82px;
+    --ad-height: 104px;
   }
 
   .theme-body {
@@ -1145,23 +1159,40 @@ textarea {
   }
 
   .ad-banner {
-    gap: 12px;
+    display: grid;
+    grid-template-columns: clamp(170px, 28%, 230px) minmax(0, 1fr) auto;
+    grid-template-areas:
+      "media pill cta"
+      "media text cta";
+    align-items: center;
+    gap: 7px 16px;
     padding: 10px 14px;
   }
 
   .ad-media {
-    width: 96px;
-    height: 58px;
-    flex-basis: 96px;
+    grid-area: media;
+    width: 100%;
+    height: calc(var(--ad-height) - 20px);
+    flex-basis: auto;
     border-radius: 12px;
   }
 
+  .ad-pill {
+    grid-area: pill;
+    justify-self: start;
+  }
+
   .ad-banner p {
+    grid-area: text;
     font-size: 0.94rem;
+    line-height: 1.25;
   }
 
   .ad-cta {
+    grid-area: cta;
+    justify-self: end;
     min-height: 40px;
+    min-width: 110px;
     padding: 8px 13px;
     font-size: 0.84rem;
   }
@@ -1196,12 +1227,31 @@ textarea {
 @media (min-width: 1100px) {
   :root {
     --nav-height: 76px;
-    --ad-height: 86px;
+    --ad-height: 116px;
   }
 
   .app-shell {
     width: min(calc(100vw - 48px), 1140px);
     padding: 24px 24px calc(var(--nav-height) + var(--ad-height) + 44px);
+  }
+
+  .ad-banner {
+    grid-template-columns: clamp(260px, 30%, 340px) minmax(0, 1fr) auto;
+    gap: 8px 20px;
+  }
+
+  .ad-media {
+    height: calc(var(--ad-height) - 20px);
+  }
+
+  .ad-banner p {
+    font-size: 1rem;
+  }
+
+  .ad-cta {
+    min-height: 46px;
+    min-width: 124px;
+    font-size: 0.88rem;
   }
 
   .home-body .app-shell {

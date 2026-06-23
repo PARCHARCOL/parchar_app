@@ -231,6 +231,90 @@ function openAdTarget(
   );
 }
 
+function bindAdBannerClick() {
+  if (
+    !adBanner ||
+    adBanner.dataset.adBannerBound
+  ) {
+    return;
+  }
+
+  adBanner.dataset.adBannerBound =
+    "true";
+
+  adBanner.addEventListener(
+    "click",
+    (event) => {
+      if (
+        event.target.closest(
+          ".ad-cta, .ad-media"
+        )
+      ) {
+        return;
+      }
+
+      const opensRequest =
+        adBanner.dataset
+          .adOpenRequest === "true";
+      const opensCampaign =
+        adBanner.dataset
+          .adCampaignActive ===
+          "true" &&
+        adBanner.dataset.adTargetUrl;
+
+      if (
+        !opensRequest &&
+        !opensCampaign
+      ) {
+        return;
+      }
+
+      openAdTarget(
+        adBanner.dataset.adTargetUrl,
+        adBanner.dataset.adCampaignId,
+        adBanner.dataset
+          .adCampaignActive === "true"
+      );
+    }
+  );
+
+  adBanner.addEventListener(
+    "keydown",
+    (event) => {
+      if (
+        event.key !== "Enter" &&
+        event.key !== " "
+      ) {
+        return;
+      }
+
+      event.preventDefault();
+      const opensRequest =
+        adBanner.dataset
+          .adOpenRequest === "true";
+      const opensCampaign =
+        adBanner.dataset
+          .adCampaignActive ===
+          "true" &&
+        adBanner.dataset.adTargetUrl;
+
+      if (
+        !opensRequest &&
+        !opensCampaign
+      ) {
+        return;
+      }
+
+      openAdTarget(
+        adBanner.dataset.adTargetUrl,
+        adBanner.dataset.adCampaignId,
+        adBanner.dataset
+          .adCampaignActive === "true"
+      );
+    }
+  );
+}
+
 function bindAdRequestButtons() {
   document
     .querySelectorAll(
@@ -277,6 +361,17 @@ async function loadAdBanner() {
     "ad-disabled"
   );
   adBanner.hidden = false;
+  adBanner.classList.remove(
+    "is-clickable"
+  );
+  adBanner.removeAttribute("role");
+  adBanner.removeAttribute("tabindex");
+  delete adBanner.dataset.adTargetUrl;
+  delete adBanner.dataset.adCampaignId;
+  delete adBanner.dataset
+    .adCampaignActive;
+  delete adBanner.dataset
+    .adOpenRequest;
 
   if (button) {
     button.textContent = "Anunciar";
@@ -306,6 +401,37 @@ async function loadAdBanner() {
     const banner =
       data.banner || {};
 
+    if (
+      banner.enabled &&
+      banner.targetUrl
+    ) {
+      adBanner.classList.add(
+        "is-clickable"
+      );
+      adBanner.setAttribute(
+        "role",
+        "link"
+      );
+      adBanner.tabIndex = 0;
+      adBanner.dataset.adTargetUrl =
+        banner.targetUrl;
+      adBanner.dataset.adCampaignId =
+        banner.id || "";
+      adBanner.dataset
+        .adCampaignActive = "true";
+    } else if (!banner.enabled) {
+      adBanner.classList.add(
+        "is-clickable"
+      );
+      adBanner.setAttribute(
+        "role",
+        "button"
+      );
+      adBanner.tabIndex = 0;
+      adBanner.dataset.adOpenRequest =
+        "true";
+    }
+
     if (pill) {
       pill.textContent = "Anuncio";
     }
@@ -329,20 +455,7 @@ async function loadAdBanner() {
             banner.targetUrl
         )
       );
-      text.onclick =
-        banner.enabled &&
-        banner.targetUrl
-          ? () => {
-              trackAdClick(
-                banner.id
-              );
-              window.open(
-                banner.targetUrl,
-                "_blank",
-                "noopener,noreferrer"
-              );
-            }
-          : null;
+      text.onclick = null;
     }
 
     if (button) {
@@ -423,10 +536,11 @@ async function loadAdBanner() {
           "_blank";
         mediaContainer.rel =
           "noopener noreferrer";
-        mediaContainer.onclick = () => {
+        mediaContainer.onclick = (event) => {
           trackAdClick(
             banner.id
           );
+          event.stopPropagation();
         };
       }
 
@@ -474,6 +588,7 @@ async function loadAdBanner() {
 
 function initializeAds() {
   bindAdRequestButtons();
+  bindAdBannerClick();
   loadAdBanner();
 
   if (!adRefreshTimer) {
