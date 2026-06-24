@@ -56,7 +56,7 @@ function appendTemplateImage(
   alt
 ) {
   if (!src) {
-    return;
+    return null;
   }
 
   const image =
@@ -66,6 +66,67 @@ function appendTemplateImage(
   image.alt = alt;
   image.loading = "lazy";
   wrapper.appendChild(image);
+  return image;
+}
+
+function configureAdVideo(
+  video,
+  loop = false
+) {
+  video.muted = true;
+  video.autoplay = true;
+  video.loop = loop;
+  video.playsInline = true;
+  video.preload = "metadata";
+}
+
+function createAdaptiveMediaStage(
+  banner,
+  mediaTag
+) {
+  const stage =
+    document.createElement("div");
+  stage.className =
+    "ad-media-stage";
+
+  const backdrop =
+    document.createElement(mediaTag);
+  backdrop.className =
+    "ad-media-fill";
+  backdrop.src = banner.mediaPath;
+  backdrop.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+
+  const media =
+    document.createElement(mediaTag);
+  media.className =
+    "ad-media-main";
+  media.src = banner.mediaPath;
+  media.setAttribute(
+    "aria-label",
+    banner.advertiserName ||
+      "Anuncio"
+  );
+
+  if (mediaTag === "video") {
+    configureAdVideo(backdrop, true);
+    configureAdVideo(media, false);
+  } else {
+    backdrop.alt = "";
+    media.alt =
+      banner.advertiserName ||
+      "Anuncio";
+  }
+
+  stage.append(backdrop, media);
+
+  return {
+    stage,
+    media,
+    backdrop,
+  };
 }
 
 function createAdTemplateElement(banner) {
@@ -86,6 +147,29 @@ function createAdTemplateElement(banner) {
   glow.className = "ad-template-glow";
   template.appendChild(glow);
 
+  appendTemplateImage(
+    template,
+    "ad-template-bg",
+    banner.productPath ||
+      banner.logoPath,
+    ""
+  );
+
+  const layout =
+    document.createElement("div");
+  layout.className =
+    "ad-template-layout";
+
+  const logoZone =
+    document.createElement("div");
+  logoZone.className =
+    "ad-template-logo-zone";
+
+  const productZone =
+    document.createElement("div");
+  productZone.className =
+    "ad-template-product-zone";
+
   const copy =
     document.createElement("div");
   copy.className = "ad-template-copy";
@@ -99,7 +183,11 @@ function createAdTemplateElement(banner) {
   const title =
     document.createElement("strong");
   title.textContent =
-    banner.title || "Publicidad";
+    banner.title &&
+    banner.title.toLowerCase() !==
+      "publicidad"
+      ? banner.title
+      : "Oferta";
 
   const message =
     document.createElement("em");
@@ -112,20 +200,23 @@ function createAdTemplateElement(banner) {
     title,
     message
   );
-  template.appendChild(copy);
+  layout.appendChild(logoZone);
+  layout.appendChild(copy);
+  layout.appendChild(productZone);
+  template.appendChild(layout);
 
   appendTemplateImage(
-    template,
+    logoZone,
     "ad-template-logo",
     banner.logoPath,
     banner.advertiserName ||
       "Logo del anunciante"
   );
   appendTemplateImage(
-    template,
+    productZone,
     "ad-template-product",
     banner.productPath ||
-      banner.logoPath,
+      "",
     banner.title || "Producto"
   );
 
@@ -811,26 +902,21 @@ async function loadAdBanner() {
         return;
       }
 
-      const media =
-        document.createElement(
-          String(
-            banner.mediaType || ""
-          ).startsWith("video/")
-            ? "video"
-            : "img"
-        );
-      media.src = banner.mediaPath;
-      media.setAttribute(
-        "aria-label",
-        banner.advertiserName ||
-          "Anuncio"
+      const mediaTag = String(
+        banner.mediaType || ""
+      ).startsWith("video/")
+        ? "video"
+        : "img";
+      const {
+        stage,
+        media,
+        backdrop,
+      } = createAdaptiveMediaStage(
+        banner,
+        mediaTag
       );
 
-      if (media.tagName === "VIDEO") {
-        media.muted = true;
-        media.autoplay = true;
-        media.loop = false;
-        media.playsInline = true;
+      if (mediaTag === "video") {
         media.addEventListener(
           "ended",
           () => {
@@ -854,16 +940,13 @@ async function loadAdBanner() {
           { once: true }
         );
       } else {
-        media.alt =
-          banner.advertiserName ||
-          "Anuncio";
         scheduleAdRefresh(AD_REFRESH_MS);
       }
 
-      mediaContainer.appendChild(media);
+      mediaContainer.appendChild(stage);
       mediaContainer.hidden = false;
 
-      if (media.tagName === "VIDEO") {
+      if (mediaTag === "video") {
         media.addEventListener(
           "loadedmetadata",
           () => {
@@ -889,6 +972,9 @@ async function loadAdBanner() {
           { once: true }
         );
 
+        backdrop
+          .play?.()
+          .catch(() => {});
         media.play?.().catch(() => {
           if (requestSeq !== adRequestSeq) {
             return;

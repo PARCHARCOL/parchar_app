@@ -1315,10 +1315,76 @@ textarea {
 .ad-media video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   margin: 0;
   border: 0;
   border-radius: 0;
+}
+
+.ad-media-stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 74% 46%, rgba(255, 158, 66, 0.22), transparent 26%),
+    linear-gradient(115deg, #090113 0%, #21043c 52%, #090113 100%);
+}
+
+.ad-media-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(90deg, rgba(10, 1, 24, 0.2), transparent 18%, transparent 82%, rgba(10, 1, 24, 0.2));
+  pointer-events: none;
+}
+
+.ad-media-stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background:
+    linear-gradient(90deg, rgba(5, 0, 14, 0.3), rgba(5, 0, 14, 0.04) 46%, rgba(5, 0, 14, 0.3)),
+    linear-gradient(0deg, rgba(5, 0, 14, 0.28), rgba(5, 0, 14, 0));
+  pointer-events: none;
+}
+
+.ad-media-fill,
+.ad-media-main {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
+}
+
+.ad-media-fill {
+  z-index: 0;
+  object-fit: cover !important;
+  opacity: 0.58;
+  filter: blur(18px) saturate(1.14);
+  transform: scale(1.12);
+}
+
+.ad-media-main {
+  z-index: 2;
+  object-fit: contain !important;
+  object-position: center center;
+  padding: 0;
+  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.36));
+}
+
+.ad-media .ad-media-fill {
+  object-fit: cover !important;
+}
+
+.ad-media .ad-media-main {
+  object-fit: contain !important;
 }
 
 .ad-template {
@@ -1353,15 +1419,53 @@ textarea {
   filter: blur(18px);
 }
 
-.ad-template-copy {
+.ad-template-bg {
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  width: 116%;
+  height: 116%;
+  margin: 0;
+  border: 0;
+  border-radius: inherit;
+  object-fit: cover;
+  opacity: 0.34;
+  filter: blur(18px) saturate(1.18);
+  transform: scale(1.04);
+}
+
+.ad-media .ad-template-bg,
+.ad-preview .ad-template-bg {
+  width: 116%;
+  height: 116%;
+  max-height: none;
+  object-fit: cover;
+}
+
+.ad-template-layout {
   position: absolute;
   z-index: 2;
-  left: clamp(16px, 5vw, 58px);
-  top: 50%;
-  width: min(46%, 520px);
-  transform: translateY(-50%);
+  inset: 0;
   display: grid;
-  gap: 4px;
+  grid-template-columns: minmax(90px, 16%) minmax(0, 1fr) minmax(160px, 38%);
+  align-items: center;
+  gap: clamp(10px, 2vw, 26px);
+  padding: 14px clamp(18px, 3.2vw, 44px);
+}
+
+.ad-template-logo-zone,
+.ad-template-product-zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+}
+
+.ad-template-copy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
   color: #fff8df;
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.42);
 }
@@ -1378,9 +1482,11 @@ textarea {
 }
 
 .ad-template-copy strong {
-  font-size: clamp(1.05rem, 3.1vw, 2.6rem);
+  font-size: clamp(1rem, 2.25vw, 2.2rem);
   line-height: 0.96;
   letter-spacing: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 
 .ad-template-copy em {
@@ -1393,8 +1499,6 @@ textarea {
 
 .ad-template-logo,
 .ad-template-product {
-  position: absolute;
-  z-index: 2;
   width: auto;
   height: auto;
   margin: 0;
@@ -1405,18 +1509,14 @@ textarea {
 }
 
 .ad-template-logo {
-  left: clamp(12px, 2.5vw, 30px);
-  top: clamp(10px, 2vw, 22px);
-  max-width: clamp(54px, 11vw, 130px);
-  max-height: clamp(42px, 7vw, 88px);
+  max-width: 100%;
+  max-height: 78%;
   animation: ad-template-float 5.5s ease-in-out infinite;
 }
 
 .ad-template-product {
-  right: clamp(18px, 5vw, 82px);
-  bottom: -4%;
-  max-width: clamp(128px, 34vw, 420px);
-  max-height: 112%;
+  max-width: 100%;
+  max-height: 86%;
   transform-origin: center bottom;
   animation: ad-template-product 8s ease-in-out infinite;
 }
@@ -1455,8 +1555,8 @@ textarea {
     linear-gradient(112deg, #09051f 0%, #183a66 48%, color-mix(in srgb, var(--ad-accent), #7634b4 42%) 100%);
 }
 
-.ad-media .ad-template img,
-.ad-preview .ad-template img {
+.ad-media .ad-template img:not(.ad-template-bg),
+.ad-preview .ad-template img:not(.ad-template-bg) {
   width: auto;
   height: auto;
   max-height: none;
@@ -1541,6 +1641,26 @@ textarea {
 .ad-banner:has(.ad-media:not([hidden])) .ad-cta {
   grid-area: cta;
   justify-self: end;
+}
+
+.ad-banner.has-template .ad-pill {
+  position: absolute !important;
+  left: 12px;
+  top: 10px;
+  z-index: 3;
+  grid-area: auto;
+}
+
+.ad-banner.has-template p {
+  display: none;
+}
+
+.ad-banner.has-template .ad-cta {
+  position: absolute !important;
+  right: 14px;
+  bottom: 14px;
+  z-index: 3;
+  grid-area: auto;
 }
 
 .ad-link-copy {
@@ -2010,20 +2130,41 @@ textarea {
     border-radius: 12px;
   }
 
+  .ad-template-layout {
+    grid-template-columns: minmax(52px, 18%) minmax(0, 1fr) minmax(82px, 34%);
+    gap: 7px;
+    padding: 10px 10px 42px;
+  }
+
   .ad-template-copy {
-    left: 14px;
-    width: min(52%, 210px);
+    gap: 3px;
+  }
+
+  .ad-template-copy strong {
+    font-size: clamp(0.96rem, 5vw, 1.35rem);
+  }
+
+  .ad-template-copy em {
+    font-size: 0.72rem;
+    line-height: 1.12;
   }
 
   .ad-template-product {
-    right: -8px;
-    max-width: 62%;
-    max-height: 96%;
+    max-width: 100%;
+    max-height: 72%;
   }
 
   .ad-template-logo {
-    max-width: 58px;
-    max-height: 44px;
+    max-width: 100%;
+    max-height: 60%;
+  }
+
+  .ad-banner.has-template .ad-cta {
+    right: 9px;
+    bottom: 9px;
+    min-width: 88px;
+    min-height: 36px;
+    padding: 7px 9px;
   }
 
   .ad-pill {

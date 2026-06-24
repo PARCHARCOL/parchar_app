@@ -187,39 +187,58 @@ function renderTemplatePreview(item) {
   const logo = item?.logoPath || "";
   const product =
     item?.productPath || logo;
+  const templateTitle =
+    item?.title &&
+    String(item.title).toLowerCase() !==
+      "publicidad"
+      ? item.title
+      : "Oferta";
 
   return `
     <div class="ad-template ad-template-${style} admin-template-preview" style="--ad-accent: ${escapeHtml(
       accent
     )}">
       <div class="ad-template-glow"></div>
-      <div class="ad-template-copy">
-        <span>${escapeHtml(
-          item?.advertiserName ||
-            "Anunciante"
-        )}</span>
-        <strong>${escapeHtml(
-          item?.title || "Publicidad"
-        )}</strong>
-        <em>${escapeHtml(
-          item?.message ||
-            "Promocion activa en Parchar"
-        )}</em>
-      </div>
-      ${
-        logo
-          ? `<img class="ad-template-logo" src="${escapeHtml(
-              logo
-            )}" alt="Logo" />`
-          : ""
-      }
       ${
         product
-          ? `<img class="ad-template-product" src="${escapeHtml(
+          ? `<img class="ad-template-bg" src="${escapeHtml(
               product
-            )}" alt="Producto" />`
+            )}" alt="" />`
           : ""
       }
+      <div class="ad-template-layout">
+        <div class="ad-template-logo-zone">
+          ${
+            logo
+              ? `<img class="ad-template-logo" src="${escapeHtml(
+                  logo
+                )}" alt="Logo" />`
+              : ""
+          }
+        </div>
+        <div class="ad-template-copy">
+          <span>${escapeHtml(
+            item?.advertiserName ||
+              "Anunciante"
+          )}</span>
+          <strong>${escapeHtml(
+            templateTitle
+          )}</strong>
+          <em>${escapeHtml(
+            item?.message ||
+              "Promocion activa en Parchar"
+          )}</em>
+        </div>
+        <div class="ad-template-product-zone">
+          ${
+            item?.productPath
+              ? `<img class="ad-template-product" src="${escapeHtml(
+                  item.productPath
+                )}" alt="Producto" />`
+              : ""
+          }
+        </div>
+      </div>
       <div class="ad-template-ribbon"></div>
     </div>
   `;
