@@ -179,6 +179,21 @@ const ALLOWED_AD_MEDIA_TYPES =
     "video/webm",
     "video/quicktime",
   ]);
+const ALLOWED_AD_IMAGE_TYPES =
+  new Set([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+  ]);
+const AD_TEMPLATE_STYLES =
+  new Set([
+    "spotlight",
+    "slide",
+    "premium",
+    "food",
+    "event",
+  ]);
 const ALLOWED_DOCUMENT_TYPES =
   new Set([
     "application/pdf",
@@ -222,6 +237,8 @@ const DEFAULT_STAFF_ACCOUNTS = [
 ];
 
 let lastServedAdCampaignId = null;
+let adRotationSignature = "";
+let adRotationQueue = [];
 
 const MIME_TYPES = {
   ".css":
@@ -579,6 +596,10 @@ function normalizeAdCampaign(row) {
     return null;
   }
 
+  const creativeType =
+    normalizeAdCreativeType(
+      row.creative_type
+    );
   const priority = Math.max(
     1,
     Math.min(
@@ -604,6 +625,19 @@ function normalizeAdCampaign(row) {
       row.message || "",
     ctaLabel:
       row.cta_label || "Anunciar",
+    creativeType,
+    templateStyle:
+      normalizeAdTemplateStyle(
+        row.template_style
+      ),
+    logoPath:
+      row.logo_path || "",
+    productPath:
+      row.product_path || "",
+    accentColor:
+      normalizeHexColor(
+        row.accent_color
+      ),
     mediaPath:
       row.media_path || "",
     mediaType:
@@ -646,6 +680,108 @@ function normalizeAdCampaign(row) {
   };
 }
 
+function hasAdCampaignCreative(item) {
+  if (!item) {
+    return false;
+  }
+
+  if (
+    item.creativeType === "template"
+  ) {
+    return Boolean(
+      item.logoPath ||
+        item.productPath
+    );
+  }
+
+  return Boolean(item.mediaPath);
+}
+
+function shuffleItems(items) {
+  const shuffled = [...items];
+
+  for (
+    let index = shuffled.length - 1;
+    index > 0;
+    index -= 1
+  ) {
+    const randomIndex = Math.floor(
+      Math.random() * (index + 1)
+    );
+    [
+      shuffled[index],
+      shuffled[randomIndex],
+    ] = [
+      shuffled[randomIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
+}
+
+function getAdRotationSignature(items) {
+  return items
+    .map(
+      (item) =>
+        `${Number(item.id)}:${Math.max(
+          1,
+          Number(item.priority || 1)
+        )}`
+    )
+    .sort()
+    .join("|");
+}
+
+function buildAdRotationQueue(items) {
+  const queue = [];
+
+  for (const item of items) {
+    const weight = Math.max(
+      1,
+      Math.min(
+        10,
+        Number(item.priority || 1)
+      )
+    );
+
+    for (
+      let index = 0;
+      index < weight;
+      index += 1
+    ) {
+      queue.push(Number(item.id));
+    }
+  }
+
+  const shuffled = shuffleItems(queue);
+
+  if (
+    shuffled.length > 1 &&
+    Number(shuffled[0]) ===
+      Number(lastServedAdCampaignId)
+  ) {
+    const swapIndex =
+      shuffled.findIndex(
+        (id) =>
+          Number(id) !==
+          Number(lastServedAdCampaignId)
+      );
+
+    if (swapIndex > 0) {
+      [
+        shuffled[0],
+        shuffled[swapIndex],
+      ] = [
+        shuffled[swapIndex],
+        shuffled[0],
+      ];
+    }
+  }
+
+  return shuffled;
+}
+
 function selectRotatingCampaign(rows) {
   const active = rows
     .map(normalizeAdCampaign)
@@ -654,49 +790,57 @@ function selectRotatingCampaign(rows) {
         item &&
         item.computedStatus ===
           "activa" &&
-        item.mediaPath
+        hasAdCampaignCreative(item)
     );
 
   if (!active.length) {
     return null;
   }
 
-  const pool =
-    active.length > 1
-      ? active.filter(
-          (item) =>
-            Number(item.id) !==
-            Number(lastServedAdCampaignId)
-        )
-      : active;
-  const candidates = pool.length
-    ? pool
-    : active;
-  const totalWeight = candidates.reduce(
-    (sum, item) =>
-      sum +
-      Math.max(1, item.priority),
-    0
+  const signature =
+    getAdRotationSignature(active);
+
+  if (
+    signature !==
+      adRotationSignature ||
+    !adRotationQueue.length
+  ) {
+    adRotationSignature = signature;
+    adRotationQueue =
+      buildAdRotationQueue(active);
+  }
+
+  const campaignsById = new Map(
+    active.map((item) => [
+      Number(item.id),
+      item,
+    ])
   );
-  let pick =
-    Math.random() * totalWeight;
 
-  for (const item of candidates) {
-    pick -= Math.max(
-      1,
-      item.priority
-    );
+  while (adRotationQueue.length) {
+    const nextId =
+      adRotationQueue.shift();
+    const nextCampaign =
+      campaignsById.get(
+        Number(nextId)
+      );
 
-    if (pick <= 0) {
+    if (nextCampaign) {
       lastServedAdCampaignId =
-        item.id;
-      return item;
+        nextCampaign.id;
+      return nextCampaign;
     }
   }
 
+  adRotationQueue =
+    buildAdRotationQueue(active);
+  const fallback =
+    campaignsById.get(
+      Number(adRotationQueue.shift())
+    ) || active[0];
   lastServedAdCampaignId =
-    candidates[0].id;
-  return candidates[0];
+    fallback.id;
+  return fallback;
 }
 
 function normalizeStaffUsername(value) {
@@ -750,6 +894,33 @@ function normalizeExternalUrl(value) {
   } catch {
     return null;
   }
+}
+
+function normalizeAdCreativeType(value) {
+  return cleanText(value) ===
+    "template"
+    ? "template"
+    : "media";
+}
+
+function normalizeAdTemplateStyle(value) {
+  const normalized = cleanText(
+    value
+  ).toLowerCase();
+
+  return AD_TEMPLATE_STYLES.has(
+    normalized
+  )
+    ? normalized
+    : "spotlight";
+}
+
+function normalizeHexColor(value) {
+  const raw = cleanText(value);
+
+  return /^#[0-9a-f]{6}$/i.test(raw)
+    ? raw.toLowerCase()
+    : "#ff8d38";
 }
 
 function normalizeCategory(
@@ -1838,6 +2009,11 @@ async function initializeSqliteDatabase() {
       title TEXT DEFAULT 'Publicidad',
       message TEXT NOT NULL,
       cta_label TEXT DEFAULT 'Anunciar',
+      creative_type TEXT DEFAULT 'media',
+      template_style TEXT,
+      logo_path TEXT,
+      product_path TEXT,
+      accent_color TEXT,
       media_path TEXT NOT NULL,
       media_type TEXT NOT NULL,
       target_url TEXT,
@@ -1993,6 +2169,31 @@ async function initializeSqliteDatabase() {
     "TEXT"
   );
   await ensureSqliteColumn(
+    "ad_campaigns",
+    "creative_type",
+    "TEXT DEFAULT 'media'"
+  );
+  await ensureSqliteColumn(
+    "ad_campaigns",
+    "template_style",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_campaigns",
+    "logo_path",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_campaigns",
+    "product_path",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "ad_campaigns",
+    "accent_color",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
     "ad_requests",
     "contacted_by",
     "TEXT"
@@ -2139,6 +2340,11 @@ async function initializeDatabase() {
       title TEXT DEFAULT 'Publicidad',
       message TEXT NOT NULL,
       cta_label TEXT DEFAULT 'Anunciar',
+      creative_type TEXT DEFAULT 'media',
+      template_style TEXT,
+      logo_path TEXT,
+      product_path TEXT,
+      accent_color TEXT,
       media_path TEXT NOT NULL,
       media_type TEXT NOT NULL,
       target_url TEXT,
@@ -2235,6 +2441,15 @@ async function initializeDatabase() {
     ADD COLUMN IF NOT EXISTS media_path TEXT,
     ADD COLUMN IF NOT EXISTS media_type TEXT,
     ADD COLUMN IF NOT EXISTS target_url TEXT;
+  `);
+
+  await pool.query(`
+    ALTER TABLE ad_campaigns
+    ADD COLUMN IF NOT EXISTS creative_type TEXT DEFAULT 'media',
+    ADD COLUMN IF NOT EXISTS template_style TEXT,
+    ADD COLUMN IF NOT EXISTS logo_path TEXT,
+    ADD COLUMN IF NOT EXISTS product_path TEXT,
+    ADD COLUMN IF NOT EXISTS accent_color TEXT;
   `);
 
   await pool.query(`
@@ -3941,7 +4156,20 @@ const server =
           await runMiddleware(
             req,
             res,
-            upload.single("media")
+            upload.fields([
+              {
+                name: "media",
+                maxCount: 1,
+              },
+              {
+                name: "logo",
+                maxCount: 1,
+              },
+              {
+                name: "product",
+                maxCount: 1,
+              },
+            ])
           );
 
           const body = req.body || {};
@@ -3966,6 +4194,18 @@ const server =
               body.ctaLabel ||
                 "Anunciar",
               40
+            );
+          const creativeType =
+            normalizeAdCreativeType(
+              body.creativeType
+            );
+          const templateStyle =
+            normalizeAdTemplateStyle(
+              body.templateStyle
+            );
+          const accentColor =
+            normalizeHexColor(
+              body.accentColor
             );
           const targetUrl =
             normalizeExternalUrl(
@@ -4026,14 +4266,6 @@ const server =
             return;
           }
 
-          if (!targetUrl) {
-            sendJson(res, 400, {
-              error:
-                "Agrega el enlace de destino para el boton Ver oferta.",
-            });
-            return;
-          }
-
           if (
             !startDate ||
             !endDate
@@ -4067,49 +4299,142 @@ const server =
             return;
           }
 
-          const mediaFile = req.file;
-
-          if (!mediaFile) {
-            sendJson(res, 400, {
-              error:
-                "Sube la imagen o video de la pauta.",
-            });
-            return;
-          }
-
-          if (
-            !ALLOWED_AD_MEDIA_TYPES.has(
-              mediaFile.mimetype || ""
-            )
-          ) {
-            sendJson(res, 400, {
-              error:
-                "La publicidad debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV.",
-            });
-            return;
-          }
+          const files = req.files || {};
+          const mediaFile =
+            files.media?.[0] || null;
+          const logoFile =
+            files.logo?.[0] || null;
+          const productFile =
+            files.product?.[0] || null;
+          let mediaPath = "";
+          let mediaType = "";
+          let logoPath = "";
+          let productPath = "";
 
           if (
-            mediaFile.size >
-            AD_MEDIA_MAX_BYTES
+            creativeType === "template"
           ) {
-            sendJson(res, 400, {
-              error:
-                "El archivo de publicidad no debe superar 15 MB.",
-            });
-            return;
-          }
+            if (!logoFile) {
+              sendJson(res, 400, {
+                error:
+                  "Sube el logo del anunciante para crear el banner animado.",
+              });
+              return;
+            }
 
-          const uploadedMedia =
-            await uploadToCloudinary(
-              mediaFile,
+            const templateFiles = [
               {
-                resource_type:
-                  "auto",
-                folder:
-                  "parchar/ads",
+                file: logoFile,
+                label: "El logo",
+              },
+              productFile
+                ? {
+                    file: productFile,
+                    label:
+                      "La imagen del producto",
+                  }
+                : null,
+            ].filter(Boolean);
+
+            for (const item of templateFiles) {
+              if (
+                !ALLOWED_AD_IMAGE_TYPES.has(
+                  item.file.mimetype || ""
+                )
+              ) {
+                sendJson(res, 400, {
+                  error:
+                    `${item.label} debe ser JPG, PNG, WEBP o GIF.`,
+                });
+                return;
               }
-            );
+
+              if (
+                item.file.size >
+                AD_MEDIA_MAX_BYTES
+              ) {
+                sendJson(res, 400, {
+                  error:
+                    `${item.label} no debe superar 15 MB.`,
+                });
+                return;
+              }
+            }
+
+            const uploadedLogo =
+              await uploadToCloudinary(
+                logoFile,
+                {
+                  resource_type:
+                    "image",
+                  folder:
+                    "parchar/ad-templates",
+                }
+              );
+            logoPath =
+              uploadedLogo.secure_url;
+
+            if (productFile) {
+              const uploadedProduct =
+                await uploadToCloudinary(
+                  productFile,
+                  {
+                    resource_type:
+                      "image",
+                    folder:
+                      "parchar/ad-templates",
+                  }
+                );
+              productPath =
+                uploadedProduct.secure_url;
+            }
+          } else {
+            if (!mediaFile) {
+              sendJson(res, 400, {
+                error:
+                  "Sube la imagen o video de la pauta.",
+              });
+              return;
+            }
+
+            if (
+              !ALLOWED_AD_MEDIA_TYPES.has(
+                mediaFile.mimetype || ""
+              )
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "La publicidad debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV.",
+              });
+              return;
+            }
+
+            if (
+              mediaFile.size >
+              AD_MEDIA_MAX_BYTES
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El archivo de publicidad no debe superar 15 MB.",
+              });
+              return;
+            }
+
+            const uploadedMedia =
+              await uploadToCloudinary(
+                mediaFile,
+                {
+                  resource_type:
+                    "auto",
+                  folder:
+                    "parchar/ads",
+                }
+              );
+            mediaPath =
+              uploadedMedia.secure_url;
+            mediaType =
+              mediaFile.mimetype;
+          }
 
           await pool.query(
             `
@@ -4118,6 +4443,11 @@ const server =
               title,
               message,
               cta_label,
+              creative_type,
+              template_style,
+              logo_path,
+              product_path,
+              accent_color,
               media_path,
               media_type,
               target_url,
@@ -4128,15 +4458,20 @@ const server =
               created_by,
               updated_at
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,NOW())
             `,
             [
               advertiserName,
               title,
               message,
               ctaLabel,
-              uploadedMedia.secure_url,
-              mediaFile.mimetype,
+              creativeType,
+              templateStyle,
+              logoPath,
+              productPath,
+              accentColor,
+              mediaPath,
+              mediaType,
               targetUrl || "",
               startsAt,
               endsAt,

@@ -78,6 +78,21 @@ const adPreview = document.querySelector(
   "#admin-ad-preview"
 );
 
+const adCreativeType =
+  document.querySelector(
+    "#admin-ad-creative-type"
+  );
+
+const adMediaFields =
+  document.querySelectorAll(
+    "[data-ad-media-fields]"
+  );
+
+const adTemplateFields =
+  document.querySelectorAll(
+    "[data-ad-template-fields]"
+  );
+
 const adCampaignList = document.querySelector(
   "#admin-ad-campaign-list"
 );
@@ -132,6 +147,82 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function getAdTemplateStyle(value) {
+  const normalized = String(
+    value || ""
+  ).toLowerCase();
+  return [
+    "spotlight",
+    "slide",
+    "premium",
+    "food",
+    "event",
+  ].includes(normalized)
+    ? normalized
+    : "spotlight";
+}
+
+function getAdAccentColor(value) {
+  const raw = String(value || "");
+  return /^#[0-9a-f]{6}$/i.test(raw)
+    ? raw
+    : "#ff8d38";
+}
+
+function isTemplateCampaign(item) {
+  return (
+    item?.creativeType === "template"
+  );
+}
+
+function renderTemplatePreview(item) {
+  const style = getAdTemplateStyle(
+    item?.templateStyle
+  );
+  const accent = getAdAccentColor(
+    item?.accentColor
+  );
+  const logo = item?.logoPath || "";
+  const product =
+    item?.productPath || logo;
+
+  return `
+    <div class="ad-template ad-template-${style} admin-template-preview" style="--ad-accent: ${escapeHtml(
+      accent
+    )}">
+      <div class="ad-template-glow"></div>
+      <div class="ad-template-copy">
+        <span>${escapeHtml(
+          item?.advertiserName ||
+            "Anunciante"
+        )}</span>
+        <strong>${escapeHtml(
+          item?.title || "Publicidad"
+        )}</strong>
+        <em>${escapeHtml(
+          item?.message ||
+            "Promocion activa en Parchar"
+        )}</em>
+      </div>
+      ${
+        logo
+          ? `<img class="ad-template-logo" src="${escapeHtml(
+              logo
+            )}" alt="Logo" />`
+          : ""
+      }
+      ${
+        product
+          ? `<img class="ad-template-product" src="${escapeHtml(
+              product
+            )}" alt="Producto" />`
+          : ""
+      }
+      <div class="ad-template-ribbon"></div>
+    </div>
+  `;
 }
 
 function setFeedback(
@@ -246,6 +337,7 @@ function showAdminDashboard() {
     });
 
   setDefaultCampaignDates();
+  syncAdCreativeFields();
 }
 
 async function staffFetch(
@@ -333,6 +425,36 @@ function setDefaultCampaignDates() {
   ) {
     adForm.elements.endDate.value =
       formatDateInput(endDate);
+  }
+}
+
+function syncAdCreativeFields() {
+  if (!adForm || !adCreativeType) {
+    return;
+  }
+
+  const isTemplate =
+    adCreativeType.value ===
+    "template";
+
+  adMediaFields.forEach(
+    (element) => {
+      element.hidden = isTemplate;
+    }
+  );
+  adTemplateFields.forEach(
+    (element) => {
+      element.hidden = !isTemplate;
+    }
+  );
+
+  if (adForm.elements.media) {
+    adForm.elements.media.required =
+      !isTemplate;
+  }
+  if (adForm.elements.logo) {
+    adForm.elements.logo.required =
+      isTemplate;
   }
 }
 
@@ -1028,6 +1150,18 @@ function renderAdPreview(banner) {
     return;
   }
 
+  if (isTemplateCampaign(banner)) {
+    adPreview.innerHTML = `
+      <strong>Banner animado creado</strong>
+      ${renderTemplatePreview(banner)}
+      <p class="tiny">
+        Esta pieza se adapta al ancho del banner y se anima sin audio.
+      </p>
+    `;
+    adPreview.hidden = false;
+    return;
+  }
+
   if (!banner?.mediaPath) {
     adPreview.hidden = true;
     adPreview.innerHTML = "";
@@ -1109,9 +1243,13 @@ function renderAdCampaigns(items) {
                 100
               ).toFixed(2)
             : "0.00";
-        const media = String(
-          item.mediaType || ""
-        ).startsWith("video/")
+        const media = isTemplateCampaign(
+          item
+        )
+          ? renderTemplatePreview(item)
+          : String(
+              item.mediaType || ""
+            ).startsWith("video/")
           ? `
             <video controls preload="metadata" src="${escapeHtml(
               item.mediaPath
@@ -1155,7 +1293,11 @@ function renderAdCampaigns(items) {
                 item.endDate
               )} - Prioridad ${escapeHtml(
                 item.priority
-              )}
+              )} - ${
+                isTemplateCampaign(item)
+                  ? "Banner animado"
+                  : "Archivo"
+              }
             </p>
 
             <div class="priority-editor">
@@ -1340,7 +1482,16 @@ async function saveAdCampaign(event) {
       "Ver oferta";
     adForm.elements.priority.value =
       "1";
+    if (adForm.elements.creativeType) {
+      adForm.elements.creativeType.value =
+        "media";
+    }
+    if (adForm.elements.accentColor) {
+      adForm.elements.accentColor.value =
+        "#ff8d38";
+    }
     setDefaultCampaignDates();
+    syncAdCreativeFields();
     if (adPreview) {
       adPreview.hidden = true;
       adPreview.innerHTML = "";
@@ -1690,7 +1841,16 @@ function prepareAdFromRequest(id) {
     "Ver oferta";
   adForm.elements.priority.value =
     "1";
+  if (adForm.elements.creativeType) {
+    adForm.elements.creativeType.value =
+      "media";
+  }
+  if (adForm.elements.accentColor) {
+    adForm.elements.accentColor.value =
+      "#ff8d38";
+  }
   setDefaultCampaignDates();
+  syncAdCreativeFields();
   adForm.scrollIntoView({
     behavior: "smooth",
     block: "start",
@@ -1698,7 +1858,7 @@ function prepareAdFromRequest(id) {
   adForm.elements.targetUrl.focus();
   setFeedback(
     adMessage,
-    "Solicitud cargada. Agrega el enlace y el archivo de la publicidad."
+    "Solicitud cargada. Agrega enlace si tiene y sube archivo o crea banner animado."
   );
 }
 
@@ -2425,6 +2585,11 @@ adForm?.addEventListener(
   saveAdCampaign
 );
 
+adCreativeType?.addEventListener(
+  "change",
+  syncAdCreativeFields
+);
+
 refreshAdCampaignsButton?.addEventListener(
   "click",
   loadAdCampaigns
@@ -2440,4 +2605,5 @@ refreshReviewModerationButton?.addEventListener(
   loadReviewModeration
 );
 
+syncAdCreativeFields();
 bootstrapStaffSession();

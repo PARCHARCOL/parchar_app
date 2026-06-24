@@ -1321,6 +1321,157 @@ textarea {
   border-radius: 0;
 }
 
+.ad-template {
+  --ad-accent: #ff8d38;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 78% 42%, color-mix(in srgb, var(--ad-accent), #ffffff 18%) 0 8%, transparent 24%),
+    linear-gradient(110deg, rgba(11, 2, 28, 0.96) 0%, rgba(42, 8, 78, 0.92) 38%, color-mix(in srgb, var(--ad-accent), #2b0858 38%) 100%);
+}
+
+.ad-template::before {
+  content: "";
+  position: absolute;
+  inset: -45% -20%;
+  background:
+    linear-gradient(110deg, transparent 0 38%, rgba(255, 255, 255, 0.24) 44%, transparent 52%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 18px);
+  transform: translateX(-36%);
+  animation: ad-template-sweep 9s ease-in-out infinite;
+}
+
+.ad-template-glow {
+  position: absolute;
+  inset: auto 8% -60% 28%;
+  height: 140%;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ad-accent), #ffffff 26%), transparent 68%);
+  opacity: 0.58;
+  filter: blur(18px);
+}
+
+.ad-template-copy {
+  position: absolute;
+  z-index: 2;
+  left: clamp(16px, 5vw, 58px);
+  top: 50%;
+  width: min(46%, 520px);
+  transform: translateY(-50%);
+  display: grid;
+  gap: 4px;
+  color: #fff8df;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.42);
+}
+
+.ad-template-copy span {
+  width: fit-content;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ad-accent), #05010d 18%);
+  color: #19051e;
+  padding: 4px 9px;
+  font-size: clamp(0.65rem, 1vw, 0.86rem);
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.ad-template-copy strong {
+  font-size: clamp(1.05rem, 3.1vw, 2.6rem);
+  line-height: 0.96;
+  letter-spacing: 0;
+}
+
+.ad-template-copy em {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: clamp(0.78rem, 1.35vw, 1rem);
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.18;
+}
+
+.ad-template-logo,
+.ad-template-product {
+  position: absolute;
+  z-index: 2;
+  width: auto;
+  height: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  filter: drop-shadow(0 14px 22px rgba(0, 0, 0, 0.45));
+}
+
+.ad-template-logo {
+  left: clamp(12px, 2.5vw, 30px);
+  top: clamp(10px, 2vw, 22px);
+  max-width: clamp(54px, 11vw, 130px);
+  max-height: clamp(42px, 7vw, 88px);
+  animation: ad-template-float 5.5s ease-in-out infinite;
+}
+
+.ad-template-product {
+  right: clamp(18px, 5vw, 82px);
+  bottom: -4%;
+  max-width: clamp(128px, 34vw, 420px);
+  max-height: 112%;
+  transform-origin: center bottom;
+  animation: ad-template-product 8s ease-in-out infinite;
+}
+
+.ad-template-ribbon {
+  position: absolute;
+  right: -12%;
+  top: 14%;
+  width: 42%;
+  height: 22%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ad-accent), #ffffff 16%);
+  opacity: 0.22;
+  transform: rotate(-12deg);
+}
+
+.ad-template-slide .ad-template-product {
+  animation-name: ad-template-slide;
+}
+
+.ad-template-premium {
+  background:
+    radial-gradient(circle at 78% 34%, rgba(255, 232, 168, 0.34), transparent 28%),
+    linear-gradient(112deg, #070111 0%, #21073f 38%, #4d246e 100%);
+}
+
+.ad-template-food {
+  background:
+    radial-gradient(circle at 80% 44%, rgba(255, 217, 92, 0.34), transparent 25%),
+    linear-gradient(112deg, #180408 0%, #5a123b 46%, color-mix(in srgb, var(--ad-accent), #e23929 36%) 100%);
+}
+
+.ad-template-event {
+  background:
+    radial-gradient(circle at 78% 42%, rgba(79, 210, 255, 0.28), transparent 27%),
+    linear-gradient(112deg, #09051f 0%, #183a66 48%, color-mix(in srgb, var(--ad-accent), #7634b4 42%) 100%);
+}
+
+.ad-media .ad-template img,
+.ad-preview .ad-template img {
+  width: auto;
+  height: auto;
+  max-height: none;
+  margin: 0;
+  object-fit: contain;
+}
+
+.admin-template-preview {
+  position: relative;
+  inset: auto;
+  min-height: 190px;
+  margin-top: 8px;
+  border-radius: 12px;
+}
+
 .ad-banner.has-media,
 .ad-banner:has(.ad-media:not([hidden])) {
   background: #130227;
@@ -1408,6 +1559,50 @@ textarea {
 .ad-banner.is-clickable:focus-visible {
   outline: 2px solid rgba(255, 216, 105, 0.95);
   outline-offset: 3px;
+}
+
+@keyframes ad-template-sweep {
+  0%, 32% {
+    transform: translateX(-38%) rotate(0deg);
+  }
+
+  70%, 100% {
+    transform: translateX(34%) rotate(0deg);
+  }
+}
+
+@keyframes ad-template-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-5px) scale(1.03);
+  }
+}
+
+@keyframes ad-template-product {
+  0%, 100% {
+    transform: translateX(0) scale(1);
+  }
+
+  50% {
+    transform: translateX(-14px) scale(1.04);
+  }
+}
+
+@keyframes ad-template-slide {
+  0% {
+    transform: translateX(24px) scale(0.98);
+  }
+
+  48%, 62% {
+    transform: translateX(-18px) scale(1.04);
+  }
+
+  100% {
+    transform: translateX(24px) scale(0.98);
+  }
 }
 
 .ad-banner[hidden] {
@@ -1815,6 +2010,22 @@ textarea {
     border-radius: 12px;
   }
 
+  .ad-template-copy {
+    left: 14px;
+    width: min(52%, 210px);
+  }
+
+  .ad-template-product {
+    right: -8px;
+    max-width: 62%;
+    max-height: 96%;
+  }
+
+  .ad-template-logo {
+    max-width: 58px;
+    max-height: 44px;
+  }
+
   .ad-pill {
     grid-area: pill;
     justify-self: start;
@@ -1857,6 +2068,12 @@ textarea {
   }
 
   .parchar-btn.parchado .parchar-btn-icon {
+    animation: none;
+  }
+
+  .ad-template::before,
+  .ad-template-logo,
+  .ad-template-product {
     animation: none;
   }
 }

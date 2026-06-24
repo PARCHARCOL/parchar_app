@@ -1,5 +1,6 @@
 const adBanner = document.querySelector(".ad-banner");
 const AD_REFRESH_MS = 18000;
+const AD_TEMPLATE_REFRESH_MS = 14000;
 const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
 let adRequestSeq = 0;
@@ -17,6 +18,124 @@ function scheduleAdRefresh(delayMs) {
     loadAdBanner,
     delayMs
   );
+}
+
+function getAdTemplateStyle(value) {
+  const normalized = String(
+    value || ""
+  ).toLowerCase();
+  return [
+    "spotlight",
+    "slide",
+    "premium",
+    "food",
+    "event",
+  ].includes(normalized)
+    ? normalized
+    : "spotlight";
+}
+
+function getAdAccentColor(value) {
+  const raw = String(value || "");
+  return /^#[0-9a-f]{6}$/i.test(raw)
+    ? raw
+    : "#ff8d38";
+}
+
+function isTemplateBanner(banner) {
+  return (
+    banner?.creativeType ===
+    "template"
+  );
+}
+
+function appendTemplateImage(
+  wrapper,
+  className,
+  src,
+  alt
+) {
+  if (!src) {
+    return;
+  }
+
+  const image =
+    document.createElement("img");
+  image.className = className;
+  image.src = src;
+  image.alt = alt;
+  image.loading = "lazy";
+  wrapper.appendChild(image);
+}
+
+function createAdTemplateElement(banner) {
+  const template =
+    document.createElement("div");
+  template.className = `ad-template ad-template-${getAdTemplateStyle(
+    banner.templateStyle
+  )}`;
+  template.style.setProperty(
+    "--ad-accent",
+    getAdAccentColor(
+      banner.accentColor
+    )
+  );
+
+  const glow =
+    document.createElement("div");
+  glow.className = "ad-template-glow";
+  template.appendChild(glow);
+
+  const copy =
+    document.createElement("div");
+  copy.className = "ad-template-copy";
+
+  const brand =
+    document.createElement("span");
+  brand.textContent =
+    banner.advertiserName ||
+    "Anunciante";
+
+  const title =
+    document.createElement("strong");
+  title.textContent =
+    banner.title || "Publicidad";
+
+  const message =
+    document.createElement("em");
+  message.textContent =
+    banner.message ||
+    "Promocion activa en Parchar";
+
+  copy.append(
+    brand,
+    title,
+    message
+  );
+  template.appendChild(copy);
+
+  appendTemplateImage(
+    template,
+    "ad-template-logo",
+    banner.logoPath,
+    banner.advertiserName ||
+      "Logo del anunciante"
+  );
+  appendTemplateImage(
+    template,
+    "ad-template-product",
+    banner.productPath ||
+      banner.logoPath,
+    banner.title || "Producto"
+  );
+
+  const ribbon =
+    document.createElement("div");
+  ribbon.className =
+    "ad-template-ribbon";
+  template.appendChild(ribbon);
+
+  return template;
 }
 
 function readStoredClient() {
@@ -81,7 +200,7 @@ function ensureAdModal() {
           Envia imagen o video horizontal tipo banner, no vertical. Medida sugerida: 1600 x 600 px o 1920 x 720 px. Video MP4 de 6 a 12 segundos, maximo 15 MB, sin audio importante.
         </p>
         <p>
-          Mantén producto, logo y texto principal en el centro. Evita letras pequenas y bordes con informacion, porque el banner se adapta a celular y PC.
+          Si no tienes el banner listo, envia logo en PNG/WEBP, una foto del producto o local, frase corta y oferta. Parchar puede armar una pieza animada para el espacio horizontal.
         </p>
       </section>
 
@@ -397,6 +516,9 @@ async function loadAdBanner() {
   adBanner.classList.remove(
     "has-media"
   );
+  adBanner.classList.remove(
+    "has-template"
+  );
   adBanner.removeAttribute("style");
   [pill, text, button].forEach(
     (element) => {
@@ -538,12 +660,22 @@ async function loadAdBanner() {
       "style"
     );
 
-    if (
+    const isTemplate =
+      isTemplateBanner(banner);
+    const hasCreative =
       banner.enabled &&
-      banner.mediaPath
-    ) {
+      (banner.mediaPath ||
+        (isTemplate &&
+          (banner.logoPath ||
+            banner.productPath)));
+
+    if (hasCreative) {
       adBanner.classList.add(
         "has-media"
+      );
+      adBanner.classList.toggle(
+        "has-template",
+        isTemplate
       );
 
       if (!mediaContainer) {
@@ -571,9 +703,31 @@ async function loadAdBanner() {
           replacement
         );
         mediaContainer = replacement;
+      } else if (
+        !banner.targetUrl &&
+        mediaContainer.tagName === "A"
+      ) {
+        const replacement =
+          document.createElement("div");
+        replacement.className =
+          "ad-media";
+        mediaContainer.replaceWith(
+          replacement
+        );
+        mediaContainer = replacement;
       }
 
       mediaContainer.replaceChildren();
+      mediaContainer.onclick = null;
+      mediaContainer.removeAttribute(
+        "href"
+      );
+      mediaContainer.removeAttribute(
+        "target"
+      );
+      mediaContainer.removeAttribute(
+        "rel"
+      );
       Object.assign(
         adBanner.style,
         {
@@ -642,6 +796,19 @@ async function loadAdBanner() {
           );
           event.stopPropagation();
         };
+      }
+
+      if (isTemplate) {
+        mediaContainer.appendChild(
+          createAdTemplateElement(
+            banner
+          )
+        );
+        mediaContainer.hidden = false;
+        scheduleAdRefresh(
+          AD_TEMPLATE_REFRESH_MS
+        );
+        return;
       }
 
       const media =
