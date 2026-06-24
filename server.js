@@ -221,6 +221,8 @@ const DEFAULT_STAFF_ACCOUNTS = [
   },
 ];
 
+let lastServedAdCampaignId = null;
+
 const MIME_TYPES = {
   ".css":
     "text/css; charset=utf-8",
@@ -625,6 +627,18 @@ function normalizeAdCampaign(row) {
     clicks: Number(
       row.clicks || 0
     ),
+    ctr:
+      Number(row.impressions || 0) > 0
+        ? Number(
+            (
+              (Number(row.clicks || 0) /
+                Number(
+                  row.impressions || 0
+                )) *
+              100
+            ).toFixed(2)
+          )
+        : 0,
     createdAt:
       row.created_at || null,
     updatedAt:
@@ -647,23 +661,42 @@ function selectRotatingCampaign(rows) {
     return null;
   }
 
-  return active.sort((a, b) => {
-    const aScore =
-      a.impressions /
-      Math.max(1, a.priority);
-    const bScore =
-      b.impressions /
-      Math.max(1, b.priority);
+  const pool =
+    active.length > 1
+      ? active.filter(
+          (item) =>
+            Number(item.id) !==
+            Number(lastServedAdCampaignId)
+        )
+      : active;
+  const candidates = pool.length
+    ? pool
+    : active;
+  const totalWeight = candidates.reduce(
+    (sum, item) =>
+      sum +
+      Math.max(1, item.priority),
+    0
+  );
+  let pick =
+    Math.random() * totalWeight;
 
-    if (aScore !== bScore) {
-      return aScore - bScore;
-    }
-
-    return (
-      Number(a.id || 0) -
-      Number(b.id || 0)
+  for (const item of candidates) {
+    pick -= Math.max(
+      1,
+      item.priority
     );
-  })[0];
+
+    if (pick <= 0) {
+      lastServedAdCampaignId =
+        item.id;
+      return item;
+    }
+  }
+
+  lastServedAdCampaignId =
+    candidates[0].id;
+  return candidates[0];
 }
 
 function normalizeStaffUsername(value) {

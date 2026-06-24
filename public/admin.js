@@ -1096,6 +1096,19 @@ function renderAdCampaigns(items) {
           status !== "vencida";
         const canPause =
           item.status === "activa";
+        const impressions = Number(
+          item.impressions || 0
+        );
+        const clicks = Number(
+          item.clicks || 0
+        );
+        const ctr =
+          impressions > 0
+            ? (
+                (clicks / impressions) *
+                100
+              ).toFixed(2)
+            : "0.00";
         const media = String(
           item.mediaType || ""
         ).startsWith("video/")
@@ -1181,13 +1194,26 @@ function renderAdCampaigns(items) {
               </button>
             </div>
 
-            <p class="tiny">
-              Vistas ${escapeHtml(
-                item.impressions
-              )} - Clics ${escapeHtml(
-                item.clicks
-              )}
-            </p>
+            <div class="ad-report-strip">
+              <div>
+                <span>Vistas</span>
+                <strong>${escapeHtml(
+                  impressions
+                )}</strong>
+              </div>
+              <div>
+                <span>Clics</span>
+                <strong>${escapeHtml(
+                  clicks
+                )}</strong>
+              </div>
+              <div>
+                <span>CTR</span>
+                <strong>${escapeHtml(
+                  `${ctr}%`
+                )}</strong>
+              </div>
+            </div>
 
             <div class="ad-preview ad-campaign-media">
               ${media}
@@ -1220,6 +1246,11 @@ function renderAdCampaigns(items) {
                 item.id
               )})">
                 Eliminar
+              </button>
+              <button class="ghost-btn" onclick="copyAdCampaignReport(${Number(
+                item.id
+              )})">
+                Copiar reporte
               </button>
             </div>
           </article>
@@ -1412,6 +1443,65 @@ async function saveAdCampaignPriority(
     await loadAdCampaigns();
   } catch (error) {
     alert(error.message);
+  }
+}
+
+async function copyAdCampaignReport(id) {
+  const campaign =
+    currentAdCampaigns.find(
+      (item) =>
+        Number(item.id) ===
+        Number(id)
+    );
+
+  if (!campaign) {
+    alert(
+      "No se encontro la campana."
+    );
+    return;
+  }
+
+  const impressions = Number(
+    campaign.impressions || 0
+  );
+  const clicks = Number(
+    campaign.clicks || 0
+  );
+  const ctr =
+    impressions > 0
+      ? (
+          (clicks / impressions) *
+          100
+        ).toFixed(2)
+      : "0.00";
+  const status =
+    campaignStatusLabel(
+      campaign.computedStatus ||
+        campaign.status
+    );
+  const report = [
+    `Reporte de pauta - ${campaign.advertiserName || "Cliente"}`,
+    `Campana: ${campaign.title || "Publicidad"}`,
+    `Periodo: ${campaign.startDate || "-"} a ${campaign.endDate || "-"}`,
+    `Estado: ${status}`,
+    `Prioridad comercial: ${campaign.priority}`,
+    `Vistas: ${impressions}`,
+    `Clics: ${clicks}`,
+    `CTR: ${ctr}%`,
+  ].join("\n");
+
+  try {
+    await navigator.clipboard.writeText(
+      report
+    );
+    alert(
+      "Reporte copiado."
+    );
+  } catch {
+    window.prompt(
+      "Copia el reporte:",
+      report
+    );
   }
 }
 
