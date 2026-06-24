@@ -921,11 +921,12 @@ function renderCards(
               <button
                 type="button"
                 class="parchar-btn"
+                aria-label="Parchar este local"
                 data-business-id="${escapeHtml(
                   item.id
                 )}"
               >
-                <span>Parchar</span>
+                <img class="parchar-btn-icon" src="/assets/icons/parchar-pin.png" alt="" />
                 <strong data-parchar-count>${escapeHtml(
                   item.parchar_count ||
                     0
