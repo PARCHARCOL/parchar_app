@@ -515,11 +515,11 @@ video {
 .parchar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   border: 0;
   border-radius: 999px;
-  min-height: 42px;
-  padding: 5px 9px 5px 7px;
+  min-height: 46px;
+  padding: 4px 9px 4px 5px;
   color: #321400;
   background: linear-gradient(145deg, #ffd869, #ff8d38);
   font: inherit;
@@ -534,8 +534,8 @@ video {
 }
 
 .parchar-btn-icon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   object-fit: contain;
   display: block;
   flex: 0 0 auto;
