@@ -563,6 +563,50 @@ video {
   gap: 8px;
 }
 
+.review-rules {
+  border-radius: 13px;
+  border: 1px solid rgba(255, 190, 106, 0.34);
+  background: rgba(255, 142, 45, 0.1);
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.review-rules strong {
+  display: block;
+  color: #ffe1a8;
+  margin-bottom: 5px;
+}
+
+.review-rules p {
+  margin: 0 0 8px;
+  color: #f2ddff;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+
+.review-moderation-card video {
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+}
+
+.review-report-alert {
+  border: 1px solid rgba(255, 111, 138, 0.45);
+  border-radius: 13px;
+  background: rgba(255, 70, 103, 0.12);
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.review-report-alert strong {
+  color: #ffd6df;
+}
+
+.review-report-alert p {
+  margin: 5px 0 0;
+  color: #f8e9ff;
+}
+
 .social-feed {
   display: grid;
   gap: 12px;
@@ -596,8 +640,34 @@ video {
 }
 
 .social-card video {
+  width: 100%;
   max-height: 430px;
   object-fit: contain;
+}
+
+.social-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.report-review-btn {
+  min-height: 38px;
+  padding: 8px 12px;
+}
+
+.report-modal-card {
+  max-width: 480px;
+}
+
+.report-form {
+  display: grid;
+  gap: 10px;
+}
+
+.report-form select,
+.report-form textarea {
+  width: 100%;
 }
 
 .social-parches {
@@ -873,6 +943,10 @@ textarea {
 
 .status-rechazado {
   background: linear-gradient(145deg, #ff6f8a, #d34058);
+}
+
+.status-retirada {
+  background: linear-gradient(145deg, #8d839d, #5b5368);
 }
 
 .status-contactado {

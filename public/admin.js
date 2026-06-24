@@ -96,6 +96,16 @@ const refreshAdRequestsButton =
     "#refresh-ad-requests"
   );
 
+const reviewModerationList =
+  document.querySelector(
+    "#admin-review-list"
+  );
+
+const refreshReviewModerationButton =
+  document.querySelector(
+    "#refresh-review-moderation"
+  );
+
 let currentStatus =
   "pendiente";
 let staffToken = "";
@@ -104,6 +114,7 @@ let currentBusinesses = [];
 let currentAdRequests = [];
 let currentStaffUsers = [];
 let currentAdCampaigns = [];
+let currentReviews = [];
 
 const BUSINESS_STATUS_LABELS = {
   todos: "Todos",
@@ -1571,6 +1582,195 @@ async function resolveAdRequest(id) {
   }
 }
 
+function renderReviewModeration(items) {
+  if (!reviewModerationList) {
+    return;
+  }
+
+  currentReviews = items || [];
+
+  if (!currentReviews.length) {
+    reviewModerationList.innerHTML = `
+      <div class="glass-card">
+        <h3>No hay resenas recibidas</h3>
+      </div>
+    `;
+    return;
+  }
+
+  reviewModerationList.innerHTML =
+    currentReviews
+      .map(
+        (item) => `
+          <article class="glass-card admin-card review-moderation-card">
+            <div class="mini-business-head">
+              <h3>${escapeHtml(
+                item.business_name
+              )}</h3>
+              <span class="status-pill status-${escapeHtml(
+                item.status
+              )}">${escapeHtml(
+                item.status
+              )}</span>
+            </div>
+
+            <p>
+              <strong>Categoria:</strong>
+              ${escapeHtml(
+                item.category
+              )}
+            </p>
+            <p>
+              <strong>Ciudad:</strong>
+              ${escapeHtml(
+                item.city
+              )}
+            </p>
+            <p class="tiny">
+              Publicada: ${escapeHtml(
+                formatDateTime(
+                  item.created_at
+                )
+              )} - Activa hasta: ${escapeHtml(
+                formatDateTime(
+                  item.expires_at
+                )
+              )}
+            </p>
+
+            ${
+              Number(
+                item.report_count ||
+                  0
+              ) > 0
+                ? `
+              <div class="review-report-alert">
+                <strong>
+                  Denuncias: ${escapeHtml(
+                    item.report_count
+                  )}
+                </strong>
+                <p>
+                  <strong>Ultimo motivo:</strong>
+                  ${escapeHtml(
+                    item.latest_report_reason ||
+                      "Sin motivo"
+                  )}
+                </p>
+                ${
+                  item.latest_report_details
+                    ? `
+                  <p>
+                    <strong>Detalle:</strong>
+                    ${escapeHtml(
+                      item.latest_report_details
+                    )}
+                  </p>
+                `
+                    : ""
+                }
+                <p class="tiny">
+                  Recibida: ${escapeHtml(
+                    formatDateTime(
+                      item.latest_report_at
+                    )
+                  )}
+                </p>
+              </div>
+            `
+                : ""
+            }
+
+            <video controls preload="metadata" src="${escapeHtml(
+              item.video_path
+            )}"></video>
+
+            ${
+              item.status === "activa"
+                ? `
+              <div class="request-actions">
+                <button
+                  class="ghost-btn"
+                  onclick="removeReview(${item.id})"
+                >
+                  Retirar del muro
+                </button>
+              </div>
+            `
+                : ""
+            }
+          </article>
+        `
+      )
+      .join("");
+}
+
+async function loadReviewModeration() {
+  if (!reviewModerationList) {
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      "/api/admin/reviews"
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Error cargando resenas"
+      );
+    }
+
+    renderReviewModeration(
+      data.items || []
+    );
+  } catch (error) {
+    reviewModerationList.innerHTML = `
+      <div class="glass-card">
+        <h3>Error</h3>
+        <p>${escapeHtml(
+          error.message
+        )}</p>
+      </div>
+    `;
+  }
+}
+
+async function removeReview(id) {
+  const reason = window.confirm(
+    "Retirar esta resena del muro por incumplir normas?"
+  );
+
+  if (!reason) {
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      `/api/admin/reviews/${id}/remove`,
+      {
+        method: "POST",
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo retirar la resena"
+      );
+    }
+
+    await loadReviewModeration();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
 function renderStaffUsers(items) {
   if (!staffUserList) {
     return;
@@ -1896,6 +2096,7 @@ async function loadDashboardData() {
   const tasks = [
     loadAdRequests(),
     loadBusinesses(),
+    loadReviewModeration(),
   ];
 
   if (isAdmin()) {
@@ -2054,6 +2255,11 @@ refreshAdCampaignsButton?.addEventListener(
 refreshAdRequestsButton?.addEventListener(
   "click",
   loadAdRequests
+);
+
+refreshReviewModerationButton?.addEventListener(
+  "click",
+  loadReviewModeration
 );
 
 bootstrapStaffSession();

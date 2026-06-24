@@ -1859,6 +1859,19 @@ async function initializeSqliteDatabase() {
     );
   `);
 
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS business_review_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      review_id INTEGER NOT NULL REFERENCES business_reviews(id) ON DELETE CASCADE,
+      visitor_key TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      details TEXT,
+      status TEXT DEFAULT 'pendiente',
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(review_id, visitor_key)
+    );
+  `);
+
   await ensureSqliteColumn(
     "clients",
     "phone_normalized",
@@ -1921,6 +1934,10 @@ async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE INDEX IF NOT EXISTS idx_business_reviews_active
     ON business_reviews (business_id, status, expires_at);
+  `);
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_business_review_reports_review
+    ON business_review_reports (review_id, status, created_at);
   `);
   await ensureSqliteColumn(
     "ad_banner_settings",
@@ -2144,6 +2161,19 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_review_reports (
+      id SERIAL PRIMARY KEY,
+      review_id INTEGER NOT NULL REFERENCES business_reviews(id) ON DELETE CASCADE,
+      visitor_key TEXT NOT NULL,
+      reason TEXT NOT NULL,
+      details TEXT,
+      status TEXT DEFAULT 'pendiente',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(review_id, visitor_key)
+    );
+  `);
+
+  await pool.query(`
     ALTER TABLE clients
     ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
   `);
@@ -2188,6 +2218,11 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_business_reviews_active
     ON business_reviews (business_id, status, expires_at);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_business_review_reports_review
+    ON business_review_reports (review_id, status, created_at);
   `);
 
   await pool.query(`
@@ -5017,6 +5052,223 @@ const server =
 
           sendJson(res, 200, {
             items: reviews.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/social\/reviews\/\d+\/report$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+          const body =
+            await parseJsonBody(req);
+          const visitorKey =
+            getRequestVisitorKey(
+              req,
+              body.visitorKey
+            );
+          const reason =
+            cleanLimitedText(
+              body.reason,
+              80
+            );
+          const details =
+            cleanLimitedText(
+              body.details,
+              500
+            );
+
+          if (!reason) {
+            sendJson(res, 400, {
+              error:
+                "Selecciona un motivo para denunciar.",
+            });
+            return;
+          }
+
+          const review =
+            await pool.query(
+              `
+              SELECT r.id
+              FROM business_reviews r
+              JOIN businesses b
+                ON b.id = r.business_id
+              WHERE
+                r.id = $1
+                AND r.status = 'activa'
+                AND r.expires_at > CURRENT_TIMESTAMP
+                AND b.status = 'activo'
+              LIMIT 1
+              `,
+              [id]
+            );
+
+          if (!review.rows.length) {
+            sendJson(res, 404, {
+              error:
+                "La resena ya no esta disponible.",
+            });
+            return;
+          }
+
+          let already = false;
+
+          try {
+            await pool.query(
+              `
+              INSERT INTO business_review_reports (
+                review_id,
+                visitor_key,
+                reason,
+                details
+              )
+              VALUES ($1,$2,$3,$4)
+              `,
+              [
+                id,
+                visitorKey,
+                reason,
+                details,
+              ]
+            );
+          } catch {
+            already = true;
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+            already,
+            message: already
+              ? "Ya habias denunciado esta resena."
+              : "Denuncia enviada a moderacion.",
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/reviews" &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const reviews =
+            await pool.query(`
+              SELECT
+                r.id,
+                r.business_id,
+                r.video_path,
+                r.video_seconds,
+                r.status,
+                r.expires_at,
+                r.created_at,
+                COALESCE((
+                  SELECT COUNT(*)
+                  FROM business_review_reports rr
+                  WHERE
+                    rr.review_id = r.id
+                    AND rr.status = 'pendiente'
+                ), 0) AS report_count,
+                (
+                  SELECT rr.reason
+                  FROM business_review_reports rr
+                  WHERE
+                    rr.review_id = r.id
+                    AND rr.status = 'pendiente'
+                  ORDER BY rr.created_at DESC
+                  LIMIT 1
+                ) AS latest_report_reason,
+                (
+                  SELECT rr.details
+                  FROM business_review_reports rr
+                  WHERE
+                    rr.review_id = r.id
+                    AND rr.status = 'pendiente'
+                  ORDER BY rr.created_at DESC
+                  LIMIT 1
+                ) AS latest_report_details,
+                (
+                  SELECT rr.created_at
+                  FROM business_review_reports rr
+                  WHERE
+                    rr.review_id = r.id
+                    AND rr.status = 'pendiente'
+                  ORDER BY rr.created_at DESC
+                  LIMIT 1
+                ) AS latest_report_at,
+                b.business_name,
+                b.category,
+                b.city
+              FROM business_reviews r
+              JOIN businesses b
+                ON b.id = r.business_id
+              ORDER BY r.created_at DESC
+              LIMIT 100
+            `);
+
+          sendJson(res, 200, {
+            items: reviews.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/reviews\/\d+\/remove$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await pool.query(
+            `
+            UPDATE business_reviews
+            SET status = 'retirada'
+            WHERE id = $1
+            `,
+            [id]
+          );
+
+          await pool.query(
+            `
+            UPDATE business_review_reports
+            SET status = 'resuelta'
+            WHERE review_id = $1
+            `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Resena retirada del muro.",
           });
           return;
         }

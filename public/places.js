@@ -332,7 +332,15 @@ function ensureReviewModal() {
         <h2 id="review-title">Grabar resena</h2>
         <button type="button" class="icon-ghost ad-close" aria-label="Cerrar" data-review-close>&times;</button>
       </div>
-      <p>Graba una resena corta de 15 segundos. Estara visible durante 15 dias.</p>
+      <p>Puedes grabar la resena en el sitio o despues. Al enviarla se publica en el muro durante 15 dias.</p>
+      <section class="review-rules">
+        <strong>Normas antes de grabar</strong>
+        <p>No subas contenido sexual o pornografico, desnudos, violencia, amenazas, insultos, datos privados, menores en situaciones sensibles o videos que no correspondan al local.</p>
+        <label class="legal-check">
+          <input id="review-rules-accept" type="checkbox" />
+          Acepto estas normas y autorizo que Parchar retire la resena si incumple.
+        </label>
+      </section>
       <video id="review-preview" class="review-preview" playsinline muted></video>
       <p id="review-status" class="status-muted">Lista para grabar.</p>
       <div class="review-actions">
@@ -448,6 +456,10 @@ async function openReviewModal(
     modal.querySelector(
       "#review-send"
     );
+  const rulesInput =
+    modal.querySelector(
+      "#review-rules-accept"
+    );
 
   if (preview) {
     preview.removeAttribute("src");
@@ -460,6 +472,10 @@ async function openReviewModal(
     sendButton.disabled = true;
   }
 
+  if (rulesInput) {
+    rulesInput.checked = false;
+  }
+
   setReviewStatus(
     "Lista para grabar."
   );
@@ -467,6 +483,19 @@ async function openReviewModal(
 }
 
 async function startReviewRecording() {
+  const rulesInput =
+    document.querySelector(
+      "#review-rules-accept"
+    );
+
+  if (!rulesInput?.checked) {
+    setReviewStatus(
+      "Primero acepta las normas de la resena.",
+      true
+    );
+    return;
+  }
+
   if (
     !navigator.mediaDevices
       ?.getUserMedia ||
