@@ -1,6 +1,23 @@
 const adBanner = document.querySelector(".ad-banner");
 const AD_REFRESH_MS = 18000;
+const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
+let adRequestSeq = 0;
+
+function clearAdRefreshTimer() {
+  if (adRefreshTimer) {
+    window.clearTimeout(adRefreshTimer);
+    adRefreshTimer = null;
+  }
+}
+
+function scheduleAdRefresh(delayMs) {
+  clearAdRefreshTimer();
+  adRefreshTimer = window.setTimeout(
+    loadAdBanner,
+    delayMs
+  );
+}
 
 function readStoredClient() {
   try {
@@ -357,6 +374,9 @@ async function loadAdBanner() {
     return;
   }
 
+  const requestSeq = ++adRequestSeq;
+  clearAdRefreshTimer();
+
   const pill = adBanner.querySelector(
     ".ad-pill"
   );
@@ -642,18 +662,81 @@ async function loadAdBanner() {
       if (media.tagName === "VIDEO") {
         media.muted = true;
         media.autoplay = true;
-        media.loop = true;
+        media.loop = false;
         media.playsInline = true;
+        media.addEventListener(
+          "ended",
+          () => {
+            if (requestSeq !== adRequestSeq) {
+              return;
+            }
+
+            scheduleAdRefresh(400);
+          },
+          { once: true }
+        );
+        media.addEventListener(
+          "error",
+          () => {
+            if (requestSeq !== adRequestSeq) {
+              return;
+            }
+
+            scheduleAdRefresh(AD_REFRESH_MS);
+          },
+          { once: true }
+        );
       } else {
         media.alt =
           banner.advertiserName ||
           "Anuncio";
+        scheduleAdRefresh(AD_REFRESH_MS);
       }
 
       mediaContainer.appendChild(media);
       mediaContainer.hidden = false;
+
+      if (media.tagName === "VIDEO") {
+        media.addEventListener(
+          "loadedmetadata",
+          () => {
+            if (requestSeq !== adRequestSeq) {
+              return;
+            }
+
+            const durationMs =
+              Number.isFinite(
+                media.duration
+              ) && media.duration > 0
+                ? Math.ceil(
+                    media.duration * 1000
+                  ) + 800
+                : AD_VIDEO_FALLBACK_MS;
+            scheduleAdRefresh(
+              Math.max(
+                durationMs,
+                5000
+              )
+            );
+          },
+          { once: true }
+        );
+
+        media.play?.().catch(() => {
+          if (requestSeq !== adRequestSeq) {
+            return;
+          }
+
+          scheduleAdRefresh(
+            AD_VIDEO_FALLBACK_MS
+          );
+        });
+      }
     } else if (mediaContainer) {
       mediaContainer.hidden = true;
+      scheduleAdRefresh(AD_REFRESH_MS);
+    } else {
+      scheduleAdRefresh(AD_REFRESH_MS);
     }
   } catch {
     if (pill) {
@@ -663,6 +746,7 @@ async function loadAdBanner() {
       text.textContent =
         "Pauta tu marca en Parchar";
     }
+    scheduleAdRefresh(AD_REFRESH_MS);
   }
 }
 
@@ -670,13 +754,6 @@ function initializeAds() {
   bindAdRequestButtons();
   bindAdBannerClick();
   loadAdBanner();
-
-  if (!adRefreshTimer) {
-    adRefreshTimer = window.setInterval(
-      loadAdBanner,
-      AD_REFRESH_MS
-    );
-  }
 }
 
 if (document.readyState === "loading") {
