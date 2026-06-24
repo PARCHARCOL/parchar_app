@@ -1106,6 +1106,28 @@ textarea {
   max-height: 180px;
 }
 
+.priority-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin: 10px 0;
+  border-radius: 13px;
+  border: 1px solid rgba(255, 190, 106, 0.28);
+  background: rgba(255, 142, 45, 0.08);
+  padding: 9px;
+}
+
+.priority-editor label {
+  min-width: 150px;
+  flex: 1;
+  margin: 0;
+}
+
+.priority-editor select {
+  min-height: 40px;
+}
+
 .request-actions {
   display: flex;
   flex-wrap: wrap;

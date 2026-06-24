@@ -4215,6 +4215,81 @@ const server =
 
         if (
           pathname.match(
+            /^\/api\/admin\/ad-campaigns\/\d+\/priority$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const priority = Math.max(
+            1,
+            Math.min(
+              10,
+              Number(
+                body.priority || 1
+              )
+            )
+          );
+
+          if (
+            !Number.isFinite(
+              priority
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Prioridad invalida.",
+            });
+            return;
+          }
+
+          const result =
+            await pool.query(
+              `
+              UPDATE ad_campaigns
+              SET priority = $1,
+                  updated_at = NOW()
+              WHERE id = $2
+              `,
+              [
+                priority,
+                id,
+              ]
+            );
+
+          if (!result.rowCount) {
+            sendJson(res, 404, {
+              error:
+                "Campana no encontrada.",
+            });
+            return;
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+            priority,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
             /^\/api\/admin\/ad-campaigns\/\d+\/delete$/
           ) &&
           req.method === "POST"

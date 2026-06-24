@@ -1145,6 +1145,42 @@ function renderAdCampaigns(items) {
               )}
             </p>
 
+            <div class="priority-editor">
+              <label>
+                Prioridad comercial
+                <select data-ad-priority="${Number(
+                  item.id
+                )}">
+                  ${Array.from(
+                    { length: 10 },
+                    (_, index) => {
+                      const value =
+                        index + 1;
+                      return `
+                        <option value="${value}" ${
+                        Number(
+                          item.priority
+                        ) === value
+                          ? "selected"
+                          : ""
+                      }>
+                          ${value}
+                        </option>
+                      `;
+                    }
+                  ).join("")}
+                </select>
+              </label>
+              <button
+                class="ghost-btn"
+                onclick="saveAdCampaignPriority(${Number(
+                  item.id
+                )})"
+              >
+                Guardar prioridad
+              </button>
+            </div>
+
             <p class="tiny">
               Vistas ${escapeHtml(
                 item.impressions
@@ -1318,6 +1354,58 @@ async function setAdCampaignStatus(
       throw new Error(
         data.error ||
           "No se pudo actualizar la campana"
+      );
+    }
+
+    await loadAdCampaigns();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function saveAdCampaignPriority(
+  id
+) {
+  const input =
+    document.querySelector(
+      `[data-ad-priority="${id}"]`
+    );
+  const priority = Number(
+    input?.value || 1
+  );
+
+  if (
+    !Number.isFinite(priority) ||
+    priority < 1 ||
+    priority > 10
+  ) {
+    alert(
+      "La prioridad debe estar entre 1 y 10."
+    );
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      `/api/admin/ad-campaigns/${id}/priority`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          priority,
+        }),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo actualizar la prioridad"
       );
     }
 
