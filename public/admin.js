@@ -1015,14 +1015,15 @@ function renderBusinesses(items) {
           ${
             item.rut_document
               ? `
-            <a
-              href="${item.rut_document}"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               class="ghost-btn"
+              onclick="downloadBusinessDocument(${Number(
+                item.id
+              )}, 'rut')"
             >
-              Ver RUT
-            </a>
+              Descargar RUT
+            </button>
           `
               : ""
           }
@@ -1030,14 +1031,15 @@ function renderBusinesses(items) {
           ${
             item.commerce_document
               ? `
-            <a
-              href="${item.commerce_document}"
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
               class="ghost-btn"
+              onclick="downloadBusinessDocument(${Number(
+                item.id
+              )}, 'commerce')"
             >
-              Ver Camara Comercio
-            </a>
+              Descargar Camara Comercio
+            </button>
           `
               : ""
           }
@@ -1220,6 +1222,86 @@ function campaignStatusLabel(value) {
   };
 
   return labels[value] || value || "";
+}
+
+function getFilenameFromDisposition(
+  disposition,
+  fallback
+) {
+  const match = String(
+    disposition || ""
+  ).match(
+    /filename\*?=(?:UTF-8''|")?([^";]+)/i
+  );
+
+  if (!match) {
+    return fallback;
+  }
+
+  try {
+    return decodeURIComponent(
+      match[1].replaceAll('"', "")
+    );
+  } catch {
+    return match[1].replaceAll(
+      '"',
+      ""
+    );
+  }
+}
+
+async function downloadBusinessDocument(
+  id,
+  type
+) {
+  try {
+    const response = await staffFetch(
+      `/api/admin/businesses/${Number(
+        id
+      )}/document/${type}`
+    );
+
+    if (!response.ok) {
+      let errorMessage =
+        "No se pudo descargar el documento.";
+      try {
+        const data =
+          await response.json();
+        errorMessage =
+          data.error || errorMessage;
+      } catch {
+        // no-op
+      }
+      throw new Error(errorMessage);
+    }
+
+    const blob = await response.blob();
+    const filename =
+      getFilenameFromDisposition(
+        response.headers.get(
+          "Content-Disposition"
+        ),
+        type === "commerce"
+          ? "camara-comercio.pdf"
+          : "rut.pdf"
+      );
+    const url =
+      URL.createObjectURL(blob);
+    const link =
+      document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    link.target = "_blank";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(
+      () => URL.revokeObjectURL(url),
+      30000
+    );
+  } catch (error) {
+    alert(error.message);
+  }
 }
 
 function renderAdCampaigns(items) {

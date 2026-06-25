@@ -1233,6 +1233,89 @@ function sendFile(
   ).pipe(res);
 }
 
+function safeDownloadFilename(
+  value,
+  fallback = "documento.pdf"
+) {
+  const ext = path
+    .extname(fallback)
+    .toLowerCase();
+  const base = safeUploadSegment(
+    String(value || fallback).replace(
+      /\.[a-z0-9]+$/i,
+      ""
+    )
+  );
+
+  return `${base}${ext || ".pdf"}`;
+}
+
+function sendLocalDocument(
+  res,
+  absolutePath,
+  filename
+) {
+  if (
+    !absolutePath ||
+    !fs.existsSync(
+      absolutePath
+    )
+  ) {
+    sendJson(res, 404, {
+      error:
+        "Documento no encontrado.",
+    });
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type":
+      "application/pdf",
+    "Content-Disposition": `attachment; filename="${safeDownloadFilename(
+      filename
+    )}"`,
+    "Cache-Control":
+      "private, no-store",
+  });
+  fs.createReadStream(
+    absolutePath
+  ).pipe(res);
+}
+
+async function sendRemoteDocument(
+  res,
+  documentUrl,
+  filename
+) {
+  const response = await fetch(
+    documentUrl
+  );
+
+  if (!response.ok) {
+    sendJson(res, 404, {
+      error:
+        "Documento no disponible.",
+    });
+    return;
+  }
+
+  const bytes = Buffer.from(
+    await response.arrayBuffer()
+  );
+
+  res.writeHead(200, {
+    "Content-Type":
+      "application/pdf",
+    "Content-Disposition": `attachment; filename="${safeDownloadFilename(
+      filename
+    )}"`,
+    "Cache-Control":
+      "private, no-store",
+    "Content-Length": bytes.length,
+  });
+  res.end(bytes);
+}
+
 async function parseJsonBody(
   req
 ) {
@@ -3850,6 +3933,118 @@ const server =
           sendJson(res, 200, {
             items:
               result.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/businesses\/\d+\/document\/(rut|commerce)$/
+          ) &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const [, idText, type] =
+            pathname.match(
+              /^\/api\/admin\/businesses\/(\d+)\/document\/(rut|commerce)$/
+            ) || [];
+          const id = Number(idText);
+          const column =
+            type === "commerce"
+              ? "commerce_document"
+              : "rut_document";
+
+          const result =
+            await pool.query(
+              `
+              SELECT id, business_name, ${column} AS document_url
+              FROM businesses
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const business =
+            result.rows[0];
+          const documentUrl =
+            business?.document_url || "";
+
+          if (!documentUrl) {
+            sendJson(res, 404, {
+              error:
+                "Este local no tiene ese documento.",
+            });
+            return;
+          }
+
+          const filename =
+            `${business.business_name || "local"}-${type}.pdf`;
+
+          if (
+            /^https?:\/\//i.test(
+              documentUrl
+            )
+          ) {
+            await sendRemoteDocument(
+              res,
+              documentUrl,
+              filename
+            );
+            return;
+          }
+
+          if (
+            documentUrl.startsWith(
+              "/uploads/"
+            )
+          ) {
+            const relativeUploadPath =
+              decodeURIComponent(
+                documentUrl.replace(
+                  /^\/uploads\//,
+                  ""
+                )
+              );
+            const uploadPath =
+              path.resolve(
+                UPLOADS_DIR,
+                relativeUploadPath
+              );
+
+            if (
+              uploadPath ===
+                UPLOADS_DIR ||
+              !uploadPath.startsWith(
+                `${UPLOADS_DIR}${path.sep}`
+              )
+            ) {
+              sendJson(res, 403, {
+                error:
+                  "Acceso no permitido.",
+              });
+              return;
+            }
+
+            sendLocalDocument(
+              res,
+              uploadPath,
+              filename
+            );
+            return;
+          }
+
+          sendJson(res, 400, {
+            error:
+              "Ruta de documento invalida.",
           });
           return;
         }
