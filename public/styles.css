@@ -15,7 +15,7 @@
   --success: #6df7b4;
   --error: #ff8a96;
   --nav-height: 72px;
-  --ad-height: 54px;
+  --ad-height: 68px;
   --radius-lg: 26px;
   --radius-md: 18px;
   --radius-sm: 13px;
@@ -1944,7 +1944,7 @@ textarea {
 @media (min-width: 700px) {
   :root {
     --nav-height: 74px;
-    --ad-height: 122px;
+    --ad-height: 153px;
   }
 
   .theme-body {
@@ -2038,7 +2038,7 @@ textarea {
 @media (min-width: 1100px) {
   :root {
     --nav-height: 76px;
-    --ad-height: 138px;
+    --ad-height: 173px;
   }
 
   .app-shell {
@@ -2119,7 +2119,7 @@ textarea {
 @media (max-width: 540px) {
   :root {
     --nav-height: 70px;
-    --ad-height: 150px;
+    --ad-height: 188px;
   }
 
   .app-shell {
