@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#3d146d" />
+    <title>Descargar Parchar</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
+    <link rel="stylesheet" href="/styles.css?v=59" />
+    <meta http-equiv="refresh" content="1; url=/index.html?source=qr-locales" />
+  </head>
+  <body class="theme-body home-body">
+    <div class="ambient-glow"></div>
+
+    <main class="app-shell qr-landing">
+      <img class="brand-logo" src="/assets/parchar-logo.png" alt="Parchar" />
+      <h1>Abriendo Parchar</h1>
+      <p>Si no abre automaticamente, toca el boton.</p>
+      <a class="submit-btn" href="/index.html?source=qr-locales">
+        Entrar a Parchar
+      </a>
+    </main>
+
+    <script>
+      window.setTimeout(() => {
+        window.location.replace("/index.html?source=qr-locales");
+      }, 400);
+    </script>
+  </body>
+</html>

@@ -1282,6 +1282,30 @@ textarea {
   opacity: 0.72;
 }
 
+.qr-landing {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  text-align: center;
+  padding-bottom: 22px;
+}
+
+.qr-landing h1 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.qr-landing p {
+  margin: 0;
+  color: #ead8ff;
+  font-weight: 700;
+}
+
+.qr-landing .submit-btn {
+  text-decoration: none;
+  max-width: 240px;
+}
+
 .ad-preview {
   border-radius: 12px;
   border: 1px solid rgba(255, 190, 106, 0.35);

@@ -8,8 +8,9 @@ App web para descubrir sitios por categoria (`moto`, `carro`, `romantico`, `bbb`
 - Frontend: HTML, CSS y JavaScript vanilla
 - Base de datos local: SQLite (`/data/parchar.db`) cuando no existe `DATABASE_URL`
 - Base de datos cloud: PostgreSQL cuando existe `DATABASE_URL`
-- Archivos multimedia locales: `/uploads` cuando no hay credenciales Cloudinary
-- Archivos multimedia cloud: Cloudinary cuando existen `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY` y `CLOUDINARY_API_SECRET`
+- Archivos multimedia locales: `/uploads` solo para desarrollo local
+- Archivos multimedia cloud: Cloudflare R2 recomendado con `STORAGE_DRIVER=r2`
+- Compatibilidad cloud anterior: Cloudinary con `STORAGE_DRIVER=cloudinary`
 
 ## Ejecutar local
 
@@ -95,12 +96,24 @@ Se puede subir a Render o Railway como servicio Node.
 - `DATABASE_MODE=postgres` usa PostgreSQL y requiere un `DATABASE_URL` valido.
 - Sin `DATABASE_URL`, la app usa SQLite sobre el disco persistente configurado.
 - Con `DATABASE_URL`, la app usa PostgreSQL.
-- Sin credenciales Cloudinary, los archivos se guardan en `/uploads`.
-- Con credenciales Cloudinary, videos y documentos se guardan en Cloudinary.
+- `STORAGE_DRIVER=r2` guarda videos, documentos, publicidad e imagenes en Cloudflare R2.
+- `STORAGE_DRIVER=cloudinary` guarda videos y documentos en Cloudinary.
+- `STORAGE_DRIVER=auto` usa R2 si esta configurado, si no Cloudinary, y por ultimo local solo en desarrollo.
 
-Importante para Render gratis: SQLite y `/uploads` quedan en disco temporal. En cada deploy o reinicio se pueden perder locales, campanas, solicitudes y archivos locales. Para no perder datos en plan gratis usa PostgreSQL externo, por ejemplo Neon o Supabase, con `DATABASE_MODE=postgres` y `DATABASE_URL`, y usa Cloudinary para todos los archivos.
+Variables para Cloudflare R2:
 
-La app trae una proteccion de produccion: si detecta que esta corriendo en Render sin PostgreSQL o sin Cloudinary, no arranca. Es mejor que falle el deploy con un mensaje claro a que arranque con datos temporales y despues borre todo. Solo desactiva esa proteccion si tienes infraestructura persistente pagada:
+- `STORAGE_DRIVER=r2`
+- `R2_ACCOUNT_ID=...`
+- `R2_ACCESS_KEY_ID=...`
+- `R2_SECRET_ACCESS_KEY=...`
+- `R2_BUCKET=parchar-media`
+- `R2_PUBLIC_BASE_URL=https://media.tu-dominio.com`
+
+`R2_PUBLIC_BASE_URL` debe ser un dominio publico conectado al bucket, por ejemplo `https://media.parchar.co`. No uses el endpoint privado de S3 como URL publica.
+
+Importante para Render gratis: SQLite y `/uploads` quedan en disco temporal. En cada deploy o reinicio se pueden perder locales, campanas, solicitudes y archivos locales. Para no perder datos en plan gratis usa PostgreSQL externo, por ejemplo Neon o Supabase, con `DATABASE_MODE=postgres` y `DATABASE_URL`, y usa Cloudflare R2 o Cloudinary para todos los archivos.
+
+La app trae una proteccion de produccion: si detecta que esta corriendo en Render sin PostgreSQL o sin almacenamiento cloud para archivos, no arranca. Es mejor que falle el deploy con un mensaje claro a que arranque con datos temporales y despues borre todo. Solo desactiva esa proteccion si tienes infraestructura persistente pagada:
 
 - `ALLOW_RENDER_SQLITE=true` permite SQLite en Render bajo tu responsabilidad.
 - `ALLOW_RENDER_LOCAL_UPLOADS=true` permite archivos locales en Render bajo tu responsabilidad.
@@ -117,10 +130,13 @@ Para que no sea temporal debes dejarla en hosting 24/7 con dominio.
 4. En Render > Environment deja estas variables:
    - `DATABASE_MODE=postgres`
    - `DATABASE_URL=...` cadena de conexion de Neon/Supabase
-   - `CLOUDINARY_CLOUD_NAME=...`
-   - `CLOUDINARY_API_KEY=...`
-   - `CLOUDINARY_API_SECRET=...`
-5. Si el servicio viejo tenia `DATABASE_MODE=sqlite`, cambialo a `postgres`. Si tenia `DATA_DIR` o `UPLOADS_DIR`, ya no son necesarios para Render gratis.
+   - `STORAGE_DRIVER=r2`
+   - `R2_ACCOUNT_ID=...`
+   - `R2_ACCESS_KEY_ID=...`
+   - `R2_SECRET_ACCESS_KEY=...`
+   - `R2_BUCKET=parchar-media`
+   - `R2_PUBLIC_BASE_URL=https://media.parchar.co`
+5. Si el servicio viejo tenia `DATABASE_MODE=sqlite`, cambialo a `postgres`. Si tenia `DATA_DIR`, `UPLOADS_DIR` o variables Cloudinary, ya no son necesarios para Render gratis con R2.
 6. Espera deploy completo y prueba URL `onrender.com`.
 7. En Render agrega tu dominio (ej: `parchar.co`) en `Settings > Custom Domains`.
 8. Configura DNS en tu proveedor de dominio y luego haz `Verify` en Render.

@@ -20,6 +20,10 @@ const multer = require(
 const cloudinary = require(
   "cloudinary"
 ).v2;
+const {
+  S3Client,
+  PutObjectCommand,
+} = require("@aws-sdk/client-s3");
 const { Pool } = require(
   "pg"
 );
@@ -78,6 +82,43 @@ const CLOUDINARY_CONFIGURED =
       process.env
         .CLOUDINARY_API_SECRET
   );
+const STORAGE_DRIVER = String(
+  process.env.STORAGE_DRIVER ||
+    "auto"
+)
+  .trim()
+  .toLowerCase();
+const R2_ACCOUNT_ID = String(
+  process.env.R2_ACCOUNT_ID || ""
+).trim();
+const R2_ACCESS_KEY_ID = String(
+  process.env.R2_ACCESS_KEY_ID || ""
+).trim();
+const R2_SECRET_ACCESS_KEY = String(
+  process.env.R2_SECRET_ACCESS_KEY || ""
+).trim();
+const R2_BUCKET = String(
+  process.env.R2_BUCKET || ""
+).trim();
+const R2_PUBLIC_BASE_URL = String(
+  process.env.R2_PUBLIC_BASE_URL || ""
+)
+  .trim()
+  .replace(/\/+$/g, "");
+const R2_ENDPOINT = String(
+  process.env.R2_ENDPOINT ||
+    (R2_ACCOUNT_ID
+      ? `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`
+      : "")
+).trim();
+const R2_CONFIGURED = Boolean(
+  R2_ACCOUNT_ID &&
+    R2_ACCESS_KEY_ID &&
+    R2_SECRET_ACCESS_KEY &&
+    R2_BUCKET &&
+    R2_PUBLIC_BASE_URL &&
+    R2_ENDPOINT
+);
 const IS_RENDER_HOST =
   Boolean(
     process.env.RENDER ||
@@ -106,6 +147,37 @@ if (
 ) {
   throw new Error(
     "DATABASE_MODE debe ser auto, sqlite o postgres."
+  );
+}
+
+if (
+  ![
+    "auto",
+    "cloudinary",
+    "r2",
+    "local",
+  ].includes(STORAGE_DRIVER)
+) {
+  throw new Error(
+    "STORAGE_DRIVER debe ser auto, cloudinary, r2 o local."
+  );
+}
+
+if (
+  STORAGE_DRIVER === "r2" &&
+  !R2_CONFIGURED
+) {
+  throw new Error(
+    "STORAGE_DRIVER=r2 requiere R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET y R2_PUBLIC_BASE_URL."
+  );
+}
+
+if (
+  STORAGE_DRIVER === "cloudinary" &&
+  !CLOUDINARY_CONFIGURED
+) {
+  throw new Error(
+    "STORAGE_DRIVER=cloudinary requiere CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET."
   );
 }
 
@@ -141,18 +213,40 @@ if (
 if (
   IS_RENDER_HOST &&
   !ALLOW_RENDER_LOCAL_UPLOADS &&
-  !CLOUDINARY_CONFIGURED
+  !CLOUDINARY_CONFIGURED &&
+  !R2_CONFIGURED
 ) {
   throw new Error(
-    "Proteccion de archivos: en Render gratis los uploads locales se pueden borrar. Configura CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET. Si realmente tienes disco persistente pago y quieres asumir el riesgo, define ALLOW_RENDER_LOCAL_UPLOADS=true."
+    "Proteccion de archivos: en Render gratis los uploads locales se pueden borrar. Configura STORAGE_DRIVER=r2 con R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET y R2_PUBLIC_BASE_URL, o configura Cloudinary. Si realmente tienes disco persistente pago y quieres asumir el riesgo, define ALLOW_RENDER_LOCAL_UPLOADS=true."
   );
 }
 
 const USE_POSTGRES =
   DATABASE_MODE !== "sqlite" &&
   Boolean(DATABASE_URL);
+const ACTIVE_STORAGE_DRIVER =
+  STORAGE_DRIVER === "auto"
+    ? R2_CONFIGURED
+      ? "r2"
+      : CLOUDINARY_CONFIGURED
+      ? "cloudinary"
+      : "local"
+    : STORAGE_DRIVER;
+const USE_R2 =
+  ACTIVE_STORAGE_DRIVER === "r2";
 const USE_CLOUDINARY =
-  CLOUDINARY_CONFIGURED;
+  ACTIVE_STORAGE_DRIVER ===
+  "cloudinary";
+
+if (
+  IS_RENDER_HOST &&
+  !ALLOW_RENDER_LOCAL_UPLOADS &&
+  ACTIVE_STORAGE_DRIVER === "local"
+) {
+  throw new Error(
+    "Proteccion de archivos: STORAGE_DRIVER=local no es seguro en Render gratis porque los archivos se pueden borrar. Usa STORAGE_DRIVER=r2 o cloudinary."
+  );
+}
 const VIDEO_MIN_SECONDS = 15;
 const VIDEO_MAX_SECONDS = 20;
 const REVIEW_VIDEO_SECONDS = 15;
@@ -281,6 +375,24 @@ cloudinary.config({
     process.env
       .CLOUDINARY_API_SECRET,
 });
+
+const r2Client = USE_R2
+  ? new S3Client({
+      region: "auto",
+      endpoint: R2_ENDPOINT,
+      credentials: {
+        accessKeyId:
+          R2_ACCESS_KEY_ID,
+        secretAccessKey:
+          R2_SECRET_ACCESS_KEY,
+      },
+      forcePathStyle: true,
+      requestChecksumCalculation:
+        "WHEN_REQUIRED",
+      responseChecksumValidation:
+        "WHEN_REQUIRED",
+    })
+  : null;
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -1440,14 +1552,7 @@ function isAllowedReviewVideo(file) {
   );
 }
 
-async function saveLocalUpload(
-  file,
-  options = {}
-) {
-  const folder =
-    safeUploadFolder(
-      options.folder
-    );
+function buildUploadFileName(file) {
   const originalName =
     file.originalname || "archivo";
   const ext =
@@ -1465,9 +1570,77 @@ async function saveLocalUpload(
         ext
       )
     );
-  const fileName = `${Date.now()}-${randomBytes(
+
+  return `${Date.now()}-${randomBytes(
     4
   ).toString("hex")}-${baseName}${ext}`;
+}
+
+function buildPublicStorageUrl(key) {
+  return `${R2_PUBLIC_BASE_URL}/${key
+    .split("/")
+    .map((part) =>
+      encodeURIComponent(part)
+    )
+    .join("/")}`;
+}
+
+async function saveR2Upload(
+  file,
+  options = {}
+) {
+  const folder =
+    safeUploadFolder(
+      options.folder
+    );
+  const fileName =
+    buildUploadFileName(file);
+  const key =
+    `${folder}/${fileName}`;
+
+  await r2Client.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      Body: file.buffer,
+      ContentType:
+        file.mimetype ||
+        "application/octet-stream",
+      ContentLength:
+        file.size ||
+        file.buffer.length,
+      CacheControl:
+        "public, max-age=31536000, immutable",
+      Metadata: {
+        originalName:
+          safeUploadSegment(
+            path.basename(
+              file.originalname ||
+                "archivo"
+            )
+          ),
+      },
+    })
+  );
+
+  return {
+    secure_url:
+      buildPublicStorageUrl(key),
+    storage_provider: "r2",
+    key,
+  };
+}
+
+async function saveLocalUpload(
+  file,
+  options = {}
+) {
+  const folder =
+    safeUploadFolder(
+      options.folder
+    );
+  const fileName =
+    buildUploadFileName(file);
   const targetDir =
     path.resolve(
       UPLOADS_DIR,
@@ -1499,14 +1672,29 @@ async function saveLocalUpload(
   };
 }
 
-async function uploadToCloudinary(
+async function uploadFileToStorage(
   file,
   options
 ) {
-  if (!USE_CLOUDINARY) {
+  if (USE_R2) {
+    return saveR2Upload(
+      file,
+      options
+    );
+  }
+
+  if (
+    ACTIVE_STORAGE_DRIVER === "local"
+  ) {
     return saveLocalUpload(
       file,
       options
+    );
+  }
+
+  if (!USE_CLOUDINARY) {
+    throw new Error(
+      "No hay almacenamiento de archivos configurado."
     );
   }
 
@@ -2633,6 +2821,11 @@ const server =
           sendJson(res, 200, {
             ok: true,
             app: "parchar-v8",
+            storage:
+              ACTIVE_STORAGE_DRIVER,
+            database: USE_POSTGRES
+              ? "postgres"
+              : "sqlite",
           });
           return;
         }
@@ -3803,7 +3996,7 @@ const server =
           }
 
           const uploadedVideo =
-            await uploadToCloudinary(
+            await uploadFileToStorage(
               videoFile,
               {
                 resource_type:
@@ -3814,7 +4007,7 @@ const server =
             );
 
           const uploadedRut =
-            await uploadToCloudinary(
+            await uploadFileToStorage(
               rutFile,
               {
                 resource_type:
@@ -3827,7 +4020,7 @@ const server =
           let commerceUrl = "";
           if (commerceFile) {
             const uploadedCommerce =
-              await uploadToCloudinary(
+              await uploadFileToStorage(
                 commerceFile,
                 {
                   resource_type:
@@ -4557,7 +4750,7 @@ const server =
             }
 
             const uploadedLogo =
-              await uploadToCloudinary(
+              await uploadFileToStorage(
                 logoFile,
                 {
                   resource_type:
@@ -4571,7 +4764,7 @@ const server =
 
             if (productFile) {
               const uploadedProduct =
-                await uploadToCloudinary(
+                await uploadFileToStorage(
                   productFile,
                   {
                     resource_type:
@@ -4616,7 +4809,7 @@ const server =
             }
 
             const uploadedMedia =
-              await uploadToCloudinary(
+              await uploadFileToStorage(
                 mediaFile,
                 {
                   resource_type:
@@ -5045,7 +5238,7 @@ const server =
             }
 
             const uploadedMedia =
-              await uploadToCloudinary(
+              await uploadFileToStorage(
                 mediaFile,
                 {
                   resource_type: "auto",
@@ -5605,7 +5798,7 @@ const server =
           }
 
           const uploadedReview =
-            await uploadToCloudinary(
+            await uploadFileToStorage(
               videoFile,
               {
                 resource_type:
