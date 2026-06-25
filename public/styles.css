@@ -2522,3 +2522,79 @@ textarea {
     animation: none;
   }
 }
+
+.home-body {
+  --ad-height: 238px;
+}
+
+.home-body .app-shell {
+  padding-bottom: calc(var(--ad-height) + 34px);
+}
+
+.home-body .home-nav {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 12px 0 0;
+  width: 100%;
+}
+
+.home-body .home-nav .nav-item {
+  min-height: 58px;
+}
+
+.home-body .ad-banner {
+  min-height: var(--ad-height);
+}
+
+@media (min-width: 700px) {
+  .home-body {
+    --ad-height: 226px;
+  }
+
+  .home-body .app-shell {
+    padding-bottom: calc(var(--ad-height) + 40px);
+  }
+}
+
+@media (min-width: 1100px) {
+  .home-body {
+    --ad-height: 250px;
+  }
+
+  .home-body .app-shell {
+    grid-template-areas:
+      "top top"
+      "search search"
+      "nav nav"
+      "install install"
+      "guide guide"
+      "buttons suggest"
+      "status suggest";
+    padding-bottom: calc(var(--ad-height) + 46px);
+  }
+
+  .home-body .home-nav {
+    grid-area: nav;
+    margin-top: 0;
+  }
+
+  .home-body .install-cta {
+    grid-area: install;
+  }
+
+  .home-body #install-guide {
+    grid-area: guide;
+  }
+}
+
+@media (max-width: 540px) {
+  .home-body {
+    --ad-height: 250px;
+  }
+
+  .home-body .app-shell {
+    padding-bottom: calc(var(--ad-height) + 32px);
+  }
+}

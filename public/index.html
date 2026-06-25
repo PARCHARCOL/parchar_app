@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
-    <link rel="stylesheet" href="/styles.css?v=59" />
+    <link rel="stylesheet" href="/styles.css?v=60" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -75,6 +75,28 @@
           autocomplete="off"
         />
       </form>
+
+      <nav class="bottom-nav public-nav home-nav">
+        <a class="nav-item active" href="/">
+          <span>&#128205;</span>
+          <strong>Inicio</strong>
+        </a>
+
+        <a class="nav-item" href="/places.html?category=moto">
+          <span>&#128293;</span>
+          <strong>Trending</strong>
+        </a>
+
+        <button type="button" class="nav-item nav-button" data-open-ad-request>
+          <span>&#128227;</span>
+          <strong>Pautar</strong>
+        </button>
+
+        <a class="nav-item" href="/admin.html">
+          <span>&#128737;</span>
+          <strong>Admin</strong>
+        </a>
+      </nav>
 
       <section class="install-cta" aria-label="Descargar app Parchar">
         <div>
@@ -176,29 +198,6 @@
         </div>
       </section>
 
-      <nav class="bottom-nav public-nav">
-        <a class="nav-item active" href="/">
-          <span>&#128205;</span>
-          <strong>Inicio</strong>
-        </a>
-
-        <a class="nav-item" href="/places.html?category=moto">
-          <span>&#128293;</span>
-          <strong>Trending</strong>
-        </a>
-
-        <button type="button" class="nav-item nav-button" data-open-ad-request>
-          <span>&#128227;</span>
-          <strong>Pautar</strong>
-        </button>
-
-        <a class="nav-item" href="/admin.html">
-          <span>&#128737;</span>
-          <strong>Admin</strong>
-        </a>
-
-      </nav>
-
       <aside class="ad-banner" aria-label="Publicidad">
         <span class="ad-pill">Anuncio</span>
         <p>Espacio para aliados de Parchar</p>
@@ -206,8 +205,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=59"></script>
-    <script src="/update.js?v=59"></script>
-    <script src="/app.js?v=59"></script>
+    <script src="/ads.js?v=60"></script>
+    <script src="/update.js?v=60"></script>
+    <script src="/app.js?v=60"></script>
   </body>
 </html>
