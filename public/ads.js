@@ -129,6 +129,30 @@ function createAdaptiveMediaStage(
   };
 }
 
+function setMediaOrientationClass(media) {
+  const width =
+    media.videoWidth ||
+    media.naturalWidth ||
+    0;
+  const height =
+    media.videoHeight ||
+    media.naturalHeight ||
+    0;
+
+  if (!width || !height) {
+    return;
+  }
+
+  media.classList.toggle(
+    "is-vertical-ad",
+    height > width * 1.12
+  );
+  media.classList.toggle(
+    "is-wide-ad",
+    width > height * 2.4
+  );
+}
+
 function createAdTemplateElement(banner) {
   const template =
     document.createElement("div");
@@ -918,6 +942,14 @@ async function loadAdBanner() {
 
       if (mediaTag === "video") {
         media.addEventListener(
+          "loadedmetadata",
+          () =>
+            setMediaOrientationClass(
+              media
+            ),
+          { once: true }
+        );
+        media.addEventListener(
           "ended",
           () => {
             if (requestSeq !== adRequestSeq) {
@@ -940,6 +972,19 @@ async function loadAdBanner() {
           { once: true }
         );
       } else {
+        media.addEventListener(
+          "load",
+          () =>
+            setMediaOrientationClass(
+              media
+            ),
+          { once: true }
+        );
+        if (media.complete) {
+          setMediaOrientationClass(
+            media
+          );
+        }
         scheduleAdRefresh(AD_REFRESH_MS);
       }
 

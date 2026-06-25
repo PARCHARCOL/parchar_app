@@ -1373,10 +1373,11 @@ textarea {
 
 .ad-media-main {
   z-index: 2;
-  object-fit: contain !important;
+  object-fit: cover !important;
   object-position: center center;
   padding: 0;
-  filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.36));
+  filter: none;
+  animation: ad-media-pan-x 18s ease-in-out infinite alternate;
 }
 
 .ad-media .ad-media-fill {
@@ -1384,7 +1385,15 @@ textarea {
 }
 
 .ad-media .ad-media-main {
-  object-fit: contain !important;
+  object-fit: cover !important;
+}
+
+.ad-media-main.is-vertical-ad {
+  animation-name: ad-media-pan-y;
+}
+
+.ad-media-main.is-wide-ad {
+  animation-name: ad-media-pan-x;
 }
 
 .ad-template {
@@ -1688,6 +1697,34 @@ textarea {
 
   70%, 100% {
     transform: translateX(34%) rotate(0deg);
+  }
+}
+
+@keyframes ad-media-pan-x {
+  0% {
+    object-position: 18% center;
+  }
+
+  45% {
+    object-position: 50% center;
+  }
+
+  100% {
+    object-position: 82% center;
+  }
+}
+
+@keyframes ad-media-pan-y {
+  0% {
+    object-position: center 18%;
+  }
+
+  45% {
+    object-position: center 50%;
+  }
+
+  100% {
+    object-position: center 82%;
   }
 }
 
@@ -2214,7 +2251,8 @@ textarea {
 
   .ad-template::before,
   .ad-template-logo,
-  .ad-template-product {
+  .ad-template-product,
+  .ad-media-main {
     animation: none;
   }
 }
