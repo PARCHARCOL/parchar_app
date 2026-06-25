@@ -1,5 +1,12 @@
 ﻿const buttons = document.querySelectorAll(".action-btn");
 const statusEl = document.querySelector("#location-status");
+const menuButton = document.querySelector("#home-menu-btn");
+const alertsButton = document.querySelector("#home-alerts-btn");
+const menuPanel = document.querySelector("#home-menu-panel");
+const alertsPanel = document.querySelector("#home-alerts-panel");
+const searchForm = document.querySelector("#home-search-form");
+const searchInput = document.querySelector("#home-search");
+const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
 
 const installButton = document.querySelector("#install-app-btn");
 const installHelpButton = document.querySelector("#install-help-btn");
@@ -29,6 +36,20 @@ function redirectWithCategory(category, coords) {
     url.searchParams.set("lng", String(coords.longitude));
   }
 
+  window.location.href = url.toString();
+}
+
+function redirectWithSearch(query) {
+  const cleanQuery = String(query || "").trim();
+
+  if (!cleanQuery) {
+    updateStatus("Escribe que quieres buscar.");
+    searchInput?.focus();
+    return;
+  }
+
+  const url = new URL("/places.html", window.location.origin);
+  url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
 }
 
@@ -84,6 +105,77 @@ function handleCategory(route) {
       maximumAge: 0,
     }
   );
+}
+
+function setPanelState(button, panel, isOpen) {
+  if (!button || !panel) return;
+
+  panel.hidden = !isOpen;
+  button.setAttribute("aria-expanded", String(isOpen));
+  button.classList.toggle("is-active", isOpen);
+}
+
+function closeQuickPanels(exceptPanel = null) {
+  if (exceptPanel !== menuPanel) {
+    setPanelState(menuButton, menuPanel, false);
+  }
+
+  if (exceptPanel !== alertsPanel) {
+    setPanelState(alertsButton, alertsPanel, false);
+  }
+}
+
+function toggleQuickPanel(button, panel) {
+  if (!button || !panel) return;
+
+  const willOpen = panel.hidden;
+  closeQuickPanels(panel);
+  setPanelState(button, panel, willOpen);
+}
+
+function setupQuickPanels() {
+  menuButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleQuickPanel(menuButton, menuPanel);
+  });
+
+  alertsButton?.addEventListener("click", (event) => {
+    event.stopPropagation();
+    toggleQuickPanel(alertsButton, alertsPanel);
+  });
+
+  [menuPanel, alertsPanel].forEach((panel) => {
+    panel?.addEventListener("click", (event) => {
+      if (event.target.closest("[data-open-ad-request]")) {
+        closeQuickPanels();
+      }
+    });
+  });
+
+  document.addEventListener("click", (event) => {
+    if (
+      event.target.closest(".quick-panel") ||
+      event.target.closest("#home-menu-btn") ||
+      event.target.closest("#home-alerts-btn")
+    ) {
+      return;
+    }
+
+    closeQuickPanels();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      closeQuickPanels();
+    }
+  });
+}
+
+function setupSearch() {
+  searchForm?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    redirectWithSearch(searchInput?.value);
+  });
 }
 
 function isIosDevice() {
@@ -303,4 +395,17 @@ for (const button of buttons) {
   });
 }
 
+for (const link of suggestionLinks) {
+  link.addEventListener("click", (event) => {
+    const route = link.dataset.suggestionRoute;
+
+    if (!route) return;
+
+    event.preventDefault();
+    handleCategory(route);
+  });
+}
+
+setupQuickPanels();
+setupSearch();
 setupInstallFlow();

@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=56"
+      href="/styles.css?v=58"
     />
 
   </head>
@@ -113,6 +113,69 @@
           >
             Cerrar sesion
           </button>
+        </section>
+
+        <section
+          id="admin-alert-center"
+          class="admin-alert-center"
+          aria-live="polite"
+        >
+          <div class="admin-alert-topline">
+            <div>
+              <strong>
+                Centro de avisos
+              </strong>
+              <span id="admin-alert-status">
+                Se actualiza automaticamente.
+              </span>
+            </div>
+
+            <button
+              id="admin-sound-toggle"
+              type="button"
+              class="ghost-btn"
+            >
+              Sonido activo
+            </button>
+          </div>
+
+          <div class="admin-alert-grid">
+            <a
+              href="#admin-business-section"
+              class="admin-alert-card"
+              data-admin-alert-card="businesses"
+            >
+              <span>Locales pendientes</span>
+              <strong data-admin-alert-count="businesses">0</strong>
+            </a>
+
+            <a
+              href="#admin-ads-section"
+              class="admin-alert-card"
+              data-admin-alert-card="adRequests"
+            >
+              <span>Solicitudes de pauta</span>
+              <strong data-admin-alert-count="adRequests">0</strong>
+            </a>
+
+            <a
+              href="#admin-review-section"
+              class="admin-alert-card"
+              data-admin-alert-card="reviews"
+            >
+              <span>Resenas activas</span>
+              <strong data-admin-alert-count="reviews">0</strong>
+            </a>
+
+            <a
+              href="#admin-review-section"
+              class="admin-alert-card"
+              data-admin-alert-card="reports"
+            >
+              <span>Reportes pendientes</span>
+              <strong data-admin-alert-count="reports">0</strong>
+            </a>
+          </div>
         </section>
 
       <section class="form-block glass-card">
@@ -263,6 +326,10 @@
 
         <h2>
           Administracion de negocios
+          <span
+            class="admin-heading-badge"
+            data-admin-alert-count="businesses"
+          >0</span>
         </h2>
 
         <p>
@@ -327,7 +394,10 @@
 
       </section>
 
-      <section class="form-block glass-card">
+      <section
+        id="admin-ads-section"
+        class="form-block glass-card"
+      >
 
         <h2>
           Publicidad
@@ -582,6 +652,10 @@
         <div class="my-businesses-head ad-requests-head">
           <h3>
             Solicitudes de pauta
+            <span
+              class="admin-heading-badge"
+              data-admin-alert-count="adRequests"
+            >0</span>
           </h3>
 
           <button
@@ -606,12 +680,19 @@
 
       </section>
 
-      <section class="form-block glass-card">
+      <section
+        id="admin-review-section"
+        class="form-block glass-card"
+      >
 
         <div class="my-businesses-head">
           <div>
             <h2>
               Moderacion del muro
+              <span
+                class="admin-heading-badge"
+                data-admin-alert-count="reports"
+              >0</span>
             </h2>
             <p>
               Revisa resenas en video y retira del muro las que incumplan normas.
@@ -687,8 +768,8 @@
 
     </main>
 
-    <script src="/update.js?v=56"></script>
-    <script src="/admin.js?v=56"></script>
+    <script src="/update.js?v=58"></script>
+    <script src="/admin.js?v=58"></script>
 
   </body>
 </html>

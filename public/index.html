@@ -10,22 +10,71 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
-    <link rel="stylesheet" href="/styles.css?v=56" />
+    <link rel="stylesheet" href="/styles.css?v=58" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
 
     <main class="app-shell">
       <header class="top-strip">
-        <button class="icon-ghost" type="button" aria-label="Menu">&#9776;</button>
+        <button
+          id="home-menu-btn"
+          class="icon-ghost"
+          type="button"
+          aria-label="Menu"
+          aria-controls="home-menu-panel"
+          aria-expanded="false"
+        >
+          &#9776;
+        </button>
         <img class="brand-logo" src="/assets/parchar-logo.png" alt="Parchar" />
-        <button class="icon-ghost" type="button" aria-label="Alertas">&#128276;</button>
+        <button
+          id="home-alerts-btn"
+          class="icon-ghost"
+          type="button"
+          aria-label="Alertas"
+          aria-controls="home-alerts-panel"
+          aria-expanded="false"
+        >
+          &#128276;
+        </button>
+
+        <div id="home-menu-panel" class="quick-panel" hidden>
+          <a href="/">Inicio</a>
+          <a href="/clients.html">Clientes</a>
+          <a href="/social.html">Muro</a>
+          <button type="button" data-open-ad-request>Solicitar pauta</button>
+          <a href="/admin.html">Admin</a>
+        </div>
+
+        <div id="home-alerts-panel" class="quick-panel quick-panel-right" hidden>
+          <a href="/social.html">
+            <strong>Muro social</strong>
+            <span>Ver reseñas activas</span>
+          </a>
+          <a href="/places.html?category=moto">
+            <strong>Trending</strong>
+            <span>Ver lugares activos</span>
+          </a>
+          <button type="button" data-open-ad-request>
+            <strong>Pauta publicitaria</strong>
+            <span>Solicitar informacion</span>
+          </button>
+        </div>
       </header>
 
-      <section class="search-bar">
-        <span class="search-icon">&#128269;</span>
-        <p>Que quieres hacer hoy?</p>
-      </section>
+      <form id="home-search-form" class="search-bar" role="search">
+        <button class="search-submit" type="submit" aria-label="Buscar">
+          <span class="search-icon">&#128269;</span>
+        </button>
+        <input
+          id="home-search"
+          type="search"
+          name="q"
+          placeholder="Que quieres hacer hoy?"
+          autocomplete="off"
+        />
+      </form>
 
       <section class="install-cta" aria-label="Descargar app Parchar">
         <div>
@@ -95,23 +144,35 @@
         <h2>Sugerencias para ti</h2>
 
         <div class="suggestion-grid">
-          <article class="suggestion-card card-romance">
+          <a
+            class="suggestion-card card-romance"
+            href="/places.html?category=romantico"
+            data-suggestion-route="romantico"
+          >
             <span class="tag-live">LIVE</span>
             <h3>Plan romantico</h3>
             <p>#Cena #Terraza #Vista</p>
-          </article>
+          </a>
 
-          <article class="suggestion-card card-bbb">
+          <a
+            class="suggestion-card card-bbb"
+            href="/places.html?category=bbb"
+            data-suggestion-route="bbb"
+          >
             <span class="tag-live">HOT</span>
             <h3>Comida BBB</h3>
             <p>#Bueno #Bonito #Barato</p>
-          </article>
+          </a>
 
-          <article class="suggestion-card card-road">
+          <a
+            class="suggestion-card card-road"
+            href="/places.html?category=moto"
+            data-suggestion-route="moto"
+          >
             <span class="tag-live">TOP</span>
             <h3>Ruta en moto</h3>
             <p>#Miradores #Aventura</p>
-          </article>
+          </a>
         </div>
       </section>
 
@@ -145,8 +206,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=56"></script>
-    <script src="/update.js?v=56"></script>
-    <script src="/app.js?v=56"></script>
+    <script src="/ads.js?v=58"></script>
+    <script src="/update.js?v=58"></script>
+    <script src="/app.js?v=58"></script>
   </body>
 </html>

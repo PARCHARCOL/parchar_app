@@ -8,6 +8,8 @@ const businessSummary =
 
 const STAFF_SESSION_KEY =
   "parchar_staff_session";
+const ADMIN_SOUND_PREF_KEY =
+  "parchar_admin_sound_enabled";
 
 const staffLoginSection =
   document.querySelector(
@@ -121,6 +123,23 @@ const refreshReviewModerationButton =
     "#refresh-review-moderation"
   );
 
+const adminAlertStatus =
+  document.querySelector(
+    "#admin-alert-status"
+  );
+const adminSoundToggle =
+  document.querySelector(
+    "#admin-sound-toggle"
+  );
+const adminAlertCountElements =
+  document.querySelectorAll(
+    "[data-admin-alert-count]"
+  );
+const adminAlertCards =
+  document.querySelectorAll(
+    "[data-admin-alert-card]"
+  );
+
 let currentStatus =
   "pendiente";
 let staffToken = "";
@@ -130,6 +149,15 @@ let currentAdRequests = [];
 let currentStaffUsers = [];
 let currentAdCampaigns = [];
 let currentReviews = [];
+let adminAlertSnapshot = null;
+let adminAlertPollTimer = null;
+let adminAudioContext = null;
+let adminSoundEnabled =
+  localStorage.getItem(
+    ADMIN_SOUND_PREF_KEY
+  ) !== "false";
+
+const ADMIN_ALERT_POLL_MS = 45000;
 
 const BUSINESS_STATUS_LABELS = {
   todos: "Todos",
@@ -264,6 +292,370 @@ function setFeedback(
   );
 }
 
+function getOpenAdRequests() {
+  return currentAdRequests.filter(
+    (item) =>
+      item.status !== "contactado"
+  );
+}
+
+function getPendingBusinesses() {
+  return currentBusinesses.filter(
+    (item) =>
+      item.status === "pendiente"
+  );
+}
+
+function getActiveReviews() {
+  return currentReviews.filter(
+    (item) =>
+      item.status === "activa"
+  );
+}
+
+function getMaxNumericId(items) {
+  return (items || []).reduce(
+    (max, item) =>
+      Math.max(
+        max,
+        Number(item.id) || 0
+      ),
+    0
+  );
+}
+
+function getLatestReportMarker(items) {
+  return (items || []).reduce(
+    (latest, item) => {
+      if (
+        Number(item.report_count || 0) <=
+        0
+      ) {
+        return latest;
+      }
+
+      const reportDate =
+        item.latest_report_at || "";
+      return reportDate > latest
+        ? reportDate
+        : latest;
+    },
+    ""
+  );
+}
+
+function getAdminAlertSnapshot() {
+  const pendingBusinesses =
+    getPendingBusinesses();
+  const openAdRequests =
+    getOpenAdRequests();
+  const activeReviews =
+    getActiveReviews();
+  const reportCount =
+    currentReviews.reduce(
+      (total, item) =>
+        total +
+        Number(
+          item.report_count || 0
+        ),
+      0
+    );
+
+  return {
+    counts: {
+      businesses:
+        pendingBusinesses.length,
+      adRequests:
+        openAdRequests.length,
+      reviews:
+        activeReviews.length,
+      reports: reportCount,
+    },
+    markers: {
+      businesses:
+        getMaxNumericId(
+          pendingBusinesses
+        ),
+      adRequests:
+        getMaxNumericId(
+          openAdRequests
+        ),
+      reviews:
+        getMaxNumericId(
+          activeReviews
+        ),
+      reports:
+        `${reportCount}:${getLatestReportMarker(
+          currentReviews
+        )}`,
+    },
+  };
+}
+
+function hasNewAdminAlert(
+  previous,
+  next
+) {
+  if (!previous || !next) {
+    return false;
+  }
+
+  return Object.keys(next.counts).some(
+    (key) => {
+      const previousCount =
+        previous.counts[key] || 0;
+      const nextCount =
+        next.counts[key] || 0;
+
+      if (nextCount > previousCount) {
+        return true;
+      }
+
+      return (
+        nextCount > 0 &&
+        nextCount >= previousCount &&
+        next.markers[key] &&
+        next.markers[key] !==
+          previous.markers[key]
+      );
+    }
+  );
+}
+
+function setAdminAlertStatus(message) {
+  if (!adminAlertStatus) {
+    return;
+  }
+
+  adminAlertStatus.textContent =
+    message;
+}
+
+function updateAdminSoundButton() {
+  if (!adminSoundToggle) {
+    return;
+  }
+
+  adminSoundToggle.textContent =
+    adminSoundEnabled
+      ? "Sonido activo"
+      : "Sonido apagado";
+  adminSoundToggle.classList.toggle(
+    "is-muted",
+    !adminSoundEnabled
+  );
+}
+
+function renderAdminAlertCenter(
+  snapshot
+) {
+  const counts =
+    snapshot?.counts || {};
+
+  adminAlertCountElements.forEach(
+    (element) => {
+      const key =
+        element.dataset
+          .adminAlertCount;
+      element.textContent = String(
+        counts[key] || 0
+      );
+      element.classList.toggle(
+        "has-alert",
+        Number(counts[key] || 0) > 0
+      );
+    }
+  );
+
+  adminAlertCards.forEach((card) => {
+    const key =
+      card.dataset.adminAlertCard;
+    card.classList.toggle(
+      "has-alert",
+      Number(counts[key] || 0) > 0
+    );
+  });
+
+  const total =
+    Number(counts.businesses || 0) +
+    Number(counts.adRequests || 0) +
+    Number(counts.reviews || 0) +
+    Number(counts.reports || 0);
+
+  document.title =
+    total > 0
+      ? `(${total}) Admin | Parchar`
+      : "Admin | Parchar";
+}
+
+function updateAdminAlertCenter({
+  notify = true,
+} = {}) {
+  const nextSnapshot =
+    getAdminAlertSnapshot();
+  const shouldNotify =
+    notify &&
+    hasNewAdminAlert(
+      adminAlertSnapshot,
+      nextSnapshot
+    );
+
+  renderAdminAlertCenter(
+    nextSnapshot
+  );
+  adminAlertSnapshot =
+    nextSnapshot;
+
+  const counts =
+    nextSnapshot.counts;
+  const total =
+    Number(counts.businesses || 0) +
+    Number(counts.adRequests || 0) +
+    Number(counts.reviews || 0) +
+    Number(counts.reports || 0);
+
+  setAdminAlertStatus(
+    total > 0
+      ? "Hay novedades pendientes por revisar."
+      : "Sin novedades pendientes."
+  );
+
+  if (shouldNotify) {
+    setAdminAlertStatus(
+      "Nueva solicitud recibida. Revisa los avisos marcados."
+    );
+    playAdminNotificationSound();
+  }
+}
+
+function getAdminAudioContext() {
+  const AudioContextClass =
+    window.AudioContext ||
+    window.webkitAudioContext;
+
+  if (!AudioContextClass) {
+    return null;
+  }
+
+  if (!adminAudioContext) {
+    adminAudioContext =
+      new AudioContextClass();
+  }
+
+  return adminAudioContext;
+}
+
+async function primeAdminSound() {
+  if (!adminSoundEnabled) {
+    return;
+  }
+
+  const audioContext =
+    getAdminAudioContext();
+
+  if (
+    audioContext?.state ===
+    "suspended"
+  ) {
+    try {
+      await audioContext.resume();
+    } catch {
+      // El navegador puede bloquear sonido hasta un toque del usuario.
+    }
+  }
+}
+
+async function playAdminNotificationSound() {
+  if (!adminSoundEnabled) {
+    return;
+  }
+
+  const audioContext =
+    getAdminAudioContext();
+
+  if (!audioContext) {
+    return;
+  }
+
+  try {
+    if (
+      audioContext.state ===
+      "suspended"
+    ) {
+      await audioContext.resume();
+    }
+
+    const now =
+      audioContext.currentTime;
+    [0, 0.18].forEach(
+      (offset, index) => {
+        const oscillator =
+          audioContext.createOscillator();
+        const gain =
+          audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value =
+          index === 0 ? 880 : 1175;
+        gain.gain.setValueAtTime(
+          0.0001,
+          now + offset
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.08,
+          now + offset + 0.02
+        );
+        gain.gain.exponentialRampToValueAtTime(
+          0.0001,
+          now + offset + 0.13
+        );
+
+        oscillator.connect(gain);
+        gain.connect(
+          audioContext.destination
+        );
+        oscillator.start(
+          now + offset
+        );
+        oscillator.stop(
+          now + offset + 0.14
+        );
+      }
+    );
+  } catch {
+    setAdminAlertStatus(
+      "Toca Sonido activo para permitir la notificacion sonora."
+    );
+  }
+}
+
+function stopAdminAlertPolling() {
+  if (adminAlertPollTimer) {
+    clearInterval(
+      adminAlertPollTimer
+    );
+    adminAlertPollTimer = null;
+  }
+}
+
+function startAdminAlertPolling() {
+  stopAdminAlertPolling();
+
+  adminAlertPollTimer =
+    setInterval(() => {
+      if (
+        !staffToken ||
+        adminDashboard?.hidden
+      ) {
+        return;
+      }
+
+      loadDashboardData({
+        notify: true,
+      });
+    }, ADMIN_ALERT_POLL_MS);
+}
+
 function saveStaffSession(
   token,
   staff
@@ -311,6 +703,10 @@ function showStaffLogin(
   message = "",
   isError = false
 ) {
+  stopAdminAlertPolling();
+  document.title =
+    "Admin | Parchar";
+
   if (staffLoginSection) {
     staffLoginSection.hidden = false;
   }
@@ -355,6 +751,7 @@ function showAdminDashboard() {
       element.hidden = !isAdmin();
     });
 
+  updateAdminSoundButton();
   setDefaultCampaignDates();
   syncAdCreativeFields();
 }
@@ -1963,7 +2360,10 @@ function prepareAdFromRequest(id) {
   );
 }
 
-async function loadAdRequests() {
+async function loadAdRequests({
+  notify = true,
+  updateAlerts = true,
+} = {}) {
   if (!adRequestList) {
     return;
   }
@@ -1985,6 +2385,11 @@ async function loadAdRequests() {
     renderAdRequests(
       data.items || []
     );
+    if (updateAlerts) {
+      updateAdminAlertCenter({
+        notify,
+      });
+    }
   } catch (error) {
     adRequestList.innerHTML = `
       <div class="glass-card">
@@ -2144,7 +2549,10 @@ function renderReviewModeration(items) {
       .join("");
 }
 
-async function loadReviewModeration() {
+async function loadReviewModeration({
+  notify = true,
+  updateAlerts = true,
+} = {}) {
   if (!reviewModerationList) {
     return;
   }
@@ -2166,6 +2574,11 @@ async function loadReviewModeration() {
     renderReviewModeration(
       data.items || []
     );
+    if (updateAlerts) {
+      updateAdminAlertCenter({
+        notify,
+      });
+    }
   } catch (error) {
     reviewModerationList.innerHTML = `
       <div class="glass-card">
@@ -2485,7 +2898,10 @@ async function changeStaffPassword(event) {
   }
 }
 
-async function loadBusinesses() {
+async function loadBusinesses({
+  notify = true,
+  updateAlerts = true,
+} = {}) {
 
   try {
 
@@ -2508,6 +2924,11 @@ async function loadBusinesses() {
     renderBusinesses(
       data.items || []
     );
+    if (updateAlerts) {
+      updateAdminAlertCenter({
+        notify,
+      });
+    }
 
   } catch (error) {
 
@@ -2529,13 +2950,24 @@ async function loadBusinesses() {
   }
 }
 
-async function loadDashboardData() {
+async function loadDashboardData({
+  notify = false,
+} = {}) {
   showAdminDashboard();
 
   const tasks = [
-    loadAdRequests(),
-    loadBusinesses(),
-    loadReviewModeration(),
+    loadAdRequests({
+      notify: false,
+      updateAlerts: false,
+    }),
+    loadBusinesses({
+      notify: false,
+      updateAlerts: false,
+    }),
+    loadReviewModeration({
+      notify: false,
+      updateAlerts: false,
+    }),
   ];
 
   if (isAdmin()) {
@@ -2548,6 +2980,10 @@ async function loadDashboardData() {
   }
 
   await Promise.all(tasks);
+  updateAdminAlertCenter({
+    notify,
+  });
+  startAdminAlertPolling();
 }
 
 async function bootstrapStaffSession() {
@@ -2706,5 +3142,58 @@ refreshReviewModerationButton?.addEventListener(
   loadReviewModeration
 );
 
+adminSoundToggle?.addEventListener(
+  "click",
+  async () => {
+    adminSoundEnabled =
+      !adminSoundEnabled;
+    localStorage.setItem(
+      ADMIN_SOUND_PREF_KEY,
+      String(adminSoundEnabled)
+    );
+    updateAdminSoundButton();
+
+    if (adminSoundEnabled) {
+      await primeAdminSound();
+      setAdminAlertStatus(
+        "Sonido activo para nuevas solicitudes."
+      );
+    } else {
+      setAdminAlertStatus(
+        "Sonido apagado. Los globos siguen activos."
+      );
+    }
+  }
+);
+
+["pointerdown", "keydown"].forEach(
+  (eventName) => {
+    window.addEventListener(
+      eventName,
+      primeAdminSound,
+      {
+        once: true,
+        passive: true,
+      }
+    );
+  }
+);
+
+document.addEventListener(
+  "visibilitychange",
+  () => {
+    if (
+      !document.hidden &&
+      staffToken &&
+      !adminDashboard?.hidden
+    ) {
+      loadDashboardData({
+        notify: true,
+      });
+    }
+  }
+);
+
 syncAdCreativeFields();
+updateAdminSoundButton();
 bootstrapStaffSession();

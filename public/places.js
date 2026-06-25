@@ -204,6 +204,34 @@ function formatDistance(
   return `${Math.round(km)} km`;
 }
 
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+function matchesSearchQuery(item, query) {
+  const needle = normalizeSearchText(query);
+
+  if (!needle) {
+    return true;
+  }
+
+  const haystack = [
+    item.business_name,
+    item.category,
+    item.description,
+    item.offerings,
+    item.city,
+    item.address,
+    item.owner_name,
+  ].join(" ");
+
+  return normalizeSearchText(haystack).includes(needle);
+}
+
 function buildRouteUrl(
   item,
   userCoords,
@@ -1068,11 +1096,17 @@ async function loadPlaces() {
     ) || "";
   const mode =
     params.get("mode") || "";
+  const searchQuery =
+    (
+      params.get("q") || ""
+    ).trim();
   const isWalkingMode =
     mode === WALKING_MODE;
 
   titleEl.textContent =
-    isWalkingMode
+    searchQuery
+      ? "Busqueda"
+      : isWalkingMode
       ? "Planes a pie"
       : titleByCategory[
           category
@@ -1080,7 +1114,9 @@ async function loadPlaces() {
         "Sitios disponibles";
 
   subtitleEl.textContent =
-    isWalkingMode
+    searchQuery
+      ? `Resultados para "${searchQuery}".`
+      : isWalkingMode
       ? "Sitios cercanos para ir caminando desde donde estas."
       : subtitleByCategory[
           category
@@ -1199,7 +1235,7 @@ async function loadPlaces() {
           item.distanceKm <=
             WALKING_DISTANCE_KM
       );
-    } else {
+    } else if (category) {
       filtered = filtered.filter(
         (item) =>
           String(
@@ -1211,11 +1247,26 @@ async function loadPlaces() {
       );
     }
 
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (item) =>
+          matchesSearchQuery(
+            item,
+            searchQuery
+          )
+      );
+    }
+
     if (isWalkingMode) {
       subtitleEl.textContent =
         `Locales hasta ${WALKING_DISTANCE_KM.toFixed(
           1
         )} km de ti para ir caminando.`;
+    } else if (searchQuery) {
+      subtitleEl.textContent =
+        userCoords
+          ? `Resultados para "${searchQuery}" ordenados por cercania.`
+          : `Resultados para "${searchQuery}".`;
     } else if (userCoords) {
       subtitleEl.textContent =
         "Sitios ordenados por cercania a tu ubicacion.";
@@ -1231,10 +1282,14 @@ async function loadPlaces() {
         routeMode: isWalkingMode
           ? "walking"
           : "driving",
-        emptyTitle: isWalkingMode
+        emptyTitle: searchQuery
+          ? "No encontramos resultados."
+          : isWalkingMode
           ? "No hay sitios caminables cerca."
           : "Aun no hay sitios activos en esta categoria.",
-        emptyMessage: isWalkingMode
+        emptyMessage: searchQuery
+          ? "Prueba con el nombre del local, ciudad, categoria o lo que ofrece."
+          : isWalkingMode
           ? `Por ahora no hay locales activos a menos de ${WALKING_DISTANCE_KM.toFixed(
               1
             )} km.`
