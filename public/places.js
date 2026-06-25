@@ -253,6 +253,44 @@ function buildRouteUrl(
   return url.toString();
 }
 
+function buildWazeRouteUrl(item) {
+  const destinationLatitude =
+    Number(item.latitude);
+  const destinationLongitude =
+    Number(item.longitude);
+  const url = new URL(
+    "https://waze.com/ul"
+  );
+
+  if (
+    isValidCoordinate(
+      destinationLatitude,
+      destinationLongitude
+    )
+  ) {
+    url.searchParams.set(
+      "ll",
+      `${destinationLatitude},${destinationLongitude}`
+    );
+  } else {
+    url.searchParams.set(
+      "q",
+      `${item.business_name || ""} ${item.address || ""} ${item.city || ""}`.trim()
+    );
+  }
+
+  url.searchParams.set(
+    "navigate",
+    "yes"
+  );
+  url.searchParams.set(
+    "utm_source",
+    "parchar"
+  );
+
+  return url.toString();
+}
+
 function escapeHtml(value) {
 
   return String(
@@ -818,6 +856,10 @@ function renderCards(
             userCoords,
             routeMode
           );
+        const wazeUrl =
+          buildWazeRouteUrl(
+            item
+          );
 
         return `
           <article class="place-card">
@@ -853,7 +895,7 @@ function renderCards(
               )}
             </p>
 
-            <p class="distance-line">
+            <div class="distance-line">
               <span>
                 <strong>Distancia:</strong>
 
@@ -872,17 +914,32 @@ function renderCards(
                 }
               </span>
 
-              <a
-                class="route-btn"
-                href="${escapeHtml(
-                  routeUrl
-                )}"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ir
-              </a>
-            </p>
+              <details class="route-menu">
+                <summary class="route-btn">
+                  Ir
+                </summary>
+                <div class="route-options">
+                  <a
+                    href="${escapeHtml(
+                      routeUrl
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Google Maps
+                  </a>
+                  <a
+                    href="${escapeHtml(
+                      wazeUrl
+                    )}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Waze
+                  </a>
+                </div>
+              </details>
+            </div>
 
             <p>
               <strong>Oferta:</strong>
