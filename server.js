@@ -276,9 +276,13 @@ const ALLOWED_AD_MEDIA_TYPES =
 const ALLOWED_SITE_TYPES =
   new Set([
     "charco",
+    "cicloruta",
     "mirador",
+    "parada_ciclista",
+    "parque",
     "pueblo",
     "naturaleza",
+    "ruta_bici",
   ]);
 const ALLOWED_SITE_MEDIA_TYPES =
   ALLOWED_AD_MEDIA_TYPES;

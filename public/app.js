@@ -23,6 +23,13 @@ const SITE_SEARCH_KEYWORDS = [
   "sendero",
   "sitio",
   "sitios",
+  "bici",
+  "bicicleta",
+  "bicicletas",
+  "cicloruta",
+  "ciclorutas",
+  "ciclista",
+  "ciclistas",
 ];
 
 const installButton = document.querySelector("#install-app-btn");
@@ -76,10 +83,17 @@ function redirectWithSearch(query) {
   const shouldSearchSites = SITE_SEARCH_KEYWORDS.some((keyword) =>
     normalizedQuery.includes(keyword)
   );
+  const isBikeSearch =
+    /\b(bici|bicicleta|bicicletas|cicloruta|ciclorutas|ciclista|ciclistas)\b/.test(
+      normalizedQuery
+    );
   const url = new URL(
     shouldSearchSites ? "/sites.html" : "/places.html",
     window.location.origin
   );
+  if (isBikeSearch) {
+    url.searchParams.set("mode", "bike");
+  }
   url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
 }
@@ -97,6 +111,11 @@ function handleCategory(route) {
 
   if (route === "sitios") {
     window.location.href = "/sites.html";
+    return;
+  }
+
+  if (route === "bici") {
+    window.location.href = "/sites.html?mode=bike";
     return;
   }
 

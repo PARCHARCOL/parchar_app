@@ -1,20 +1,76 @@
 const siteResultsEl = document.querySelector("#site-results");
 const siteSearchForm = document.querySelector("#site-search-form");
 const siteSearchInput = document.querySelector("#site-search");
-const siteFilterButtons = document.querySelectorAll(".site-filter");
+const siteFilterContainer = document.querySelector(".category-chips");
+let siteFilterButtons = document.querySelectorAll(".site-filter");
 const siteLocationStatus = document.querySelector("#site-location-status");
 const siteLocationButton = document.querySelector("#site-location-btn");
+const sitePageTitle = document.querySelector("#site-page-title");
+const sitePageSubtitle = document.querySelector("#site-page-subtitle");
 
 const siteTypeLabels = {
   charco: "Charco",
+  cicloruta: "Cicloruta",
   mirador: "Mirador",
+  parada_ciclista: "Parada ciclista",
+  parque: "Parque",
   pueblo: "Pueblo",
   naturaleza: "Naturaleza",
+  ruta_bici: "Ruta en bici",
 };
+
+const defaultSiteFilters = [
+  ["todos", "Todos"],
+  ["charco", "Charcos"],
+  ["mirador", "Miradores"],
+  ["pueblo", "Pueblos"],
+  ["naturaleza", "Naturaleza"],
+];
+
+const bikeSiteFilters = [
+  ["todos", "Todos"],
+  ["cicloruta", "Ciclorutas"],
+  ["ruta_bici", "Rutas bici"],
+  ["parada_ciclista", "Paradas"],
+  ["mirador", "Miradores"],
+  ["parque", "Parques"],
+];
+
+const bikeSiteTypes = new Set([
+  "cicloruta",
+  "ruta_bici",
+  "parada_ciclista",
+]);
+
+const bikeOptionalTypes = new Set([
+  "mirador",
+  "parque",
+  "naturaleza",
+  "charco",
+  "pueblo",
+]);
+
+const bikeKeywords = [
+  "bici",
+  "bicicleta",
+  "bicicletas",
+  "cicloruta",
+  "ciclorutas",
+  "ciclista",
+  "ciclistas",
+  "pedal",
+  "pedaleo",
+  "mtb",
+];
 
 let openSites = [];
 let userCoords = null;
 let locationResolved = false;
+
+function isBikeMode() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeText(params.get("mode")) === "bike";
+}
 
 function escapeHtml(value) {
   return String(value || "")
@@ -114,6 +170,11 @@ function estimateTravelText(km) {
     return "Permite ubicacion para calcular distancia.";
   }
 
+  if (isBikeMode()) {
+    const bikeMinutes = (km / 14) * 60;
+    return `A ${formatDistance(km)} de ti - En bici aprox ${formatMinutes(bikeMinutes)}`;
+  }
+
   const driveMinutes = (km / 28) * 60;
   const parts = [
     `A ${formatDistance(km)} de ti`,
@@ -126,6 +187,8 @@ function estimateTravelText(km) {
       `A pie aprox ${formatMinutes(walkMinutes)}`
     );
   }
+
+  return parts.join(" - ");
 
   return parts.join(" · ");
 }
@@ -145,7 +208,10 @@ function buildGoogleRouteUrl(site) {
     "destination",
     `${site.latitude},${site.longitude}`
   );
-  url.searchParams.set("travelmode", "driving");
+  url.searchParams.set(
+    "travelmode",
+    isBikeMode() ? "bicycling" : "driving"
+  );
   return url.toString();
 }
 
@@ -178,6 +244,56 @@ function getSearchFromUrl() {
   return String(params.get("q") || "").trim();
 }
 
+function renderFilterButtons() {
+  if (!siteFilterContainer) return;
+
+  const filters = isBikeMode()
+    ? bikeSiteFilters
+    : defaultSiteFilters;
+
+  siteFilterContainer.innerHTML = filters
+    .map(
+      ([value, label], index) => `
+        <button
+          type="button"
+          class="chip-filter site-filter ${index === 0 ? "active" : ""}"
+          data-site-filter="${escapeHtml(value)}"
+        >
+          ${escapeHtml(label)}
+        </button>
+      `
+    )
+    .join("");
+  siteFilterButtons = document.querySelectorAll(".site-filter");
+}
+
+function setupPageMode() {
+  if (!isBikeMode()) {
+    return;
+  }
+
+  document.title = "En bici | Parchar";
+
+  if (sitePageTitle) {
+    sitePageTitle.textContent = "En bici";
+  }
+
+  if (sitePageSubtitle) {
+    sitePageSubtitle.textContent =
+      "Ciclorutas, rutas urbanas, miradores y paradas utiles para pedalear cerca de ti.";
+  }
+
+  if (siteSearchInput) {
+    siteSearchInput.placeholder =
+      "Buscar cicloruta, ruta o parada";
+  }
+
+  if (siteLocationStatus) {
+    siteLocationStatus.textContent =
+      "Permite ubicacion para ordenar rutas en bici por cercania.";
+  }
+}
+
 function setLocationStatus(message, isError = false) {
   if (!siteLocationStatus) return;
   siteLocationStatus.textContent = message;
@@ -198,6 +314,13 @@ function setActiveFilter(filter) {
 
 function matchesSite(site, query, filter) {
   const type = site.siteType || site.site_type || "";
+
+  if (
+    isBikeMode() &&
+    !isBikeCandidate(site)
+  ) {
+    return false;
+  }
 
   if (filter !== "todos" && type !== filter) {
     return false;
@@ -222,6 +345,33 @@ function matchesSite(site, query, filter) {
     .split(/\s+/)
     .filter(Boolean)
     .every((term) => haystack.includes(term));
+}
+
+function isBikeCandidate(site) {
+  const type =
+    site.siteType || site.site_type || "";
+
+  if (bikeSiteTypes.has(type)) {
+    return true;
+  }
+
+  if (!bikeOptionalTypes.has(type)) {
+    return false;
+  }
+
+  const haystack = normalizeText(
+    [
+      site.name,
+      site.description,
+      site.address,
+      site.city,
+      site.tags,
+    ].join(" ")
+  );
+
+  return bikeKeywords.some((keyword) =>
+    haystack.includes(keyword)
+  );
 }
 
 function parseTags(tags) {
@@ -348,10 +498,17 @@ function renderSites() {
     });
 
   if (!filteredSites.length) {
+    const title = isBikeMode()
+      ? "Aun no hay rutas en bici cargadas."
+      : "No encontramos sitios con ese filtro.";
+    const message = isBikeMode()
+      ? "Desde admin carga ciclorutas, rutas en bici, paradas ciclistas o sitios con etiqueta bici."
+      : "Prueba con charco, mirador, pueblo, rio, cascada o naturaleza.";
+
     siteResultsEl.innerHTML = `
       <article class="empty-card">
-        <h3>No encontramos sitios con ese filtro.</h3>
-        <p>Prueba con charco, mirador, pueblo, rio, cascada o naturaleza.</p>
+        <h3>${escapeHtml(title)}</h3>
+        <p>${escapeHtml(message)}</p>
       </article>
     `;
     return;
@@ -404,7 +561,11 @@ function requestUserLocation() {
     return;
   }
 
-  setLocationStatus("Calculando sitios cerca de ti...");
+  setLocationStatus(
+    isBikeMode()
+      ? "Calculando rutas en bici cerca de ti..."
+      : "Calculando sitios cerca de ti..."
+  );
 
   navigator.geolocation.getCurrentPosition(
     (position) => {
@@ -414,7 +575,9 @@ function requestUserLocation() {
       };
       locationResolved = true;
       setLocationStatus(
-        "Ubicacion lista. Sitios ordenados por cercania."
+        isBikeMode()
+          ? "Ubicacion lista. Rutas en bici ordenadas por cercania."
+          : "Ubicacion lista. Sitios ordenados por cercania."
       );
       renderSites();
     },
@@ -422,7 +585,9 @@ function requestUserLocation() {
       locationResolved = true;
       userCoords = null;
       setLocationStatus(
-        "Permite ubicacion para ver distancia y tiempo desde donde estas.",
+        isBikeMode()
+          ? "Permite ubicacion para ver distancia y tiempo en bici."
+          : "Permite ubicacion para ver distancia y tiempo desde donde estas.",
         true
       );
       renderSites();
@@ -466,6 +631,8 @@ siteLocationButton?.addEventListener("click", () => {
   requestUserLocation();
 });
 
+setupPageMode();
+renderFilterButtons();
 setupSiteSearch();
 setupSiteFilters();
 loadSites().then(() => {

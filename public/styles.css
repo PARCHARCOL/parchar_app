@@ -357,6 +357,10 @@ a {
   background: linear-gradient(155deg, #7be7a0, #1f8f70 75%);
 }
 
+.btn-bike {
+  background: linear-gradient(155deg, #e8f66a, #1f8f70 78%);
+}
+
 .btn-sites {
   background: linear-gradient(155deg, #84e4df, #255f68 74%);
 }

@@ -1592,9 +1592,13 @@ function renderBusinessSummary(
 function siteTypeLabel(value) {
   const labels = {
     charco: "Charco",
+    cicloruta: "Cicloruta",
     mirador: "Mirador",
+    parada_ciclista: "Parada ciclista",
+    parque: "Parque",
     pueblo: "Pueblo",
     naturaleza: "Naturaleza",
+    ruta_bici: "Ruta en bici",
   };
 
   return labels[value] || value || "";
