@@ -1371,6 +1371,17 @@ textarea {
   box-shadow: 0 12px 24px rgba(255, 126, 45, 0.16);
 }
 
+.admin-shortcut-card {
+  border-color: rgba(118, 226, 216, 0.48);
+  background:
+    linear-gradient(145deg, rgba(37, 95, 104, 0.42), rgba(94, 42, 160, 0.5));
+}
+
+.admin-shortcut-card strong {
+  background: linear-gradient(145deg, #84e4df, #ffcf59);
+  color: #130227;
+}
+
 .admin-alert-card.has-alert strong,
 .admin-heading-badge.has-alert {
   background: linear-gradient(145deg, #ff6151, #ff3d95);
