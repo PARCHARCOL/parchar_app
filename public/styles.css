@@ -357,6 +357,10 @@ a {
   background: linear-gradient(155deg, #7be7a0, #1f8f70 75%);
 }
 
+.btn-sites {
+  background: linear-gradient(155deg, #84e4df, #255f68 74%);
+}
+
 .btn-romantico {
   background: linear-gradient(155deg, #ff71ca, #7c2798 72%);
 }
@@ -500,6 +504,15 @@ a {
   font-size: 0.86rem;
   border: 1px solid rgba(222, 165, 255, 0.42);
   background: rgba(94, 42, 160, 0.7);
+  color: #fff8df;
+  font: inherit;
+  cursor: pointer;
+}
+
+.chip-filter.active {
+  border-color: rgba(255, 216, 105, 0.82);
+  background: linear-gradient(145deg, #ffcf59, #ff7836);
+  color: #2b0b00;
 }
 
 .cards-grid {
@@ -597,6 +610,35 @@ a {
 
 .route-options a + a {
   border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.site-card {
+  display: grid;
+  gap: 8px;
+}
+
+.site-card .chip {
+  text-transform: uppercase;
+}
+
+.site-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.site-tags span {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 216, 105, 0.35);
+  background: rgba(255, 190, 88, 0.14);
+  color: #fff0c7;
+  padding: 5px 8px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.site-route-line {
+  margin-top: 2px;
 }
 
 .route-options a:hover,

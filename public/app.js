@@ -8,6 +8,23 @@ const searchForm = document.querySelector("#home-search-form");
 const searchInput = document.querySelector("#home-search");
 const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
 
+const SITE_SEARCH_KEYWORDS = [
+  "charco",
+  "charcos",
+  "mirador",
+  "miradores",
+  "pueblo",
+  "pueblos",
+  "rio",
+  "rios",
+  "cascada",
+  "cascadas",
+  "naturaleza",
+  "sendero",
+  "sitio",
+  "sitios",
+];
+
 const installButton = document.querySelector("#install-app-btn");
 const installHelpButton = document.querySelector("#install-help-btn");
 const installHint = document.querySelector("#install-hint");
@@ -39,6 +56,13 @@ function redirectWithCategory(category, coords) {
   window.location.href = url.toString();
 }
 
+function normalizeHomeSearch(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
 function redirectWithSearch(query) {
   const cleanQuery = String(query || "").trim();
 
@@ -48,7 +72,14 @@ function redirectWithSearch(query) {
     return;
   }
 
-  const url = new URL("/places.html", window.location.origin);
+  const normalizedQuery = normalizeHomeSearch(cleanQuery);
+  const shouldSearchSites = SITE_SEARCH_KEYWORDS.some((keyword) =>
+    normalizedQuery.includes(keyword)
+  );
+  const url = new URL(
+    shouldSearchSites ? "/sites.html" : "/places.html",
+    window.location.origin
+  );
   url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
 }
@@ -64,11 +95,16 @@ function handleCategory(route) {
     return;
   }
 
+  if (route === "sitios") {
+    window.location.href = "/sites.html";
+    return;
+  }
+
   if (!navigator.geolocation) {
     updateStatus(
       route === "walking"
-        ? "Para mostrar sitios a pie necesitamos tu ubicacion."
-        : "No se pudo leer tu ubicacion. Te mostrare sitios generales por categoria."
+        ? "Para mostrar locales a pie necesitamos tu ubicacion."
+        : "No se pudo leer tu ubicacion. Te mostrare locales generales por categoria."
     );
 
     if (route !== "walking") {
@@ -79,7 +115,7 @@ function handleCategory(route) {
 
   updateStatus(
     route === "walking"
-      ? "Buscando sitios para ir caminando desde donde estas..."
+      ? "Buscando locales para ir caminando desde donde estas..."
       : "Buscando tu ubicacion para mostrar lugares cercanos..."
   );
 
@@ -91,8 +127,8 @@ function handleCategory(route) {
     () => {
       updateStatus(
         route === "walking"
-          ? "No autorizaste ubicacion. No puedo calcular sitios para ir a pie."
-          : "No autorizaste ubicacion. Te mostrare sitios generales por categoria."
+          ? "No autorizaste ubicacion. No puedo calcular locales para ir a pie."
+          : "No autorizaste ubicacion. Te mostrare locales generales por categoria."
       );
 
       if (route !== "walking") {

@@ -39,16 +39,16 @@ const titleByCategory = {
 
 const subtitleByCategory = {
   moto:
-    "Sitios cercanos para ir en moto.",
+    "Locales cercanos para ir en moto.",
 
   carro:
-    "Sitios cercanos para ir en carro.",
+    "Locales cercanos para ir en carro.",
 
   romantico:
     "Lugares romanticos en la ciudad o alrededores.",
 
   bbb:
-    "Sitios buenos, bonitos y baratos en la ciudad o cerca.",
+    "Locales buenos, bonitos y baratos en la ciudad o cerca.",
 };
 
 const categoryChip = {
@@ -847,7 +847,7 @@ function renderCards(
     "driving";
   const emptyTitle =
     options.emptyTitle ||
-    "Aun no hay sitios activos en esta categoria.";
+    "Aun no hay locales activos en esta categoria.";
   const emptyMessage =
     options.emptyMessage ||
     "Parchar mostrara solo negocios seleccionados y aprobados.";
@@ -1111,13 +1111,13 @@ async function loadPlaces() {
       : titleByCategory[
           category
         ] ||
-        "Sitios disponibles";
+        "Locales disponibles";
 
   subtitleEl.textContent =
     searchQuery
       ? `Resultados para "${searchQuery}".`
       : isWalkingMode
-      ? "Sitios cercanos para ir caminando desde donde estas."
+      ? "Locales cercanos para ir caminando desde donde estas."
       : subtitleByCategory[
           category
         ] ||
@@ -1140,7 +1140,7 @@ async function loadPlaces() {
     if (!userCoords) {
       subtitleEl.textContent =
         isWalkingMode
-          ? "Necesitamos tu ubicacion para encontrar sitios caminables."
+          ? "Necesitamos tu ubicacion para encontrar locales caminables."
           : "Calculando distancia desde tu ubicacion...";
       userCoords =
         await requestUserCoords();
@@ -1155,7 +1155,7 @@ async function loadPlaces() {
         null,
         {
           emptyTitle:
-            "Activa tu ubicacion para ver sitios a pie.",
+            "Activa tu ubicacion para ver locales a pie.",
           emptyMessage:
             "Este filtro necesita saber donde estas para mostrar locales cercanos caminables.",
           routeMode: "walking",
@@ -1269,7 +1269,7 @@ async function loadPlaces() {
           : `Resultados para "${searchQuery}".`;
     } else if (userCoords) {
       subtitleEl.textContent =
-        "Sitios ordenados por cercania a tu ubicacion.";
+        "Locales ordenados por cercania a tu ubicacion.";
     } else {
       subtitleEl.textContent =
         "No se pudo leer tu ubicacion. Puedes permitirla para ver distancias.";
@@ -1285,8 +1285,8 @@ async function loadPlaces() {
         emptyTitle: searchQuery
           ? "No encontramos resultados."
           : isWalkingMode
-          ? "No hay sitios caminables cerca."
-          : "Aun no hay sitios activos en esta categoria.",
+          ? "No hay locales caminables cerca."
+          : "Aun no hay locales activos en esta categoria.",
         emptyMessage: searchQuery
           ? "Prueba con el nombre del local, ciudad, categoria o lo que ofrece."
           : isWalkingMode
@@ -1303,7 +1303,7 @@ async function loadPlaces() {
       <article class="empty-card">
 
         <h3>
-          No pudimos cargar los sitios.
+          No pudimos cargar los locales.
         </h3>
 
         <p>

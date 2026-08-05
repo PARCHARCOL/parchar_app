@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sitios | Parchar</title>
+    <link rel="stylesheet" href="/styles.css?v=62" />
+  </head>
+  <body class="theme-body list-body">
+    <div class="ambient-glow"></div>
+    <main class="app-shell">
+      <header class="top-strip inner-top">
+        <a class="icon-ghost icon-link" href="/" aria-label="Volver">&#8592;</a>
+        <h1>Sitios</h1>
+        <a class="icon-ghost icon-link" href="/social.html" aria-label="Muro">&#128172;</a>
+      </header>
+
+      <p class="subtitle">
+        Charcos, miradores, pueblos y planes abiertos. No son locales comerciales.
+      </p>
+
+      <form id="site-search-form" class="search-bar compact-search" role="search">
+        <button class="search-submit" type="submit" aria-label="Buscar sitio">
+          <span class="search-icon">&#128269;</span>
+        </button>
+        <input
+          id="site-search"
+          type="search"
+          name="q"
+          placeholder="Buscar charco, pueblo o mirador"
+          autocomplete="off"
+        />
+      </form>
+
+      <section class="category-chips" aria-label="Filtros de sitios">
+        <button type="button" class="chip-filter site-filter active" data-site-filter="todos">
+          Todos
+        </button>
+        <button type="button" class="chip-filter site-filter" data-site-filter="charco">
+          Charcos
+        </button>
+        <button type="button" class="chip-filter site-filter" data-site-filter="mirador">
+          Miradores
+        </button>
+        <button type="button" class="chip-filter site-filter" data-site-filter="pueblo">
+          Pueblos
+        </button>
+        <button type="button" class="chip-filter site-filter" data-site-filter="naturaleza">
+          Naturaleza
+        </button>
+      </section>
+
+      <section id="site-results" class="cards-grid"></section>
+
+      <nav class="bottom-nav public-nav">
+        <a class="nav-item" href="/">
+          <span>&#128205;</span>
+          <strong>Inicio</strong>
+        </a>
+        <a class="nav-item active" href="/sites.html">
+          <span>&#127966;</span>
+          <strong>Sitios</strong>
+        </a>
+        <button type="button" class="nav-item nav-button" data-open-ad-request>
+          <span>&#128227;</span>
+          <strong>Pautar</strong>
+        </button>
+        <a class="nav-item" href="/admin.html">
+          <span>&#128737;</span>
+          <strong>Admin</strong>
+        </a>
+      </nav>
+
+      <aside class="ad-banner" aria-label="Publicidad">
+        <span class="ad-pill">Anuncio</span>
+        <p>Espacio para aliados de Parchar</p>
+        <button type="button" class="ad-cta">Anunciar</button>
+      </aside>
+    </main>
+
+    <script src="/ads.js?v=62"></script>
+    <script src="/update.js?v=62"></script>
+    <script src="/sites.js?v=62"></script>
+  </body>
+</html>
