@@ -273,6 +273,15 @@ const ALLOWED_AD_MEDIA_TYPES =
     "video/webm",
     "video/quicktime",
   ]);
+const ALLOWED_SITE_TYPES =
+  new Set([
+    "charco",
+    "mirador",
+    "pueblo",
+    "naturaleza",
+  ]);
+const ALLOWED_SITE_MEDIA_TYPES =
+  ALLOWED_AD_MEDIA_TYPES;
 const ALLOWED_AD_IMAGE_TYPES =
   new Set([
     "image/jpeg",
@@ -1046,6 +1055,30 @@ function normalizeCategory(
       /[\u0300-\u036f]/g,
       ""
     );
+}
+
+function normalizeOpenSiteType(
+  rawValue
+) {
+  const normalized =
+    normalizeCategory(rawValue);
+
+  return ALLOWED_SITE_TYPES.has(
+    normalized
+  )
+    ? normalized
+    : "";
+}
+
+function cleanTags(value) {
+  return cleanText(value)
+    .split(/[,\n]+/)
+    .map((tag) =>
+      cleanLimitedText(tag, 32)
+    )
+    .filter(Boolean)
+    .slice(0, 8)
+    .join(", ");
 }
 
 function normalizePhone(
@@ -1848,6 +1881,147 @@ function requireStaffRole(
   return false;
 }
 
+function normalizeOpenSiteRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    siteType:
+      row.site_type || "",
+    description:
+      row.description || "",
+    address: row.address || "",
+    city: row.city || "",
+    latitude: Number(
+      row.latitude
+    ),
+    longitude: Number(
+      row.longitude
+    ),
+    tags:
+      row.tags || "",
+    mediaPath:
+      row.media_path || "",
+    mediaType:
+      row.media_type || "",
+    status:
+      row.status || "activo",
+    createdBy:
+      row.created_by || "",
+    updatedBy:
+      row.updated_by || "",
+    createdAt:
+      row.created_at || null,
+    updatedAt:
+      row.updated_at || null,
+  };
+}
+
+function readOpenSitePayload(body) {
+  const name =
+    cleanLimitedText(
+      body.name,
+      140
+    );
+  const siteType =
+    normalizeOpenSiteType(
+      body.siteType ||
+        body.site_type
+    );
+  const description =
+    cleanLimitedText(
+      body.description,
+      420
+    );
+  const address =
+    cleanLimitedText(
+      body.address,
+      180
+    );
+  const city =
+    cleanLimitedText(
+      body.city,
+      120
+    );
+  const latitude =
+    validateLatitude(
+      body.latitude
+    );
+  const longitude =
+    validateLongitude(
+      body.longitude
+    );
+  const tags =
+    cleanTags(body.tags);
+  const status =
+    cleanText(body.status) ===
+    "pausado"
+      ? "pausado"
+      : "activo";
+
+  return {
+    name,
+    siteType,
+    description,
+    address,
+    city,
+    latitude,
+    longitude,
+    tags,
+    status,
+  };
+}
+
+function validateOpenSitePayload(
+  payload
+) {
+  if (
+    !payload.name ||
+    !payload.siteType ||
+    !payload.description ||
+    !payload.city ||
+    payload.latitude === null ||
+    payload.longitude === null
+  ) {
+    return "Completa nombre, tipo, descripcion, ciudad y coordenadas del sitio.";
+  }
+
+  return "";
+}
+
+async function uploadOpenSiteMedia(
+  file
+) {
+  if (!file) {
+    return null;
+  }
+
+  if (
+    !ALLOWED_SITE_MEDIA_TYPES.has(
+      file.mimetype || ""
+    )
+  ) {
+    throw new Error(
+      "El archivo del sitio debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV."
+    );
+  }
+
+  if (
+    file.size > AD_MEDIA_MAX_BYTES
+  ) {
+    throw new Error(
+      "El archivo del sitio no debe superar 15 MB."
+    );
+  }
+
+  return uploadFileToStorage(
+    file,
+    {
+      resource_type: "auto",
+      folder: "parchar/sites",
+    }
+  );
+}
+
 function assertSqliteIdentifier(
   value
 ) {
@@ -2352,6 +2526,27 @@ async function initializeSqliteDatabase() {
     );
   `);
 
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS open_sites (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      site_type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      address TEXT,
+      city TEXT NOT NULL,
+      latitude REAL NOT NULL,
+      longitude REAL NOT NULL,
+      tags TEXT,
+      media_path TEXT,
+      media_type TEXT,
+      status TEXT DEFAULT 'activo',
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
   await ensureSqliteColumn(
     "clients",
     "phone_normalized",
@@ -2418,6 +2613,11 @@ async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE INDEX IF NOT EXISTS idx_business_review_reports_review
     ON business_review_reports (review_id, status, created_at);
+  `);
+
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_open_sites_status_type
+    ON open_sites (status, site_type, created_at);
   `);
   await ensureSqliteColumn(
     "ad_banner_settings",
@@ -2684,6 +2884,27 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS open_sites (
+      id SERIAL PRIMARY KEY,
+      name TEXT NOT NULL,
+      site_type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      address TEXT,
+      city TEXT NOT NULL,
+      latitude DOUBLE PRECISION NOT NULL,
+      longitude DOUBLE PRECISION NOT NULL,
+      tags TEXT,
+      media_path TEXT,
+      media_type TEXT,
+      status TEXT DEFAULT 'activo',
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     ALTER TABLE clients
     ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
   `);
@@ -2742,6 +2963,11 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_business_review_reports_review
     ON business_review_reports (review_id, status, created_at);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_open_sites_status_type
+    ON open_sites (status, site_type, created_at);
   `);
 
   await pool.query(`
@@ -4126,6 +4352,367 @@ const server =
           sendJson(res, 200, {
             items:
               result.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/sites" &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM open_sites
+              ORDER BY created_at DESC
+            `);
+
+          sendJson(res, 200, {
+            items: result.rows.map(
+              normalizeOpenSiteRow
+            ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/sites" &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          await runMiddleware(
+            req,
+            res,
+            upload.single("media")
+          );
+
+          const payload =
+            readOpenSitePayload(
+              req.body || {}
+            );
+          const payloadError =
+            validateOpenSitePayload(
+              payload
+            );
+
+          if (payloadError) {
+            sendJson(res, 400, {
+              error: payloadError,
+            });
+            return;
+          }
+
+          let mediaPath = "";
+          let mediaType = "";
+
+          try {
+            const uploaded =
+              await uploadOpenSiteMedia(
+                req.file
+              );
+
+            if (uploaded) {
+              mediaPath =
+                uploaded.secure_url;
+              mediaType =
+                req.file.mimetype;
+            }
+          } catch (error) {
+            sendJson(res, 400, {
+              error: error.message,
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            INSERT INTO open_sites (
+              name,
+              site_type,
+              description,
+              address,
+              city,
+              latitude,
+              longitude,
+              tags,
+              media_path,
+              media_type,
+              status,
+              created_by,
+              updated_by,
+              updated_at
+            )
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,NOW())
+            `,
+            [
+              payload.name,
+              payload.siteType,
+              payload.description,
+              payload.address,
+              payload.city,
+              payload.latitude,
+              payload.longitude,
+              payload.tags,
+              mediaPath,
+              mediaType,
+              payload.status,
+              staffAuth.staff.username,
+            ]
+          );
+
+          sendJson(res, 201, {
+            ok: true,
+            message:
+              "Sitio creado.",
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/sites\/\d+\/edit$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await runMiddleware(
+            req,
+            res,
+            upload.single("media")
+          );
+
+          const current =
+            await pool.query(
+              `
+              SELECT media_path, media_type
+              FROM open_sites
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+
+          if (!current.rows.length) {
+            sendJson(res, 404, {
+              error:
+                "Sitio no encontrado.",
+            });
+            return;
+          }
+
+          const payload =
+            readOpenSitePayload(
+              req.body || {}
+            );
+          const payloadError =
+            validateOpenSitePayload(
+              payload
+            );
+
+          if (payloadError) {
+            sendJson(res, 400, {
+              error: payloadError,
+            });
+            return;
+          }
+
+          let mediaPath =
+            current.rows[0]
+              .media_path || "";
+          let mediaType =
+            current.rows[0]
+              .media_type || "";
+
+          if (
+            parseBooleanFlag(
+              req.body?.clearMedia
+            )
+          ) {
+            mediaPath = "";
+            mediaType = "";
+          }
+
+          try {
+            const uploaded =
+              await uploadOpenSiteMedia(
+                req.file
+              );
+
+            if (uploaded) {
+              mediaPath =
+                uploaded.secure_url;
+              mediaType =
+                req.file.mimetype;
+            }
+          } catch (error) {
+            sendJson(res, 400, {
+              error: error.message,
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE open_sites
+            SET
+              name = $1,
+              site_type = $2,
+              description = $3,
+              address = $4,
+              city = $5,
+              latitude = $6,
+              longitude = $7,
+              tags = $8,
+              media_path = $9,
+              media_type = $10,
+              status = $11,
+              updated_by = $12,
+              updated_at = NOW()
+            WHERE id = $13
+            `,
+            [
+              payload.name,
+              payload.siteType,
+              payload.description,
+              payload.address,
+              payload.city,
+              payload.latitude,
+              payload.longitude,
+              payload.tags,
+              mediaPath,
+              mediaType,
+              payload.status,
+              staffAuth.staff.username,
+              id,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Sitio actualizado.",
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/sites\/\d+\/status$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const status =
+            cleanText(body.status) ===
+            "pausado"
+              ? "pausado"
+              : "activo";
+
+          await pool.query(
+            `
+            UPDATE open_sites
+            SET
+              status = $1,
+              updated_by = $2,
+              updated_at = NOW()
+            WHERE id = $3
+            `,
+            [
+              status,
+              staffAuth.staff.username,
+              id,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/sites\/\d+\/delete$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await pool.query(
+            `
+            DELETE FROM open_sites
+            WHERE id = $1
+            `,
+            [id]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
           });
           return;
         }
@@ -6100,6 +6687,27 @@ const server =
             ok: true,
             message:
               "Resena retirada del muro.",
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/sites/active" &&
+          req.method === "GET"
+        ) {
+          const result =
+            await pool.query(`
+              SELECT *
+              FROM open_sites
+              WHERE status = 'activo'
+              ORDER BY created_at DESC
+            `);
+
+          sendJson(res, 200, {
+            items: result.rows.map(
+              normalizeOpenSiteRow
+            ),
           });
           return;
         }

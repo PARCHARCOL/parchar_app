@@ -123,6 +123,31 @@ const refreshReviewModerationButton =
     "#refresh-review-moderation"
   );
 
+const siteForm =
+  document.querySelector(
+    "#admin-site-form"
+  );
+const siteMessage =
+  document.querySelector(
+    "#admin-site-message"
+  );
+const siteSubmitButton =
+  document.querySelector(
+    "#admin-site-submit"
+  );
+const siteCancelButton =
+  document.querySelector(
+    "#admin-site-cancel"
+  );
+const siteList =
+  document.querySelector(
+    "#admin-site-list"
+  );
+const refreshSitesButton =
+  document.querySelector(
+    "#refresh-admin-sites"
+  );
+
 const adminAlertStatus =
   document.querySelector(
     "#admin-alert-status"
@@ -149,6 +174,7 @@ let currentAdRequests = [];
 let currentStaffUsers = [];
 let currentAdCampaigns = [];
 let currentReviews = [];
+let currentOpenSites = [];
 let adminAlertSnapshot = null;
 let adminAlertPollTimer = null;
 let adminAudioContext = null;
@@ -1563,6 +1589,425 @@ function renderBusinessSummary(
   `;
 }
 
+function siteTypeLabel(value) {
+  const labels = {
+    charco: "Charco",
+    mirador: "Mirador",
+    pueblo: "Pueblo",
+    naturaleza: "Naturaleza",
+  };
+
+  return labels[value] || value || "";
+}
+
+function renderSiteMedia(site) {
+  if (!site?.mediaPath) {
+    return `
+      <p class="tiny">
+        Sin video o imagen cargada.
+      </p>
+    `;
+  }
+
+  return String(
+    site.mediaType || ""
+  ).startsWith("video/")
+    ? `
+      <video
+        controls
+        preload="metadata"
+        class="admin-video"
+        src="${escapeHtml(
+          site.mediaPath
+        )}"
+      ></video>
+    `
+    : `
+      <img
+        class="admin-site-media"
+        src="${escapeHtml(
+          site.mediaPath
+        )}"
+        alt="${escapeHtml(
+          site.name
+        )}"
+      />
+    `;
+}
+
+function resetSiteForm() {
+  if (!siteForm) {
+    return;
+  }
+
+  siteForm.reset();
+  siteForm.elements.siteId.value =
+    "";
+  siteSubmitButton.textContent =
+    "Crear sitio";
+  siteCancelButton.hidden = true;
+  setFeedback(
+    siteMessage,
+    ""
+  );
+}
+
+function editSite(id) {
+  const site =
+    currentOpenSites.find(
+      (item) =>
+        Number(item.id) ===
+        Number(id)
+    );
+
+  if (!site || !siteForm) {
+    return;
+  }
+
+  siteForm.elements.siteId.value =
+    site.id;
+  siteForm.elements.name.value =
+    site.name || "";
+  siteForm.elements.siteType.value =
+    site.siteType || "charco";
+  siteForm.elements.city.value =
+    site.city || "";
+  siteForm.elements.address.value =
+    site.address || "";
+  siteForm.elements.latitude.value =
+    Number.isFinite(
+      Number(site.latitude)
+    )
+      ? site.latitude
+      : "";
+  siteForm.elements.longitude.value =
+    Number.isFinite(
+      Number(site.longitude)
+    )
+      ? site.longitude
+      : "";
+  siteForm.elements.status.value =
+    site.status || "activo";
+  siteForm.elements.tags.value =
+    site.tags || "";
+  siteForm.elements.description.value =
+    site.description || "";
+  siteForm.elements.clearMedia.checked =
+    false;
+  if (siteForm.elements.media) {
+    siteForm.elements.media.value = "";
+  }
+  siteSubmitButton.textContent =
+    "Guardar sitio";
+  siteCancelButton.hidden = false;
+  siteForm.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function renderSites(items) {
+  if (!siteList) {
+    return;
+  }
+
+  currentOpenSites = items || [];
+
+  if (!currentOpenSites.length) {
+    siteList.innerHTML = `
+      <div class="glass-card">
+        <h3>No hay sitios cargados</h3>
+        <p>
+          Crea el primer charco, mirador, pueblo o sitio natural con coordenadas reales.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  siteList.innerHTML =
+    currentOpenSites
+      .map(
+        (site) => `
+          <article class="glass-card admin-card admin-site-card">
+            <div class="mini-business-head">
+              <h3>${escapeHtml(
+                site.name
+              )}</h3>
+              <span class="status-pill status-${escapeHtml(
+                site.status
+              )}">
+                ${escapeHtml(
+                  site.status
+                )}
+              </span>
+            </div>
+
+            <p>
+              <strong>Tipo:</strong>
+              ${escapeHtml(
+                siteTypeLabel(
+                  site.siteType
+                )
+              )}
+            </p>
+            <p>
+              <strong>Zona:</strong>
+              ${escapeHtml(
+                site.city
+              )}
+            </p>
+            ${
+              site.address
+                ? `
+                  <p>
+                    <strong>Referencia:</strong>
+                    ${escapeHtml(
+                      site.address
+                    )}
+                  </p>
+                `
+                : ""
+            }
+            <p>
+              ${escapeHtml(
+                site.description
+              )}
+            </p>
+            <p class="tiny">
+              Coordenadas: ${escapeHtml(
+                site.latitude
+              )}, ${escapeHtml(
+                site.longitude
+              )}
+              ${
+                site.updatedBy
+                  ? `- Actualizado por ${escapeHtml(
+                      site.updatedBy
+                    )}`
+                  : ""
+              }
+            </p>
+
+            <div class="admin-site-media-wrap">
+              ${renderSiteMedia(site)}
+            </div>
+
+            <div class="request-actions">
+              <button
+                class="ghost-btn"
+                onclick="editSite(${Number(
+                  site.id
+                )})"
+              >
+                Editar
+              </button>
+
+              <button
+                class="${
+                  site.status === "activo"
+                    ? "ghost-btn"
+                    : "submit-btn"
+                }"
+                onclick="setSiteStatus(${Number(
+                  site.id
+                )}, '${
+                  site.status === "activo"
+                    ? "pausado"
+                    : "activo"
+                }')"
+              >
+                ${
+                  site.status === "activo"
+                    ? "Pausar"
+                    : "Activar"
+                }
+              </button>
+
+              ${
+                isAdmin()
+                  ? `
+                    <button
+                      class="ghost-btn"
+                      onclick="deleteSite(${Number(
+                        site.id
+                      )})"
+                    >
+                      Eliminar
+                    </button>
+                  `
+                  : ""
+              }
+            </div>
+          </article>
+        `
+      )
+      .join("");
+}
+
+async function loadSites() {
+  if (!siteList) {
+    return;
+  }
+
+  try {
+    const response =
+      await staffFetch(
+        "/api/admin/sites"
+      );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Error cargando sitios"
+      );
+    }
+
+    renderSites(
+      data.items || []
+    );
+  } catch (error) {
+    siteList.innerHTML = `
+      <div class="glass-card">
+        <h3>Error</h3>
+        <p>${escapeHtml(
+          error.message
+        )}</p>
+      </div>
+    `;
+  }
+}
+
+async function saveSite(event) {
+  event.preventDefault();
+
+  if (!siteForm) {
+    return;
+  }
+
+  const id =
+    siteForm.elements.siteId.value;
+  const formData =
+    new FormData(siteForm);
+  const url = id
+    ? `/api/admin/sites/${Number(
+        id
+      )}/edit`
+    : "/api/admin/sites";
+
+  setFeedback(
+    siteMessage,
+    id
+      ? "Guardando sitio..."
+      : "Creando sitio..."
+  );
+
+  try {
+    const response =
+      await staffFetch(url, {
+        method: "POST",
+        body: formData,
+      });
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo guardar el sitio"
+      );
+    }
+
+    resetSiteForm();
+    setFeedback(
+      siteMessage,
+      data.message ||
+        "Sitio guardado."
+    );
+    await loadSites();
+  } catch (error) {
+    setFeedback(
+      siteMessage,
+      error.message,
+      true
+    );
+  }
+}
+
+async function setSiteStatus(
+  id,
+  status
+) {
+  try {
+    const response =
+      await staffFetch(
+        `/api/admin/sites/${Number(
+          id
+        )}/status`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            status,
+          }),
+        }
+      );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo actualizar el sitio"
+      );
+    }
+
+    await loadSites();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function deleteSite(id) {
+  if (
+    !window.confirm(
+      "Eliminar este sitio definitivamente?"
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const response =
+      await staffFetch(
+        `/api/admin/sites/${Number(
+          id
+        )}/delete`,
+        {
+          method: "POST",
+        }
+      );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo eliminar el sitio"
+      );
+    }
+
+    await loadSites();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
 function renderAdPreview(banner) {
   if (!adPreview) {
     return;
@@ -2968,6 +3413,7 @@ async function loadDashboardData({
       notify: false,
       updateAlerts: false,
     }),
+    loadSites(),
   ];
 
   if (isAdmin()) {
@@ -3140,6 +3586,21 @@ refreshAdRequestsButton?.addEventListener(
 refreshReviewModerationButton?.addEventListener(
   "click",
   loadReviewModeration
+);
+
+siteForm?.addEventListener(
+  "submit",
+  saveSite
+);
+
+siteCancelButton?.addEventListener(
+  "click",
+  resetSiteForm
+);
+
+refreshSitesButton?.addEventListener(
+  "click",
+  loadSites
 );
 
 adminSoundToggle?.addEventListener(

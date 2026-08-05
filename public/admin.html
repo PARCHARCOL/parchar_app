@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=62"
+      href="/styles.css?v=63"
     />
 
   </head>
@@ -395,6 +395,202 @@
       </section>
 
       <section
+        id="admin-sites-section"
+        class="form-block glass-card"
+      >
+
+        <h2>
+          Sitios
+        </h2>
+
+        <p>
+          Carga charcos, miradores, pueblos y planes abiertos. No son locales comerciales.
+        </p>
+
+        <form
+          id="admin-site-form"
+          class="form-grid"
+          enctype="multipart/form-data"
+        >
+          <input
+            name="siteId"
+            type="hidden"
+          />
+
+          <label>
+            Nombre del sitio
+            <input
+              name="name"
+              maxlength="140"
+              placeholder="Charco, mirador o pueblo"
+              required
+            />
+          </label>
+
+          <label>
+            Tipo
+            <select
+              name="siteType"
+              required
+            >
+              <option value="charco">
+                Charco
+              </option>
+              <option value="mirador">
+                Mirador
+              </option>
+              <option value="pueblo">
+                Pueblo
+              </option>
+              <option value="naturaleza">
+                Naturaleza
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Ciudad o zona
+            <input
+              name="city"
+              maxlength="120"
+              placeholder="San Rafael, Antioquia"
+              required
+            />
+          </label>
+
+          <label>
+            Direccion o referencia
+            <input
+              name="address"
+              maxlength="180"
+              placeholder="Referencia para ubicacion"
+            />
+          </label>
+
+          <label>
+            Latitud
+            <input
+              name="latitude"
+              type="number"
+              step="any"
+              min="-90"
+              max="90"
+              required
+            />
+          </label>
+
+          <label>
+            Longitud
+            <input
+              name="longitude"
+              type="number"
+              step="any"
+              min="-180"
+              max="180"
+              required
+            />
+          </label>
+
+          <label>
+            Estado
+            <select name="status">
+              <option value="activo">
+                Activo
+              </option>
+              <option value="pausado">
+                Pausado
+              </option>
+            </select>
+          </label>
+
+          <label>
+            Etiquetas
+            <input
+              name="tags"
+              maxlength="220"
+              placeholder="Agua, naturaleza, caminata"
+            />
+          </label>
+
+          <label class="full-row">
+            Descripcion
+            <textarea
+              name="description"
+              rows="3"
+              maxlength="420"
+              required
+            ></textarea>
+          </label>
+
+          <label class="full-row">
+            Video o imagen del sitio
+            <input
+              name="media"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+            />
+            <span class="field-hint">
+              Opcional. Recomendado video horizontal corto o imagen clara del sitio.
+            </span>
+          </label>
+
+          <label class="full-row legal-check">
+            <input
+              name="clearMedia"
+              type="checkbox"
+            />
+            Quitar video o imagen actual al guardar
+          </label>
+
+          <button
+            id="admin-site-submit"
+            type="submit"
+            class="submit-btn"
+          >
+            Crear sitio
+          </button>
+
+          <button
+            id="admin-site-cancel"
+            type="button"
+            class="ghost-btn"
+            hidden
+          >
+            Cancelar edicion
+          </button>
+        </form>
+
+        <p
+          id="admin-site-message"
+          class="feedback"
+        ></p>
+
+        <div class="my-businesses-head staff-users-head">
+          <h3>
+            Sitios cargados
+          </h3>
+
+          <button
+            id="refresh-admin-sites"
+            type="button"
+            class="ghost-btn"
+          >
+            Actualizar
+          </button>
+        </div>
+
+        <div
+          id="admin-site-list"
+          class="admin-list"
+        >
+          <p class="loading">
+            Cargando sitios...
+          </p>
+        </div>
+
+      </section>
+
+      <section
         id="admin-ads-section"
         class="form-block glass-card"
       >
@@ -768,8 +964,8 @@
 
     </main>
 
-    <script src="/update.js?v=62"></script>
-    <script src="/admin.js?v=62"></script>
+    <script src="/update.js?v=63"></script>
+    <script src="/admin.js?v=63"></script>
 
   </body>
 </html>

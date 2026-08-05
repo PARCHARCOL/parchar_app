@@ -617,6 +617,53 @@ a {
   gap: 8px;
 }
 
+.site-location-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 4px 0 12px;
+}
+
+.site-location-tools .status-muted {
+  margin: 0;
+}
+
+.site-location-tools .ghost-btn {
+  flex: 0 0 auto;
+  min-height: 38px;
+  padding: 8px 11px;
+  font-size: 0.82rem;
+}
+
+.site-media,
+.site-media-placeholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 216, 105, 0.28);
+  background: rgba(7, 1, 18, 0.72);
+  object-fit: cover;
+  overflow: hidden;
+}
+
+.site-media-placeholder {
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 72% 30%, rgba(255, 190, 88, 0.24), transparent 28%),
+    linear-gradient(145deg, rgba(28, 8, 67, 0.92), rgba(14, 3, 33, 0.96));
+}
+
+.site-media-placeholder span {
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(9, 1, 22, 0.46);
+  color: #fff8df;
+  padding: 7px 10px;
+  font-weight: 900;
+}
+
 .site-card .chip {
   text-transform: uppercase;
 }
@@ -639,6 +686,19 @@ a {
 
 .site-route-line {
   margin-top: 2px;
+}
+
+.admin-site-media-wrap {
+  margin-top: 10px;
+}
+
+.admin-site-media,
+.admin-site-card video {
+  width: 100%;
+  max-height: 340px;
+  border-radius: 12px;
+  object-fit: contain;
+  background: rgba(7, 1, 18, 0.72);
 }
 
 .route-options a:hover,
@@ -2448,6 +2508,15 @@ textarea {
 
   .suggestion-grid {
     grid-template-columns: 1fr;
+  }
+
+  .site-location-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .site-location-tools .ghost-btn {
+    width: 100%;
   }
 
   .card-road {
