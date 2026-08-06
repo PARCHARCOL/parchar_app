@@ -16,6 +16,7 @@ const siteTypeLabels = {
   parque: "Parque",
   pueblo: "Pueblo",
   naturaleza: "Naturaleza",
+  ruta_moto: "Ruta en moto",
   ruta_bici: "Ruta en bici",
 };
 
@@ -36,10 +37,22 @@ const bikeSiteFilters = [
   ["parque", "Parques"],
 ];
 
+const motoSiteFilters = [
+  ["todos", "Todos"],
+  ["ruta_moto", "Rutas moto"],
+  ["mirador", "Miradores"],
+  ["pueblo", "Pueblos"],
+  ["naturaleza", "Naturaleza"],
+];
+
 const bikeSiteTypes = new Set([
   "cicloruta",
   "ruta_bici",
   "parada_ciclista",
+]);
+
+const motoSiteTypes = new Set([
+  "ruta_moto",
 ]);
 
 const bikeOptionalTypes = new Set([
@@ -48,6 +61,12 @@ const bikeOptionalTypes = new Set([
   "naturaleza",
   "charco",
   "pueblo",
+]);
+
+const motoOptionalTypes = new Set([
+  "mirador",
+  "pueblo",
+  "naturaleza",
 ]);
 
 const bikeKeywords = [
@@ -63,6 +82,16 @@ const bikeKeywords = [
   "mtb",
 ];
 
+const motoKeywords = [
+  "moto",
+  "motos",
+  "motero",
+  "motera",
+  "ruta",
+  "rodada",
+  "mirador",
+];
+
 let openSites = [];
 let userCoords = null;
 let locationResolved = false;
@@ -70,6 +99,11 @@ let locationResolved = false;
 function isBikeMode() {
   const params = new URLSearchParams(window.location.search);
   return normalizeText(params.get("mode")) === "bike";
+}
+
+function isMotoMode() {
+  const params = new URLSearchParams(window.location.search);
+  return normalizeText(params.get("mode")) === "moto";
 }
 
 function escapeHtml(value) {
@@ -175,10 +209,15 @@ function estimateTravelText(km) {
     return `A ${formatDistance(km)} de ti - En bici aprox ${formatMinutes(bikeMinutes)}`;
   }
 
+  if (isMotoMode()) {
+    const motoMinutes = (km / 32) * 60;
+    return `A ${formatDistance(km)} de ti - En moto aprox ${formatMinutes(motoMinutes)}`;
+  }
+
   const driveMinutes = (km / 28) * 60;
   const parts = [
     `A ${formatDistance(km)} de ti`,
-    `En carro aprox ${formatMinutes(driveMinutes)}`,
+    `En vehiculo aprox ${formatMinutes(driveMinutes)}`,
   ];
 
   if (km <= 3) {
@@ -249,6 +288,8 @@ function renderFilterButtons() {
 
   const filters = isBikeMode()
     ? bikeSiteFilters
+    : isMotoMode()
+    ? motoSiteFilters
     : defaultSiteFilters;
 
   siteFilterContainer.innerHTML = filters
@@ -268,6 +309,31 @@ function renderFilterButtons() {
 }
 
 function setupPageMode() {
+  if (isMotoMode()) {
+    document.title = "Rutas en moto | Parchar";
+
+    if (sitePageTitle) {
+      sitePageTitle.textContent =
+        "Rutas en moto";
+    }
+
+    if (sitePageSubtitle) {
+      sitePageSubtitle.textContent =
+        "Rutas, miradores, pueblos y salidas pensadas para moto.";
+    }
+
+    if (siteSearchInput) {
+      siteSearchInput.placeholder =
+        "Buscar ruta, mirador o pueblo";
+    }
+
+    if (siteLocationStatus) {
+      siteLocationStatus.textContent =
+        "Permite ubicacion para ordenar rutas en moto por cercania.";
+    }
+    return;
+  }
+
   if (!isBikeMode()) {
     return;
   }
@@ -322,6 +388,13 @@ function matchesSite(site, query, filter) {
     return false;
   }
 
+  if (
+    isMotoMode() &&
+    !isMotoCandidate(site)
+  ) {
+    return false;
+  }
+
   if (filter !== "todos" && type !== filter) {
     return false;
   }
@@ -370,6 +443,33 @@ function isBikeCandidate(site) {
   );
 
   return bikeKeywords.some((keyword) =>
+    haystack.includes(keyword)
+  );
+}
+
+function isMotoCandidate(site) {
+  const type =
+    site.siteType || site.site_type || "";
+
+  if (motoSiteTypes.has(type)) {
+    return true;
+  }
+
+  if (!motoOptionalTypes.has(type)) {
+    return false;
+  }
+
+  const haystack = normalizeText(
+    [
+      site.name,
+      site.description,
+      site.address,
+      site.city,
+      site.tags,
+    ].join(" ")
+  );
+
+  return motoKeywords.some((keyword) =>
     haystack.includes(keyword)
   );
 }
@@ -500,9 +600,13 @@ function renderSites() {
   if (!filteredSites.length) {
     const title = isBikeMode()
       ? "Aun no hay rutas en bici cargadas."
+      : isMotoMode()
+      ? "Aun no hay rutas en moto cargadas."
       : "No encontramos sitios con ese filtro.";
     const message = isBikeMode()
       ? "Desde admin carga ciclorutas, rutas en bici, paradas ciclistas o sitios con etiqueta bici."
+      : isMotoMode()
+      ? "Desde admin carga rutas en moto, miradores o pueblos con etiqueta moto."
       : "Prueba con charco, mirador, pueblo, rio, cascada o naturaleza.";
 
     siteResultsEl.innerHTML = `
@@ -564,6 +668,8 @@ function requestUserLocation() {
   setLocationStatus(
     isBikeMode()
       ? "Calculando rutas en bici cerca de ti..."
+      : isMotoMode()
+      ? "Calculando rutas en moto cerca de ti..."
       : "Calculando sitios cerca de ti..."
   );
 
@@ -577,6 +683,8 @@ function requestUserLocation() {
       setLocationStatus(
         isBikeMode()
           ? "Ubicacion lista. Rutas en bici ordenadas por cercania."
+          : isMotoMode()
+          ? "Ubicacion lista. Rutas en moto ordenadas por cercania."
           : "Ubicacion lista. Sitios ordenados por cercania."
       );
       renderSites();
@@ -587,6 +695,8 @@ function requestUserLocation() {
       setLocationStatus(
         isBikeMode()
           ? "Permite ubicacion para ver distancia y tiempo en bici."
+          : isMotoMode()
+          ? "Permite ubicacion para ver distancia y tiempo en moto."
           : "Permite ubicacion para ver distancia y tiempo desde donde estas.",
         true
       );

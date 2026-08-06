@@ -1122,13 +1122,49 @@ async function deleteBusiness(id) {
 }
 
 async function editBusiness(id) {
+  const item =
+    currentBusinesses.find(
+      (business) =>
+        Number(business.id) ===
+        Number(id)
+    );
 
   const businessName = prompt(
-    "Nuevo nombre negocio:"
+    "Nuevo nombre negocio:",
+    item?.business_name || ""
   );
 
   if (!businessName) {
 
+    return;
+  }
+
+  const category = prompt(
+    "Categoria: restaurante, bar, bbb o romantico",
+    item?.category || "restaurante"
+  );
+  const normalizedCategory = String(
+    category || ""
+  )
+    .trim()
+    .toLowerCase();
+  const allowedCategories = [
+    "restaurante",
+    "bar",
+    "bbb",
+    "romantico",
+    "moto",
+    "carro",
+  ];
+
+  if (
+    !allowedCategories.includes(
+      normalizedCategory
+    )
+  ) {
+    alert(
+      "Categoria invalida. Usa restaurante, bar, bbb o romantico."
+    );
     return;
   }
 
@@ -1146,6 +1182,8 @@ async function editBusiness(id) {
 
         body: JSON.stringify({
           businessName,
+          category:
+            normalizedCategory,
         }),
       }
     );
@@ -1598,6 +1636,7 @@ function siteTypeLabel(value) {
     parque: "Parque",
     pueblo: "Pueblo",
     naturaleza: "Naturaleza",
+    ruta_moto: "Ruta en moto",
     ruta_bici: "Ruta en bici",
   };
 

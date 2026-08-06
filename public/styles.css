@@ -345,10 +345,12 @@ a {
   letter-spacing: 0.01em;
 }
 
+.btn-restaurante,
 .btn-moto {
   background: linear-gradient(155deg, #ff9f3e, #bc3d18 72%);
 }
 
+.btn-bar,
 .btn-carro {
   background: linear-gradient(155deg, #88e7ff, #2d4ec5 75%);
 }
@@ -359,6 +361,10 @@ a {
 
 .btn-bike {
   background: linear-gradient(155deg, #e8f66a, #1f8f70 78%);
+}
+
+.btn-moto-route {
+  background: linear-gradient(155deg, #ff9f3e, #bc3d18 72%);
 }
 
 .btn-sites {

@@ -30,6 +30,12 @@ const SITE_SEARCH_KEYWORDS = [
   "ciclorutas",
   "ciclista",
   "ciclistas",
+  "moto",
+  "motos",
+  "motero",
+  "motera",
+  "rodada",
+  "rodadas",
 ];
 
 const installButton = document.querySelector("#install-app-btn");
@@ -87,12 +93,18 @@ function redirectWithSearch(query) {
     /\b(bici|bicicleta|bicicletas|cicloruta|ciclorutas|ciclista|ciclistas)\b/.test(
       normalizedQuery
     );
+  const isMotoSearch =
+    /\b(moto|motos|motero|motera|rodada|rodadas)\b/.test(
+      normalizedQuery
+    );
   const url = new URL(
     shouldSearchSites ? "/sites.html" : "/places.html",
     window.location.origin
   );
   if (isBikeSearch) {
     url.searchParams.set("mode", "bike");
+  } else if (isMotoSearch) {
+    url.searchParams.set("mode", "moto");
   }
   url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
@@ -116,6 +128,11 @@ function handleCategory(route) {
 
   if (route === "bici") {
     window.location.href = "/sites.html?mode=bike";
+    return;
+  }
+
+  if (route === "rutas-moto") {
+    window.location.href = "/sites.html?mode=moto";
     return;
   }
 

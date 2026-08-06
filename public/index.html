@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
-    <link rel="stylesheet" href="/styles.css?v=65" />
+    <link rel="stylesheet" href="/styles.css?v=66" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -53,9 +53,9 @@
             <strong>Muro social</strong>
             <span>Ver reseñas activas</span>
           </a>
-          <a href="/places.html?category=moto">
-            <strong>Trending</strong>
-            <span>Ver lugares activos</span>
+          <a href="/places.html?category=restaurante">
+            <strong>Restaurantes</strong>
+            <span>Ver locales para comer</span>
           </a>
           <button type="button" data-open-ad-request>
             <strong>Pauta publicitaria</strong>
@@ -83,9 +83,9 @@
           <strong>Inicio</strong>
         </a>
 
-        <a class="nav-item" href="/places.html?category=moto">
-          <span>&#128293;</span>
-          <strong>Trending</strong>
+        <a class="nav-item" href="/places.html?category=restaurante">
+          <span>&#127860;</span>
+          <strong>Restaurantes</strong>
         </a>
 
         <button type="button" class="nav-item nav-button" data-open-ad-request>
@@ -125,14 +125,19 @@
       </section>
 
       <section class="button-grid">
-        <button class="action-btn btn-moto" data-route="moto">
-          <span class="action-icon">&#127949;</span>
-          <span class="action-label">En moto</span>
+        <button class="action-btn btn-restaurante" data-route="restaurante">
+          <span class="action-icon">&#127860;</span>
+          <span class="action-label">Restaurantes</span>
         </button>
 
-        <button class="action-btn btn-carro" data-route="carro">
-          <span class="action-icon">&#128663;</span>
-          <span class="action-label">En carro</span>
+        <button class="action-btn btn-bar" data-route="bar">
+          <span class="action-icon">&#127866;</span>
+          <span class="action-label">Bares</span>
+        </button>
+
+        <button class="action-btn btn-bbb" data-route="bbb">
+          <span class="action-icon">&#127828;</span>
+          <span class="action-label">BBB</span>
         </button>
 
         <button class="action-btn btn-walking" data-route="walking">
@@ -145,6 +150,11 @@
           <span class="action-label">En bici</span>
         </button>
 
+        <button class="action-btn btn-moto-route" data-route="rutas-moto">
+          <span class="action-icon">&#127949;</span>
+          <span class="action-label">Rutas moto</span>
+        </button>
+
         <button class="action-btn btn-sites" data-route="sitios">
           <span class="action-icon">&#127966;</span>
           <span class="action-label">Sitios</span>
@@ -155,19 +165,9 @@
           <span class="action-label">Romantico</span>
         </button>
 
-        <button class="action-btn btn-bbb" data-route="bbb">
-          <span class="action-icon">&#127828;</span>
-          <span class="action-label">BBB</span>
-        </button>
-
         <button class="action-btn btn-clientes" data-route="clientes">
           <span class="action-icon">&#127970;</span>
           <span class="action-label">Clientes</span>
-        </button>
-
-        <button class="action-btn btn-social" data-route="social">
-          <span class="action-icon">&#128172;</span>
-          <span class="action-label">Muro</span>
         </button>
       </section>
 
@@ -199,8 +199,7 @@
 
           <a
             class="suggestion-card card-road"
-            href="/places.html?category=moto"
-            data-suggestion-route="moto"
+            href="/sites.html?mode=moto"
           >
             <span class="tag-live">TOP</span>
             <h3>Ruta en moto</h3>
@@ -216,8 +215,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=65"></script>
-    <script src="/update.js?v=65"></script>
-    <script src="/app.js?v=65"></script>
+    <script src="/ads.js?v=66"></script>
+    <script src="/update.js?v=66"></script>
+    <script src="/app.js?v=66"></script>
   </body>
 </html>

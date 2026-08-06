@@ -26,6 +26,11 @@ let reviewTimer = null;
 let reviewStartedAt = 0;
 
 const titleByCategory = {
+  restaurante:
+    "Restaurantes",
+
+  bar: "Bares",
+
   moto: "Planes en moto",
 
   carro: "Planes en carro",
@@ -38,11 +43,17 @@ const titleByCategory = {
 };
 
 const subtitleByCategory = {
+  restaurante:
+    "Restaurantes cercanos para comer o parchar.",
+
+  bar:
+    "Bares y lugares para tomar algo cerca de ti.",
+
   moto:
-    "Locales cercanos para ir en moto.",
+    "Locales guardados como moto. Recategorizalos desde admin cuando sea posible.",
 
   carro:
-    "Locales cercanos para ir en carro.",
+    "Locales guardados como carro. Recategorizalos desde admin cuando sea posible.",
 
   romantico:
     "Lugares romanticos en la ciudad o alrededores.",
@@ -52,6 +63,11 @@ const subtitleByCategory = {
 };
 
 const categoryChip = {
+  restaurante:
+    "Restaurante",
+
+  bar: "Bar",
+
   moto: "Moto",
 
   carro: "Carro",

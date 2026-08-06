@@ -258,6 +258,8 @@ const REVIEW_VIDEO_MAX_BYTES =
   25 * 1024 * 1024;
 const ALLOWED_CATEGORIES =
   new Set([
+    "restaurante",
+    "bar",
     "moto",
     "carro",
     "romantico",
@@ -282,6 +284,7 @@ const ALLOWED_SITE_TYPES =
     "parque",
     "pueblo",
     "naturaleza",
+    "ruta_moto",
     "ruta_bici",
   ]);
 const ALLOWED_SITE_MEDIA_TYPES =
@@ -6153,11 +6156,20 @@ const server =
             cleanText(
               body.businessName
             );
+          const category =
+            normalizeCategory(
+              body.category
+            );
 
-          if (!businessName) {
+          if (
+            !businessName ||
+            !ALLOWED_CATEGORIES.has(
+              category
+            )
+          ) {
             sendJson(res, 400, {
               error:
-                "Debes enviar un nombre valido.",
+                "Debes enviar nombre y categoria validos.",
             });
             return;
           }
@@ -6165,11 +6177,13 @@ const server =
           await pool.query(
             `
             UPDATE businesses
-            SET business_name = $1
-            WHERE id = $2
+            SET business_name = $1,
+                category = $2
+            WHERE id = $3
             `,
             [
               businessName,
+              category,
               id,
             ]
           );
