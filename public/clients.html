@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clientes | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=66" />
+    <link rel="stylesheet" href="/styles.css?v=67" />
   </head>
 
   <body class="theme-body clients-body">
@@ -220,28 +220,40 @@
 
           <label>
             Latitud
-            <input name="latitude" type="number" step="0.000001" required />
+            <input
+              name="latitude"
+              class="coordinate-input"
+              type="number"
+              step="0.000001"
+              placeholder="Usa el boton de ubicacion"
+              readonly
+              tabindex="-1"
+              required
+            />
           </label>
 
           <label>
             Longitud
-            <input name="longitude" type="number" step="0.000001" required />
+            <input
+              name="longitude"
+              class="coordinate-input"
+              type="number"
+              step="0.000001"
+              placeholder="Usa el boton de ubicacion"
+              readonly
+              tabindex="-1"
+              required
+            />
           </label>
 
-          <button id="use-location" type="button" class="ghost-btn">
-            Usar mi ubicacion
+          <button id="use-location" type="button" class="location-primary-btn full-row">
+            Usar mi ubicacion actual
           </button>
 
           <label class="full-row">
             RUT del negocio
             <input name="rutDocument" type="file" accept="application/pdf,.pdf" required />
-            <span class="field-hint">Solo PDF.</span>
-          </label>
-
-          <label class="full-row">
-            Camara de comercio
-            <input name="commerceDocument" type="file" accept="application/pdf,.pdf" />
-            <span class="field-hint">Solo PDF.</span>
+            <span class="field-hint">Solo PDF. No pedimos Camara de Comercio en este registro.</span>
           </label>
 
           <label class="full-row">
@@ -323,8 +335,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=66"></script>
-    <script src="/update.js?v=66"></script>
-    <script src="/clients.js?v=66"></script>
+    <script src="/ads.js?v=67"></script>
+    <script src="/update.js?v=67"></script>
+    <script src="/clients.js?v=67"></script>
   </body>
 </html>

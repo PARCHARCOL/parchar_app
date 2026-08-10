@@ -21,7 +21,7 @@ const logoutButton = document.querySelector("#client-logout");
 const businessForm = document.querySelector("#business-form");
 const businessMessage = document.querySelector("#business-message");
 const rutInput = document.querySelector("input[name='rutDocument']");
-const commerceInput = document.querySelector("input[name='commerceDocument']");
+const coordinateInputs = document.querySelectorAll(".coordinate-input");
 
 const videoInput = document.querySelector("#video-input");
 const videoStatus = document.querySelector("#video-status");
@@ -36,6 +36,12 @@ const VIDEO_MAX_SECONDS = 20;
 
 let currentToken = "";
 let currentClient = null;
+
+coordinateInputs.forEach((input) => {
+  input.addEventListener("focus", () => {
+    input.blur();
+  });
+});
 
 const AUTH_VIEW_COPY = {
   login: {
@@ -594,29 +600,38 @@ businessForm?.addEventListener("submit", async (event) => {
   }
 
   setBusinessFormClientData(currentClient);
-  setMessage(businessMessage, "Subiendo negocio y documentos...");
+  setMessage(businessMessage, "Subiendo negocio y RUT...");
 
   const formData = new FormData(businessForm);
   const duration = Number(formData.get("videoDurationSeconds"));
+  const latitudeRaw = String(
+    formData.get("latitude") || ""
+  ).trim();
+  const longitudeRaw = String(
+    formData.get("longitude") || ""
+  ).trim();
+  const latitude = Number(latitudeRaw);
+  const longitude = Number(longitudeRaw);
   const rutFile = rutInput?.files?.[0];
-  const commerceFile = commerceInput?.files?.[0];
 
-  if (!isPdfFile(rutFile)) {
+  if (
+    !latitudeRaw ||
+    !longitudeRaw ||
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
     setMessage(
       businessMessage,
-      "El RUT debe estar en formato PDF.",
+      "Primero presiona Usar mi ubicacion actual para cargar latitud y longitud.",
       true
     );
     return;
   }
 
-  if (
-    commerceFile &&
-    !isPdfFile(commerceFile)
-  ) {
+  if (!isPdfFile(rutFile)) {
     setMessage(
       businessMessage,
-      "La Camara de Comercio debe estar en formato PDF.",
+      "El RUT debe estar en formato PDF.",
       true
     );
     return;
