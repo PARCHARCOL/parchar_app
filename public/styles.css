@@ -1661,6 +1661,14 @@ textarea {
   grid-template-columns: repeat(4, 1fr);
 }
 
+.bottom-nav.public-nav:not(.home-nav) {
+  position: fixed;
+  left: max(12px, calc((100vw - 430px) / 2 + 12px));
+  right: max(12px, calc((100vw - 430px) / 2 + 12px));
+  bottom: calc(var(--ad-height) + 18px + env(safe-area-inset-bottom, 0px));
+  z-index: 13;
+}
+
 .nav-item {
   text-decoration: none;
   color: #d8bef8;
@@ -1695,10 +1703,11 @@ textarea {
 }
 
 .ad-banner {
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  bottom: 12px;
+  position: fixed;
+  left: max(12px, calc((100vw - 430px) / 2 + 12px));
+  right: max(12px, calc((100vw - 430px) / 2 + 12px));
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 12;
   min-height: var(--ad-height);
   border-radius: 14px;
   border: 1px solid rgba(255, 171, 92, 0.5);
@@ -2180,8 +2189,8 @@ textarea {
   padding-bottom: calc(var(--nav-height) + 34px);
 }
 
-.ad-disabled .bottom-nav {
-  bottom: 12px;
+.ad-disabled .bottom-nav.public-nav:not(.home-nav) {
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
 }
 
 .ad-pill {
@@ -2367,6 +2376,12 @@ textarea {
     padding: 20px 18px calc(var(--nav-height) + var(--ad-height) + 38px);
   }
 
+  .bottom-nav.public-nav:not(.home-nav),
+  .ad-banner {
+    left: max(24px, calc((100vw - 760px) / 2 + 18px));
+    right: max(24px, calc((100vw - 760px) / 2 + 18px));
+  }
+
   .app-shell::before {
     width: 180px;
   }
@@ -2454,6 +2469,12 @@ textarea {
   .app-shell {
     width: min(calc(100vw - 48px), 1140px);
     padding: 24px 24px calc(var(--nav-height) + var(--ad-height) + 44px);
+  }
+
+  .bottom-nav.public-nav:not(.home-nav),
+  .ad-banner {
+    left: max(24px, calc((100vw - 1140px) / 2 + 24px));
+    right: max(24px, calc((100vw - 1140px) / 2 + 24px));
   }
 
   .ad-banner {
