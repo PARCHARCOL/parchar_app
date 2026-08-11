@@ -1720,6 +1720,10 @@ textarea {
   overflow: hidden;
 }
 
+body > .ad-banner {
+  position: fixed !important;
+}
+
 .ad-media {
   width: 40px;
   height: 40px;

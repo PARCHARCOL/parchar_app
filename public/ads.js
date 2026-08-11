@@ -1,9 +1,30 @@
 const adBanner = document.querySelector(".ad-banner");
+const publicFixedNav = document.querySelector(
+  ".bottom-nav.public-nav:not(.home-nav)"
+);
 const AD_REFRESH_MS = 18000;
 const AD_TEMPLATE_REFRESH_MS = 14000;
 const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
 let adRequestSeq = 0;
+
+function mountFixedPublicChrome() {
+  if (
+    publicFixedNav &&
+    publicFixedNav.parentElement !== document.body
+  ) {
+    document.body.appendChild(publicFixedNav);
+  }
+
+  if (
+    adBanner &&
+    adBanner.parentElement !== document.body
+  ) {
+    document.body.appendChild(adBanner);
+  }
+}
+
+mountFixedPublicChrome();
 
 function clearAdRefreshTimer() {
   if (adRefreshTimer) {
