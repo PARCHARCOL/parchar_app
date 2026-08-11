@@ -16,7 +16,8 @@ const siteTypeLabels = {
   parque: "Parque",
   pueblo: "Pueblo",
   naturaleza: "Naturaleza",
-  ruta_moto: "Ruta en moto",
+  ruta_pueblo: "Ruta a pueblo",
+  ruta_moto: "Ruta a pueblo",
   ruta_bici: "Ruta en bici",
 };
 
@@ -37,11 +38,11 @@ const bikeSiteFilters = [
   ["parque", "Parques"],
 ];
 
-const motoSiteFilters = [
+const puebliarSiteFilters = [
   ["todos", "Todos"],
-  ["ruta_moto", "Rutas moto"],
-  ["mirador", "Miradores"],
   ["pueblo", "Pueblos"],
+  ["mirador", "Miradores"],
+  ["rutas_pueblo", "Rutas"],
   ["naturaleza", "Naturaleza"],
 ];
 
@@ -51,8 +52,10 @@ const bikeSiteTypes = new Set([
   "parada_ciclista",
 ]);
 
-const motoSiteTypes = new Set([
+const puebliarSiteTypes = new Set([
+  "ruta_pueblo",
   "ruta_moto",
+  "pueblo",
 ]);
 
 const bikeOptionalTypes = new Set([
@@ -63,9 +66,8 @@ const bikeOptionalTypes = new Set([
   "pueblo",
 ]);
 
-const motoOptionalTypes = new Set([
+const puebliarOptionalTypes = new Set([
   "mirador",
-  "pueblo",
   "naturaleza",
 ]);
 
@@ -82,12 +84,18 @@ const bikeKeywords = [
   "mtb",
 ];
 
-const motoKeywords = [
+const puebliarKeywords = [
+  "pueblo",
+  "pueblos",
+  "puebliar",
+  "escapada",
+  "escapadas",
+  "ruta",
+  "rutas",
   "moto",
   "motos",
   "motero",
   "motera",
-  "ruta",
   "rodada",
   "mirador",
 ];
@@ -101,9 +109,10 @@ function isBikeMode() {
   return normalizeText(params.get("mode")) === "bike";
 }
 
-function isMotoMode() {
+function isPuebliarMode() {
   const params = new URLSearchParams(window.location.search);
-  return normalizeText(params.get("mode")) === "moto";
+  const mode = normalizeText(params.get("mode"));
+  return mode === "puebliar" || mode === "moto";
 }
 
 function escapeHtml(value) {
@@ -209,9 +218,9 @@ function estimateTravelText(km) {
     return `A ${formatDistance(km)} de ti - En bici aprox ${formatMinutes(bikeMinutes)}`;
   }
 
-  if (isMotoMode()) {
-    const motoMinutes = (km / 32) * 60;
-    return `A ${formatDistance(km)} de ti - En moto aprox ${formatMinutes(motoMinutes)}`;
+  if (isPuebliarMode()) {
+    const driveMinutes = (km / 32) * 60;
+    return `A ${formatDistance(km)} de ti - En ruta aprox ${formatMinutes(driveMinutes)}`;
   }
 
   const driveMinutes = (km / 28) * 60;
@@ -288,8 +297,8 @@ function renderFilterButtons() {
 
   const filters = isBikeMode()
     ? bikeSiteFilters
-    : isMotoMode()
-    ? motoSiteFilters
+    : isPuebliarMode()
+    ? puebliarSiteFilters
     : defaultSiteFilters;
 
   siteFilterContainer.innerHTML = filters
@@ -309,27 +318,27 @@ function renderFilterButtons() {
 }
 
 function setupPageMode() {
-  if (isMotoMode()) {
-    document.title = "Rutas en moto | Parchar";
+  if (isPuebliarMode()) {
+    document.title = "Puebliar | Parchar";
 
     if (sitePageTitle) {
       sitePageTitle.textContent =
-        "Rutas en moto";
+        "Puebliar";
     }
 
     if (sitePageSubtitle) {
       sitePageSubtitle.textContent =
-        "Rutas, miradores, pueblos y salidas pensadas para moto.";
+        "Pueblos, miradores y escapadas cercanas para salir de la ciudad.";
     }
 
     if (siteSearchInput) {
       siteSearchInput.placeholder =
-        "Buscar ruta, mirador o pueblo";
+        "Buscar pueblo, mirador o ruta";
     }
 
     if (siteLocationStatus) {
       siteLocationStatus.textContent =
-        "Permite ubicacion para ordenar rutas en moto por cercania.";
+        "Permite ubicacion para ordenar pueblos y rutas por cercania.";
     }
     return;
   }
@@ -389,13 +398,25 @@ function matchesSite(site, query, filter) {
   }
 
   if (
-    isMotoMode() &&
-    !isMotoCandidate(site)
+    isPuebliarMode() &&
+    !isPuebliarCandidate(site)
   ) {
     return false;
   }
 
-  if (filter !== "todos" && type !== filter) {
+  if (
+    filter === "rutas_pueblo" &&
+    type !== "ruta_pueblo" &&
+    type !== "ruta_moto"
+  ) {
+    return false;
+  }
+
+  if (
+    filter !== "todos" &&
+    filter !== "rutas_pueblo" &&
+    type !== filter
+  ) {
     return false;
   }
 
@@ -447,15 +468,15 @@ function isBikeCandidate(site) {
   );
 }
 
-function isMotoCandidate(site) {
+function isPuebliarCandidate(site) {
   const type =
     site.siteType || site.site_type || "";
 
-  if (motoSiteTypes.has(type)) {
+  if (puebliarSiteTypes.has(type)) {
     return true;
   }
 
-  if (!motoOptionalTypes.has(type)) {
+  if (!puebliarOptionalTypes.has(type)) {
     return false;
   }
 
@@ -469,7 +490,7 @@ function isMotoCandidate(site) {
     ].join(" ")
   );
 
-  return motoKeywords.some((keyword) =>
+  return puebliarKeywords.some((keyword) =>
     haystack.includes(keyword)
   );
 }
@@ -600,13 +621,13 @@ function renderSites() {
   if (!filteredSites.length) {
     const title = isBikeMode()
       ? "Aun no hay rutas en bici cargadas."
-      : isMotoMode()
-      ? "Aun no hay rutas en moto cargadas."
+      : isPuebliarMode()
+      ? "Aun no hay pueblos o rutas cargadas."
       : "No encontramos sitios con ese filtro.";
     const message = isBikeMode()
       ? "Desde admin carga ciclorutas, rutas en bici, paradas ciclistas o sitios con etiqueta bici."
-      : isMotoMode()
-      ? "Desde admin carga rutas en moto, miradores o pueblos con etiqueta moto."
+      : isPuebliarMode()
+      ? "Desde admin carga pueblos, miradores o rutas a pueblos cercanos."
       : "Prueba con charco, mirador, pueblo, rio, cascada o naturaleza.";
 
     siteResultsEl.innerHTML = `
@@ -668,8 +689,8 @@ function requestUserLocation() {
   setLocationStatus(
     isBikeMode()
       ? "Calculando rutas en bici cerca de ti..."
-      : isMotoMode()
-      ? "Calculando rutas en moto cerca de ti..."
+      : isPuebliarMode()
+      ? "Calculando pueblos y rutas cerca de ti..."
       : "Calculando sitios cerca de ti..."
   );
 
@@ -683,8 +704,8 @@ function requestUserLocation() {
       setLocationStatus(
         isBikeMode()
           ? "Ubicacion lista. Rutas en bici ordenadas por cercania."
-          : isMotoMode()
-          ? "Ubicacion lista. Rutas en moto ordenadas por cercania."
+          : isPuebliarMode()
+          ? "Ubicacion lista. Pueblos y rutas ordenados por cercania."
           : "Ubicacion lista. Sitios ordenados por cercania."
       );
       renderSites();
@@ -695,8 +716,8 @@ function requestUserLocation() {
       setLocationStatus(
         isBikeMode()
           ? "Permite ubicacion para ver distancia y tiempo en bici."
-          : isMotoMode()
-          ? "Permite ubicacion para ver distancia y tiempo en moto."
+          : isPuebliarMode()
+          ? "Permite ubicacion para ver distancia y ruta a pueblos cercanos."
           : "Permite ubicacion para ver distancia y tiempo desde donde estas.",
         true
       );

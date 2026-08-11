@@ -15,6 +15,10 @@ const SITE_SEARCH_KEYWORDS = [
   "miradores",
   "pueblo",
   "pueblos",
+  "puebliar",
+  "puebliando",
+  "escapada",
+  "escapadas",
   "rio",
   "rios",
   "cascada",
@@ -30,6 +34,8 @@ const SITE_SEARCH_KEYWORDS = [
   "ciclorutas",
   "ciclista",
   "ciclistas",
+  "ruta",
+  "rutas",
   "moto",
   "motos",
   "motero",
@@ -93,8 +99,8 @@ function redirectWithSearch(query) {
     /\b(bici|bicicleta|bicicletas|cicloruta|ciclorutas|ciclista|ciclistas)\b/.test(
       normalizedQuery
     );
-  const isMotoSearch =
-    /\b(moto|motos|motero|motera|rodada|rodadas)\b/.test(
+  const isPuebliarSearch =
+    /\b(pueblo|pueblos|puebliar|puebliando|escapada|escapadas|ruta|rutas|moto|motos|motero|motera|rodada|rodadas)\b/.test(
       normalizedQuery
     );
   const url = new URL(
@@ -103,8 +109,8 @@ function redirectWithSearch(query) {
   );
   if (isBikeSearch) {
     url.searchParams.set("mode", "bike");
-  } else if (isMotoSearch) {
-    url.searchParams.set("mode", "moto");
+  } else if (isPuebliarSearch) {
+    url.searchParams.set("mode", "puebliar");
   }
   url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
@@ -131,8 +137,8 @@ function handleCategory(route) {
     return;
   }
 
-  if (route === "rutas-moto") {
-    window.location.href = "/sites.html?mode=moto";
+  if (route === "puebliar") {
+    window.location.href = "/sites.html?mode=puebliar";
     return;
   }
 

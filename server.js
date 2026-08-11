@@ -284,6 +284,7 @@ const ALLOWED_SITE_TYPES =
     "parque",
     "pueblo",
     "naturaleza",
+    "ruta_pueblo",
     "ruta_moto",
     "ruta_bici",
   ]);

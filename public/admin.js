@@ -1636,7 +1636,8 @@ function siteTypeLabel(value) {
     parque: "Parque",
     pueblo: "Pueblo",
     naturaleza: "Naturaleza",
-    ruta_moto: "Ruta en moto",
+    ruta_pueblo: "Ruta a pueblo",
+    ruta_moto: "Ruta a pueblo",
     ruta_bici: "Ruta en bici",
   };
 
