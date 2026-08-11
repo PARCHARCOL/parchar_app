@@ -1254,6 +1254,14 @@ textarea {
   font-size: 0.9rem;
 }
 
+.mini-business-actions,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

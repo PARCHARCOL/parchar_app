@@ -4190,12 +4190,21 @@ const server =
               `
               SELECT
                 id,
+                owner_document,
                 business_name,
                 category,
+                description,
+                products,
+                address,
                 city,
+                latitude,
+                longitude,
+                social_link,
+                rut_document,
                 status,
                 created_at,
-                video_path
+                video_path,
+                video_seconds
               FROM businesses
               WHERE
                 client_id = $1
@@ -4215,6 +4224,387 @@ const server =
             ok: true,
             items:
               result.rows,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/clients\/businesses\/\d+\/edit$/
+          ) &&
+          req.method === "POST"
+        ) {
+          const auth =
+            await requireClientAuth(
+              req,
+              res
+            );
+
+          if (!auth) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+
+          await runMiddleware(
+            req,
+            res,
+            upload.fields([
+              {
+                name: "video",
+                maxCount: 1,
+              },
+              {
+                name: "rutDocument",
+                maxCount: 1,
+              },
+              {
+                name:
+                  "commerceDocument",
+                maxCount: 1,
+              },
+            ])
+          );
+
+          const current =
+            await pool.query(
+              `
+              SELECT *
+              FROM businesses
+              WHERE
+                id = $1
+                AND (
+                  client_id = $2
+                  OR (
+                    client_id IS NULL
+                    AND LOWER(owner_email) = LOWER($3)
+                  )
+                )
+              LIMIT 1
+              `,
+              [
+                id,
+                auth.client.id,
+                auth.client.email,
+              ]
+            );
+
+          if (!current.rows.length) {
+            sendJson(res, 404, {
+              error:
+                "Local no encontrado para este cliente.",
+            });
+            return;
+          }
+
+          const body =
+            req.body || {};
+          const category =
+            normalizeCategory(
+              body.category
+            );
+          const legalAcceptance =
+            parseBooleanFlag(
+              body.legalAcceptance
+            );
+
+          if (
+            !ALLOWED_CATEGORIES.has(
+              category
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Categoria invalida.",
+            });
+            return;
+          }
+
+          if (!legalAcceptance) {
+            sendJson(res, 400, {
+              error:
+                "Debes aceptar la declaracion legal.",
+            });
+            return;
+          }
+
+          const businessName =
+            cleanText(
+              body.businessName
+            );
+          const description =
+            cleanText(
+              body.description
+            );
+          const products =
+            cleanText(
+              body.products
+            );
+          const address =
+            cleanText(
+              body.address
+            );
+          const city =
+            cleanText(body.city);
+          const socialLink =
+            cleanText(
+              body.socialLink ||
+                ""
+            );
+          const ownerDocument =
+            cleanText(
+              body.ownerDocument
+            );
+          const latitude =
+            validateLatitude(
+              body.latitude
+            );
+          const longitude =
+            validateLongitude(
+              body.longitude
+            );
+
+          if (
+            !businessName ||
+            !description ||
+            !products ||
+            !address ||
+            !city ||
+            latitude === null ||
+            longitude === null ||
+            !ownerDocument
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Completa todos los campos obligatorios del negocio.",
+            });
+            return;
+          }
+
+          const duplicated =
+            await pool.query(
+              `
+              SELECT id
+              FROM businesses
+              WHERE
+                LOWER(business_name) = LOWER($1)
+                AND id <> $2
+              LIMIT 1
+              `,
+              [businessName, id]
+            );
+
+          if (
+            duplicated.rows
+              .length
+          ) {
+            sendJson(res, 409, {
+              error:
+                "Ese negocio ya fue registrado.",
+            });
+            return;
+          }
+
+          const currentBusiness =
+            current.rows[0];
+          const videoFile =
+            req.files?.video?.[0];
+          const rutFile =
+            req.files
+              ?.rutDocument?.[0];
+          const commerceFile =
+            req.files
+              ?.commerceDocument?.[0];
+
+          let videoPath =
+            currentBusiness
+              .video_path;
+          let videoSeconds =
+            Number(
+              currentBusiness
+                .video_seconds
+            );
+          let rutDocument =
+            currentBusiness
+              .rut_document || "";
+          let commerceDocument =
+            currentBusiness
+              .commerce_document || "";
+
+          if (
+            rutFile &&
+            !isPdfDocument(rutFile)
+          ) {
+            sendJson(res, 400, {
+              error:
+                "El RUT debe subirse en formato PDF.",
+            });
+            return;
+          }
+
+          if (
+            commerceFile &&
+            !isPdfDocument(commerceFile)
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La Camara de Comercio debe subirse en formato PDF.",
+            });
+            return;
+          }
+
+          if (videoFile) {
+            videoSeconds =
+              Number(
+                body.videoDurationSeconds
+              );
+
+            if (
+              !Number.isFinite(
+                videoSeconds
+              ) ||
+              videoSeconds <
+                VIDEO_MIN_SECONDS ||
+              videoSeconds >
+                VIDEO_MAX_SECONDS
+            ) {
+              sendJson(res, 400, {
+                error:
+                  `El video debe durar entre ${VIDEO_MIN_SECONDS} y ${VIDEO_MAX_SECONDS} segundos.`,
+              });
+              return;
+            }
+
+            const uploadedVideo =
+              await uploadFileToStorage(
+                videoFile,
+                {
+                  resource_type:
+                    "video",
+                  folder:
+                    "parchar/videos",
+                }
+              );
+            videoPath =
+              uploadedVideo.secure_url;
+            videoSeconds =
+              Number(
+                videoSeconds.toFixed(
+                  2
+                )
+              );
+          }
+
+          if (!videoPath) {
+            sendJson(res, 400, {
+              error:
+                "Debes subir el video del local.",
+            });
+            return;
+          }
+
+          if (rutFile) {
+            const uploadedRut =
+              await uploadFileToStorage(
+                rutFile,
+                {
+                  resource_type:
+                    "raw",
+                  folder:
+                    "parchar/rut",
+                }
+              );
+            rutDocument =
+              uploadedRut.secure_url;
+          }
+
+          if (!rutDocument) {
+            sendJson(res, 400, {
+              error:
+                "Debes subir el RUT del negocio.",
+            });
+            return;
+          }
+
+          if (commerceFile) {
+            const uploadedCommerce =
+              await uploadFileToStorage(
+                commerceFile,
+                {
+                  resource_type:
+                    "raw",
+                  folder:
+                    "parchar/commerce",
+                }
+              );
+            commerceDocument =
+              uploadedCommerce.secure_url;
+          }
+
+          await pool.query(
+            `
+            UPDATE businesses
+            SET
+              client_id = $1,
+              owner_name = $2,
+              owner_email = $3,
+              owner_phone = $4,
+              owner_document = $5,
+              business_name = $6,
+              category = $7,
+              description = $8,
+              products = $9,
+              address = $10,
+              city = $11,
+              latitude = $12,
+              longitude = $13,
+              social_link = $14,
+              rut_document = $15,
+              commerce_document = $16,
+              legal_acceptance = $17,
+              video_path = $18,
+              video_seconds = $19,
+              status = 'pendiente',
+              reviewed_by = NULL,
+              reviewed_at = NULL,
+              review_note = $20
+            WHERE id = $21
+            `,
+            [
+              auth.client.id,
+              auth.client
+                .fullName,
+              auth.client
+                .email,
+              auth.client
+                .phone,
+              ownerDocument,
+              businessName,
+              category,
+              description,
+              products,
+              address,
+              city,
+              latitude,
+              longitude,
+              socialLink,
+              rutDocument,
+              commerceDocument,
+              true,
+              videoPath,
+              videoSeconds,
+              "Editado por cliente, pendiente de revision",
+              id,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            message:
+              "Cambios enviados para revision.",
           });
           return;
         }

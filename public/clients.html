@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Clientes | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=71" />
+    <link rel="stylesheet" href="/styles.css?v=72" />
   </head>
 
   <body class="theme-body clients-body">
@@ -157,6 +157,8 @@
         </div>
 
         <form id="business-form" class="form-grid" enctype="multipart/form-data">
+          <input name="businessId" type="hidden" />
+
           <label>
             Nombre del responsable
             <input name="ownerName" required readonly />
@@ -289,7 +291,12 @@
             </p>
           </div>
 
-          <button type="submit" class="submit-btn">Enviar para revision</button>
+          <div class="form-actions full-row">
+            <button type="submit" class="submit-btn">Enviar para revision</button>
+            <button id="cancel-business-edit" type="button" class="ghost-btn" hidden>
+              Cancelar edicion
+            </button>
+          </div>
         </form>
 
         <p id="business-message" class="feedback"></p>
@@ -335,8 +342,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=71"></script>
-    <script src="/update.js?v=71"></script>
-    <script src="/clients.js?v=71"></script>
+    <script src="/ads.js?v=72"></script>
+    <script src="/update.js?v=72"></script>
+    <script src="/clients.js?v=72"></script>
   </body>
 </html>

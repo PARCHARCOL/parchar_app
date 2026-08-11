@@ -30,12 +30,16 @@ const useLocationButton = document.querySelector("#use-location");
 
 const myBusinessesList = document.querySelector("#my-businesses-list");
 const refreshMyBusinessesButton = document.querySelector("#refresh-my-businesses");
+const businessSubmitButton = businessForm?.querySelector("button[type='submit']");
+const cancelBusinessEditButton = document.querySelector("#cancel-business-edit");
 
 const VIDEO_MIN_SECONDS = 15;
 const VIDEO_MAX_SECONDS = 20;
 
 let currentToken = "";
 let currentClient = null;
+let currentMyBusinesses = [];
+let editingBusinessId = "";
 
 coordinateInputs.forEach((input) => {
   input.addEventListener("focus", () => {
@@ -162,11 +166,17 @@ function setBusinessFormClientData(client) {
   if (ownerPhoneInput) ownerPhoneInput.value = client.phone || "";
 }
 
-function resetBusinessPanel() {
-  if (businessForm) {
-    businessForm.reset();
+function setBusinessFileRequirements(isEditing) {
+  if (rutInput) {
+    rutInput.required = !isEditing;
   }
 
+  if (videoInput) {
+    videoInput.required = !isEditing;
+  }
+}
+
+function clearVideoStatus() {
   if (videoDurationInput) {
     videoDurationInput.value = "";
   }
@@ -175,6 +185,85 @@ function resetBusinessPanel() {
     videoStatus.textContent = "";
     videoStatus.classList.remove("error", "success");
   }
+}
+
+function resetBusinessEditMode() {
+  editingBusinessId = "";
+
+  if (businessForm?.elements.businessId) {
+    businessForm.elements.businessId.value = "";
+  }
+
+  setBusinessFileRequirements(false);
+
+  if (businessSubmitButton) {
+    businessSubmitButton.textContent = "Enviar para revision";
+  }
+
+  if (cancelBusinessEditButton) {
+    cancelBusinessEditButton.hidden = true;
+  }
+}
+
+function startBusinessEdit(item) {
+  if (!businessForm || !item) {
+    return;
+  }
+
+  editingBusinessId = String(item.id || "");
+  businessForm.reset();
+  setBusinessFormClientData(currentClient);
+  setBusinessFileRequirements(true);
+  clearVideoStatus();
+
+  const fields = businessForm.elements;
+
+  if (fields.businessId) fields.businessId.value = editingBusinessId;
+  if (fields.ownerDocument) fields.ownerDocument.value = item.owner_document || "";
+  if (fields.businessName) fields.businessName.value = item.business_name || "";
+  if (fields.category) fields.category.value = item.category || "";
+  if (fields.city) fields.city.value = item.city || "";
+  if (fields.address) fields.address.value = item.address || "";
+  if (fields.socialLink) fields.socialLink.value = item.social_link || "";
+  if (fields.description) fields.description.value = item.description || "";
+  if (fields.products) fields.products.value = item.products || "";
+  if (fields.latitude) fields.latitude.value = item.latitude ?? "";
+  if (fields.longitude) fields.longitude.value = item.longitude ?? "";
+  if (fields.legalAcceptance) fields.legalAcceptance.checked = true;
+
+  if (businessSubmitButton) {
+    businessSubmitButton.textContent = "Guardar cambios";
+  }
+
+  if (cancelBusinessEditButton) {
+    cancelBusinessEditButton.hidden = false;
+  }
+
+  setMessage(
+    businessMessage,
+    "Editando local. Al guardar, el local vuelve a revision de Parchar.",
+    false
+  );
+
+  setMessage(
+    videoStatus,
+    "Modo edicion: si no subes un RUT o video nuevo, se conserva el archivo actual.",
+    false
+  );
+
+  businessForm.scrollIntoView({
+    behavior: "smooth",
+    block: "start",
+  });
+}
+
+function resetBusinessPanel() {
+  if (businessForm) {
+    businessForm.reset();
+  }
+
+  resetBusinessEditMode();
+  clearVideoStatus();
 
   if (myBusinessesList) {
     myBusinessesList.innerHTML = "";
@@ -275,6 +364,8 @@ function renderMyBusinesses(items) {
     return;
   }
 
+  currentMyBusinesses = Array.isArray(items) ? items : [];
+
   if (!items?.length) {
     myBusinessesList.innerHTML = `
       <article class="mini-business-card">
@@ -297,17 +388,33 @@ function renderMyBusinesses(items) {
           </div>
           <p><strong>Categoria:</strong> ${escapeHtml(item.category)}</p>
           <p><strong>Ciudad:</strong> ${escapeHtml(item.city)}</p>
-          ${
-            item.video_path
-              ? `<a href="${escapeHtml(
-                  item.video_path
-                )}" class="ghost-btn" target="_blank" rel="noopener noreferrer">Ver video</a>`
-              : ""
-          }
+          <div class="mini-business-actions">
+            <button type="button" class="ghost-btn" data-edit-business="${escapeHtml(
+              item.id
+            )}">Editar</button>
+            ${
+              item.video_path
+                ? `<a href="${escapeHtml(
+                    item.video_path
+                  )}" class="ghost-btn" target="_blank" rel="noopener noreferrer">Ver video</a>`
+                : ""
+            }
+          </div>
         </article>
       `
     )
     .join("");
+
+  myBusinessesList
+    .querySelectorAll("[data-edit-business]")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        const selected = currentMyBusinesses.find(
+          (item) => String(item.id) === String(button.dataset.editBusiness)
+        );
+        startBusinessEdit(selected);
+      });
+    });
 }
 
 async function loadMyBusinesses() {
@@ -485,6 +592,17 @@ refreshMyBusinessesButton?.addEventListener("click", async () => {
   await loadMyBusinesses();
 });
 
+cancelBusinessEditButton?.addEventListener("click", () => {
+  if (businessForm) {
+    businessForm.reset();
+    setBusinessFormClientData(currentClient);
+  }
+
+  resetBusinessEditMode();
+  clearVideoStatus();
+  setMessage(businessMessage, "Edicion cancelada.", false);
+});
+
 async function extractVideoDuration(file) {
   return new Promise((resolve, reject) => {
     const tempVideo = document.createElement("video");
@@ -600,9 +718,10 @@ businessForm?.addEventListener("submit", async (event) => {
   }
 
   setBusinessFormClientData(currentClient);
-  setMessage(businessMessage, "Subiendo negocio y RUT...");
 
   const formData = new FormData(businessForm);
+  const businessId = String(formData.get("businessId") || editingBusinessId || "").trim();
+  const isEditing = Boolean(businessId);
   const duration = Number(formData.get("videoDurationSeconds"));
   const latitudeRaw = String(
     formData.get("latitude") || ""
@@ -613,6 +732,12 @@ businessForm?.addEventListener("submit", async (event) => {
   const latitude = Number(latitudeRaw);
   const longitude = Number(longitudeRaw);
   const rutFile = rutInput?.files?.[0];
+  const videoFile = videoInput?.files?.[0];
+
+  setMessage(
+    businessMessage,
+    isEditing ? "Guardando cambios del local..." : "Subiendo negocio y RUT..."
+  );
 
   if (
     !latitudeRaw ||
@@ -628,7 +753,7 @@ businessForm?.addEventListener("submit", async (event) => {
     return;
   }
 
-  if (!isPdfFile(rutFile)) {
+  if (!isEditing && !isPdfFile(rutFile)) {
     setMessage(
       businessMessage,
       "El RUT debe estar en formato PDF.",
@@ -637,10 +762,20 @@ businessForm?.addEventListener("submit", async (event) => {
     return;
   }
 
+  if (isEditing && rutFile && !isPdfFile(rutFile)) {
+    setMessage(
+      businessMessage,
+      "El nuevo RUT debe estar en formato PDF.",
+      true
+    );
+    return;
+  }
+
   if (
-    !Number.isFinite(duration) ||
-    duration < VIDEO_MIN_SECONDS ||
-    duration > VIDEO_MAX_SECONDS
+    (!isEditing || videoFile) &&
+    (!Number.isFinite(duration) ||
+      duration < VIDEO_MIN_SECONDS ||
+      duration > VIDEO_MAX_SECONDS)
   ) {
     setMessage(
       businessMessage,
@@ -651,26 +786,23 @@ businessForm?.addEventListener("submit", async (event) => {
   }
 
   try {
-    await apiRequest("/api/businesses", {
+    const url = isEditing
+      ? `/api/clients/businesses/${encodeURIComponent(businessId)}/edit`
+      : "/api/businesses";
+
+    const data = await apiRequest(url, {
       method: "POST",
       body: formData,
     });
 
     businessForm.reset();
+    resetBusinessEditMode();
     setBusinessFormClientData(currentClient);
-
-    if (videoDurationInput) {
-      videoDurationInput.value = "";
-    }
-
-    if (videoStatus) {
-      videoStatus.textContent = "";
-      videoStatus.classList.remove("error", "success");
-    }
+    clearVideoStatus();
 
     setMessage(
       businessMessage,
-      "Negocio enviado para revision correctamente.",
+      data.message || "Negocio enviado para revision correctamente.",
       false
     );
 
