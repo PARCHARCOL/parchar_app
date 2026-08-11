@@ -1996,6 +1996,237 @@ function validateOpenSitePayload(
   return "";
 }
 
+function parseWikidataPoint(
+  value
+) {
+  const match = String(value || "").match(
+    /Point\((-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)\)/
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  return {
+    longitude: Number(match[1]),
+    latitude: Number(match[2]),
+  };
+}
+
+function wikiArticleToSummaryUrl(
+  articleUrl
+) {
+  if (!articleUrl) {
+    return "";
+  }
+
+  try {
+    const url = new URL(articleUrl);
+    const marker = "/wiki/";
+    const index =
+      url.pathname.indexOf(marker);
+
+    if (index === -1) {
+      return "";
+    }
+
+    const title =
+      decodeURIComponent(
+        url.pathname.slice(
+          index + marker.length
+        )
+      );
+
+    return `https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      title
+    )}`;
+  } catch {
+    return "";
+  }
+}
+
+async function fetchWikipediaExtract(
+  articleUrl
+) {
+  const summaryUrl =
+    wikiArticleToSummaryUrl(
+      articleUrl
+    );
+
+  if (!summaryUrl) {
+    return "";
+  }
+
+  try {
+    const controller =
+      new AbortController();
+    const timer =
+      setTimeout(
+        () => controller.abort(),
+        6000
+      );
+    const response = await fetch(
+      summaryUrl,
+      {
+        headers: {
+          "User-Agent":
+            "ParcharApp/1.0",
+        },
+        signal:
+          controller.signal,
+      }
+    );
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      return "";
+    }
+
+    const data =
+      await response.json();
+    return cleanLimitedText(
+      data.extract || "",
+      320
+    );
+  } catch {
+    return "";
+  }
+}
+
+async function fetchPuebliarCandidates(
+  latitude,
+  longitude,
+  radiusKm,
+  limit
+) {
+  const safeRadius = Math.min(
+    Math.max(Number(radiusKm) || 90, 20),
+    180
+  );
+  const safeLimit = Math.min(
+    Math.max(Number(limit) || 12, 4),
+    20
+  );
+  const query = `
+SELECT DISTINCT ?item ?itemLabel ?coord ?distance ?article WHERE {
+  SERVICE wikibase:around {
+    ?item wdt:P625 ?coord.
+    bd:serviceParam wikibase:center "Point(${longitude} ${latitude})"^^geo:wktLiteral.
+    bd:serviceParam wikibase:radius "${safeRadius}".
+    bd:serviceParam wikibase:distance ?distance.
+  }
+  ?item wdt:P17 wd:Q739.
+  ?item wdt:P31/wdt:P279* wd:Q15284.
+  OPTIONAL {
+    ?article schema:about ?item;
+      schema:isPartOf <https://es.wikipedia.org/>.
+  }
+  SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
+}
+ORDER BY ?distance
+LIMIT ${safeLimit * 4}
+`;
+  const url =
+    `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(
+      query
+    )}`;
+  const controller =
+    new AbortController();
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      9000
+    );
+
+  try {
+    const response = await fetch(
+      url,
+      {
+        headers: {
+          Accept:
+            "application/sparql-results+json",
+          "User-Agent":
+            "ParcharApp/1.0",
+        },
+        signal:
+          controller.signal,
+      }
+    );
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      throw new Error(
+        "No se pudo consultar Wikidata."
+      );
+    }
+
+    const data =
+      await response.json();
+    const seen =
+      new Set();
+    const candidates = [];
+
+    for (const binding of data
+      ?.results?.bindings || []) {
+      const name =
+        cleanLimitedText(
+          binding.itemLabel?.value,
+          120
+        );
+      const coords =
+        parseWikidataPoint(
+          binding.coord?.value
+        );
+      const distanceKm =
+        Number(
+          binding.distance?.value
+        );
+
+      if (
+        !name ||
+        !coords ||
+        !Number.isFinite(
+          distanceKm
+        )
+      ) {
+        continue;
+      }
+
+      const key =
+        normalizeCategory(name);
+
+      if (seen.has(key)) {
+        continue;
+      }
+
+      seen.add(key);
+      candidates.push({
+        name,
+        latitude:
+          coords.latitude,
+        longitude:
+          coords.longitude,
+        distanceKm,
+        articleUrl:
+          binding.article
+            ?.value || "",
+      });
+
+      if (
+        candidates.length >=
+        safeLimit
+      ) {
+        break;
+      }
+    }
+
+    return candidates;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+}
+
 async function uploadOpenSiteMedia(
   file
 ) {
@@ -4390,6 +4621,199 @@ const server =
             items: result.rows.map(
               normalizeOpenSiteRow
             ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/sites/puebliar/import" &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "asesor"]
+            )
+          ) {
+            return;
+          }
+
+          const body =
+            await parseJsonBody(req);
+          const latitude =
+            validateLatitude(
+              body.latitude
+            );
+          const longitude =
+            validateLongitude(
+              body.longitude
+            );
+          const radiusKm =
+            Math.min(
+              Math.max(
+                Number(
+                  body.radiusKm
+                ) || 90,
+                20
+              ),
+              180
+            );
+          const minDistanceKm =
+            Math.min(
+              Math.max(
+                Number(
+                  body.minDistanceKm
+                ) || 8,
+                0
+              ),
+              60
+            );
+          const limit =
+            Math.min(
+              Math.max(
+                Number(body.limit) ||
+                  12,
+                4
+              ),
+              20
+            );
+
+          if (
+            latitude === null ||
+            longitude === null
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Debes enviar coordenadas validas para importar pueblos cercanos.",
+            });
+            return;
+          }
+
+          let candidates = [];
+          try {
+            candidates =
+              await fetchPuebliarCandidates(
+                latitude,
+                longitude,
+                radiusKm,
+                limit
+              );
+          } catch (error) {
+            sendJson(res, 502, {
+              error:
+                "No se pudo consultar la fuente externa de pueblos. Intenta de nuevo mas tarde.",
+            });
+            return;
+          }
+
+          const existingResult =
+            await pool.query(`
+              SELECT name
+              FROM open_sites
+            `);
+          const existingNames =
+            new Set(
+              existingResult.rows.map(
+                (row) =>
+                  normalizeCategory(
+                    row.name
+                  )
+              )
+            );
+          const created = [];
+          const skipped = [];
+
+          for (const candidate of candidates) {
+            const key =
+              normalizeCategory(
+                candidate.name
+              );
+
+            if (
+              existingNames.has(key) ||
+              candidate.distanceKm <
+                minDistanceKm
+            ) {
+              skipped.push(
+                candidate.name
+              );
+              continue;
+            }
+
+            const extract =
+              await fetchWikipediaExtract(
+                candidate.articleUrl
+              );
+            const description =
+              cleanLimitedText(
+                [
+                  extract ||
+                    `${candidate.name} aparece como pueblo cercano para Puebliar.`,
+                  "Pendiente por revisar: ferias, fiestas, gastronomia y atractivos tipicos.",
+                ].join(" "),
+                420
+              );
+            const tags =
+              cleanTags(
+                "pueblo, puebliar, ruta, importado, revisar"
+              );
+            const address =
+              cleanLimitedText(
+                candidate.articleUrl
+                  ? `Fuente: ${candidate.articleUrl}`
+                  : "Fuente: Wikidata",
+                180
+              );
+
+            await pool.query(
+              `
+              INSERT INTO open_sites (
+                name,
+                site_type,
+                description,
+                address,
+                city,
+                latitude,
+                longitude,
+                tags,
+                media_path,
+                media_type,
+                status,
+                created_by,
+                updated_by,
+                updated_at
+              )
+              VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$12,NOW())
+              `,
+              [
+                candidate.name,
+                "pueblo",
+                description,
+                address,
+                "Puebliar",
+                candidate.latitude,
+                candidate.longitude,
+                tags,
+                "",
+                "",
+                "pausado",
+                staffAuth.staff
+                  .username,
+              ]
+            );
+            existingNames.add(key);
+            created.push(
+              candidate.name
+            );
+          }
+
+          sendJson(res, 201, {
+            ok: true,
+            created,
+            skipped,
+            message: `${created.length} pueblos importados como pausados para revision.`,
           });
           return;
         }

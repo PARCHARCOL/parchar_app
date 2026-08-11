@@ -147,6 +147,10 @@ const refreshSitesButton =
   document.querySelector(
     "#refresh-admin-sites"
   );
+const importPuebliarButton =
+  document.querySelector(
+    "#import-puebliar-sites"
+  );
 
 const adminAlertStatus =
   document.querySelector(
@@ -1924,6 +1928,189 @@ async function loadSites() {
   }
 }
 
+function readSiteFormCoordinates() {
+  const latitude = Number(
+    siteForm?.elements.latitude
+      ?.value
+  );
+  const longitude = Number(
+    siteForm?.elements.longitude
+      ?.value
+  );
+
+  if (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180
+  ) {
+    return {
+      latitude,
+      longitude,
+    };
+  }
+
+  return null;
+}
+
+function parseCoordinatePair(value) {
+  const parts = String(value || "")
+    .split(",")
+    .map((part) =>
+      Number(part.trim())
+    );
+
+  if (
+    parts.length === 2 &&
+    Number.isFinite(parts[0]) &&
+    Number.isFinite(parts[1]) &&
+    parts[0] >= -90 &&
+    parts[0] <= 90 &&
+    parts[1] >= -180 &&
+    parts[1] <= 180
+  ) {
+    return {
+      latitude: parts[0],
+      longitude: parts[1],
+    };
+  }
+
+  return null;
+}
+
+function requestAdminLocation() {
+  return new Promise(
+    (resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(
+          new Error(
+            "Sin geolocalizacion"
+          )
+        );
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude:
+              position.coords
+                .latitude,
+            longitude:
+              position.coords
+                .longitude,
+          });
+        },
+        reject,
+        {
+          enableHighAccuracy: true,
+          timeout: 8000,
+          maximumAge: 60000,
+        }
+      );
+    }
+  );
+}
+
+async function getPuebliarImportCoordinates() {
+  const formCoordinates =
+    readSiteFormCoordinates();
+
+  if (formCoordinates) {
+    return formCoordinates;
+  }
+
+  try {
+    return await requestAdminLocation();
+  } catch {
+    const typed = prompt(
+      "No pude leer tu ubicacion. Escribe latitud,longitud para importar pueblos cercanos:"
+    );
+
+    return parseCoordinatePair(
+      typed
+    );
+  }
+}
+
+async function importPuebliarSites() {
+  if (!importPuebliarButton) {
+    return;
+  }
+
+  const coordinates =
+    await getPuebliarImportCoordinates();
+
+  if (!coordinates) {
+    setFeedback(
+      siteMessage,
+      "No se pudo importar sin coordenadas validas.",
+      true
+    );
+    return;
+  }
+
+  const originalText =
+    importPuebliarButton.textContent;
+  importPuebliarButton.disabled = true;
+  importPuebliarButton.textContent =
+    "Importando...";
+  setFeedback(
+    siteMessage,
+    "Buscando pueblos cercanos en fuentes externas..."
+  );
+
+  try {
+    const response =
+      await staffFetch(
+        "/api/admin/sites/puebliar/import",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+          body: JSON.stringify({
+            latitude:
+              coordinates.latitude,
+            longitude:
+              coordinates.longitude,
+            radiusKm: 90,
+            minDistanceKm: 8,
+            limit: 12,
+          }),
+        }
+      );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudieron importar pueblos."
+      );
+    }
+
+    setFeedback(
+      siteMessage,
+      `${data.message || "Importacion lista"} Revisa los pausados, edita ferias/fiestas y activa los buenos.`
+    );
+    await loadSites();
+  } catch (error) {
+    setFeedback(
+      siteMessage,
+      error.message,
+      true
+    );
+  } finally {
+    importPuebliarButton.disabled = false;
+    importPuebliarButton.textContent =
+      originalText;
+  }
+}
+
 async function saveSite(event) {
   event.preventDefault();
 
@@ -3645,6 +3832,11 @@ siteCancelButton?.addEventListener(
 refreshSitesButton?.addEventListener(
   "click",
   loadSites
+);
+
+importPuebliarButton?.addEventListener(
+  "click",
+  importPuebliarSites
 );
 
 adminSoundToggle?.addEventListener(
