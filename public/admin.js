@@ -210,6 +210,12 @@ const BUSINESS_STATUS_LABELS = {
   pausado: "Pausados",
   rechazado: "Rechazados",
 };
+const SITE_STATUS_PRIORITY = {
+  pausado: 0,
+  pendiente: 0,
+  rechazado: 1,
+  activo: 2,
+};
 
 function escapeHtml(value) {
 
@@ -1856,12 +1862,47 @@ function editSite(id) {
   });
 }
 
+function sortSitesForAdmin(items) {
+  return [...(items || [])].sort(
+    (a, b) => {
+      const statusA =
+        SITE_STATUS_PRIORITY[
+          a.status
+        ] ?? 3;
+      const statusB =
+        SITE_STATUS_PRIORITY[
+          b.status
+        ] ?? 3;
+
+      if (statusA !== statusB) {
+        return statusA - statusB;
+      }
+
+      const dateA =
+        Date.parse(
+          a.updatedAt ||
+            a.createdAt ||
+            ""
+        ) || 0;
+      const dateB =
+        Date.parse(
+          b.updatedAt ||
+            b.createdAt ||
+            ""
+        ) || 0;
+
+      return dateB - dateA;
+    }
+  );
+}
+
 function renderSites(items) {
   if (!siteList) {
     return;
   }
 
-  currentOpenSites = items || [];
+  currentOpenSites =
+    sortSitesForAdmin(items);
 
   if (!currentOpenSites.length) {
     siteList.innerHTML = `
