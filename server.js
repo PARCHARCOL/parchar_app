@@ -254,6 +254,8 @@ const REVIEW_VIDEO_TOLERANCE_SECONDS = 1;
 const REVIEW_ACTIVE_DAYS = 15;
 const AD_MEDIA_MAX_BYTES =
   15 * 1024 * 1024;
+const SITE_MEDIA_MAX_BYTES =
+  50 * 1024 * 1024;
 const REVIEW_VIDEO_MAX_BYTES =
   25 * 1024 * 1024;
 const ALLOWED_CATEGORIES =
@@ -2480,10 +2482,10 @@ async function uploadOpenSiteMedia(
   }
 
   if (
-    file.size > AD_MEDIA_MAX_BYTES
+    file.size > SITE_MEDIA_MAX_BYTES
   ) {
     throw new Error(
-      "El archivo del sitio no debe superar 15 MB."
+      "El archivo del sitio no debe superar 50 MB."
     );
   }
 
