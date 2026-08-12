@@ -1929,13 +1929,27 @@ async function loadSites() {
 }
 
 function readSiteFormCoordinates() {
-  const latitude = Number(
+  const latitudeRaw = String(
     siteForm?.elements.latitude
-      ?.value
+      ?.value || ""
+  ).trim();
+  const longitudeRaw = String(
+    siteForm?.elements.longitude
+      ?.value || ""
+  ).trim();
+
+  if (
+    !latitudeRaw ||
+    !longitudeRaw
+  ) {
+    return null;
+  }
+
+  const latitude = Number(
+    latitudeRaw
   );
   const longitude = Number(
-    siteForm?.elements.longitude
-      ?.value
+    longitudeRaw
   );
 
   if (
