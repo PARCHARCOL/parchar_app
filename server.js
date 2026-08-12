@@ -5352,60 +5352,45 @@ const server =
           const skipped = [];
           let usedFallback = false;
 
-          if (
-            candidates.length <
-            limit
-          ) {
-            const candidateNames =
-              new Set(
-                candidates.map(
-                  (candidate) =>
-                    normalizeCategory(
-                      candidate.name
-                    )
-                )
-              );
-            const fallback =
-              getFallbackPuebliarCandidates(
-                latitude,
-                longitude,
-                radiusKm,
-                limit,
-                minDistanceKm
+          const candidateNames =
+            new Set(
+              candidates.map(
+                (candidate) =>
+                  normalizeCategory(
+                    candidate.name
+                  )
+              )
+            );
+          const fallback =
+            getFallbackPuebliarCandidates(
+              latitude,
+              longitude,
+              radiusKm,
+              limit,
+              minDistanceKm
+            );
+
+          for (const candidate of fallback) {
+            const key =
+              normalizeCategory(
+                candidate.name
               );
 
-            for (const candidate of fallback) {
-              const key =
-                normalizeCategory(
-                  candidate.name
-                );
-
-              if (
-                candidateNames.has(
-                  key
-                ) ||
-                existingNames.has(
-                  key
-                )
-              ) {
-                continue;
-              }
-
-              candidates.push(
-                candidate
-              );
-              candidateNames.add(
+            if (
+              candidateNames.has(
                 key
-              );
-              usedFallback = true;
-
-              if (
-                candidates.length >=
-                limit
-              ) {
-                break;
-              }
+              )
+            ) {
+              continue;
             }
+
+            candidates.push(
+              candidate
+            );
+            candidateNames.add(
+              key
+            );
+            usedFallback = true;
           }
 
           for (const candidate of candidates) {
@@ -5496,6 +5481,13 @@ const server =
             created.push(
               candidate.name
             );
+
+            if (
+              created.length >=
+              limit
+            ) {
+              break;
+            }
           }
 
           sendJson(res, 201, {
