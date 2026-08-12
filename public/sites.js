@@ -100,6 +100,13 @@ const puebliarKeywords = [
   "mirador",
 ];
 
+const internalPublicSiteTags = new Set([
+  "importado",
+  "revisar",
+  "revision",
+  "pendiente",
+]);
+
 let openSites = [];
 let userCoords = null;
 let locationResolved = false;
@@ -499,8 +506,53 @@ function parseTags(tags) {
   return String(tags || "")
     .split(",")
     .map((tag) => tag.trim())
-    .filter(Boolean)
+    .filter((tag) => {
+      if (!tag) {
+        return false;
+      }
+
+      return !internalPublicSiteTags.has(
+        normalizeText(tag)
+      );
+    })
     .slice(0, 8);
+}
+
+function getPublicSiteDescription(site) {
+  const description = String(
+    site.description || ""
+  )
+    .replace(
+      /\s*Pendiente por revisar:.*$/i,
+      ""
+    )
+    .replace(
+      /^(.+?) aparece como pueblo cercano para Puebliar\.?$/i,
+      "Destino cercano para puebliar y hacer una escapada."
+    )
+    .trim();
+
+  return (
+    description ||
+    "Destino cercano para puebliar. Revisa distancia y ruta antes de salir."
+  );
+}
+
+function getPublicSiteAddress(site) {
+  const address = String(
+    site.address || ""
+  ).trim();
+
+  if (
+    /^fuente:/i.test(address) ||
+    /wikidata|wikipedia|base inicial parchar/i.test(
+      address
+    )
+  ) {
+    return "";
+  }
+
+  return address;
 }
 
 function renderSiteMedia(site) {
@@ -534,6 +586,9 @@ function renderSiteMedia(site) {
 function renderSiteCard(site) {
   const googleUrl = buildGoogleRouteUrl(site);
   const wazeUrl = buildWazeRouteUrl(site);
+  const publicAddress = getPublicSiteAddress(site);
+  const publicDescription =
+    getPublicSiteDescription(site);
   const tags = parseTags(site.tags)
     .map((tag) => `<span>${escapeHtml(tag)}</span>`)
     .join("");
@@ -554,17 +609,17 @@ function renderSiteCard(site) {
       </p>
 
       ${
-        site.address
+        publicAddress
           ? `
             <p>
               <strong>Referencia:</strong>
-              ${escapeHtml(site.address)}
+              ${escapeHtml(publicAddress)}
             </p>
           `
           : ""
       }
 
-      <p>${escapeHtml(site.description)}</p>
+      <p>${escapeHtml(publicDescription)}</p>
 
       ${tags ? `<div class="site-tags">${tags}</div>` : ""}
 

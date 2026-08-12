@@ -5429,27 +5429,15 @@ const server =
 
             const description =
               cleanLimitedText(
-                [
-                  candidate.summary ||
-                    `${candidate.name} aparece como pueblo cercano para Puebliar.`,
-                  "Pendiente por revisar: ferias, fiestas, gastronomia y atractivos tipicos.",
-                ].join(" "),
+                candidate.summary ||
+                  `${candidate.name} es un destino cercano para puebliar y hacer una escapada.`,
                 420
               );
             const tags =
               cleanTags(
-                "pueblo, puebliar, ruta, importado, revisar"
+                "pueblo, puebliar, ruta"
               );
-            const address =
-              cleanLimitedText(
-                candidate.articleUrl
-                  ? `Fuente: ${candidate.articleUrl}`
-                  : candidate.source ===
-                      "base"
-                    ? "Fuente: base inicial Parchar, revisar antes de activar"
-                    : "Fuente: Wikidata",
-                180
-              );
+            const address = "";
 
             await pool.query(
               `
