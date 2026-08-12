@@ -2013,6 +2013,229 @@ function parseWikidataPoint(
   };
 }
 
+function toRadians(value) {
+  return (Number(value) * Math.PI) / 180;
+}
+
+function calculateDistanceKm(
+  fromLatitude,
+  fromLongitude,
+  toLatitude,
+  toLongitude
+) {
+  const earthRadiusKm = 6371;
+  const deltaLat =
+    toRadians(toLatitude - fromLatitude);
+  const deltaLng =
+    toRadians(toLongitude - fromLongitude);
+  const startLat =
+    toRadians(fromLatitude);
+  const endLat =
+    toRadians(toLatitude);
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(startLat) *
+      Math.cos(endLat) *
+      Math.sin(deltaLng / 2) ** 2;
+
+  return (
+    earthRadiusKm *
+    2 *
+    Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  );
+}
+
+const PUEBLIAR_FALLBACK_TOWNS = [
+  {
+    name: "Guatape",
+    latitude: 6.2326,
+    longitude: -75.1587,
+    summary:
+      "Pueblo turistico reconocido por el embalse, el malecon, zocalos coloridos y la ruta hacia la Piedra del Penol.",
+  },
+  {
+    name: "El Penol",
+    latitude: 6.2181,
+    longitude: -75.2435,
+    summary:
+      "Destino de embalse y miradores cercano a Guatape, usado para paseos de fin de semana y rutas panoramicas.",
+  },
+  {
+    name: "Santa Fe de Antioquia",
+    latitude: 6.5569,
+    longitude: -75.8275,
+    summary:
+      "Pueblo patrimonial de clima calido, calles coloniales, hoteles, piscinas y el Puente de Occidente.",
+  },
+  {
+    name: "Jardin",
+    latitude: 5.599,
+    longitude: -75.8198,
+    summary:
+      "Pueblo patrimonial cafetero con parque principal, balcones coloridos, miradores y planes de naturaleza.",
+  },
+  {
+    name: "Jerico",
+    latitude: 5.7921,
+    longitude: -75.786,
+    summary:
+      "Pueblo patrimonial del Suroeste antioqueno, conocido por miradores, arquitectura tradicional y turismo religioso.",
+  },
+  {
+    name: "El Retiro",
+    latitude: 6.0586,
+    longitude: -75.5031,
+    summary:
+      "Pueblo cercano al Oriente antioqueno, con planes de gastronomia, artesanias, parques y escapadas cortas.",
+  },
+  {
+    name: "San Rafael",
+    latitude: 6.2941,
+    longitude: -75.0258,
+    summary:
+      "Destino natural con rios, charcos, cascadas y planes de agua para paseos desde Medellin.",
+  },
+  {
+    name: "San Carlos",
+    latitude: 6.1879,
+    longitude: -74.9931,
+    summary:
+      "Municipio de rios, cascadas y naturaleza, recomendado para planes de charcos y turismo de aventura.",
+  },
+  {
+    name: "San Jeronimo",
+    latitude: 6.4436,
+    longitude: -75.7286,
+    summary:
+      "Destino de clima calido, fincas, piscinas y planes familiares cerca del occidente de Medellin.",
+  },
+  {
+    name: "Sopetran",
+    latitude: 6.5017,
+    longitude: -75.7467,
+    summary:
+      "Pueblo de clima calido cercano a San Jeronimo y Santa Fe de Antioquia, frecuente para descanso y fincas.",
+  },
+  {
+    name: "Rionegro",
+    latitude: 6.1552,
+    longitude: -75.3737,
+    summary:
+      "Municipio del Oriente antioqueno con centro historico, restaurantes, comercio y rutas hacia pueblos cercanos.",
+  },
+  {
+    name: "Marinilla",
+    latitude: 6.1736,
+    longitude: -75.3361,
+    summary:
+      "Pueblo del Oriente antioqueno con tradicion religiosa, comercio local y cercania a rutas turisticas.",
+  },
+  {
+    name: "La Ceja",
+    latitude: 6.0313,
+    longitude: -75.4318,
+    summary:
+      "Municipio del Oriente antioqueno con parques, gastronomia y planes tranquilos de cercania.",
+  },
+  {
+    name: "El Carmen de Viboral",
+    latitude: 6.0824,
+    longitude: -75.3351,
+    summary:
+      "Pueblo reconocido por ceramica artesanal, talleres, tiendas y planes culturales.",
+  },
+  {
+    name: "Concepcion",
+    latitude: 6.3948,
+    longitude: -75.2582,
+    summary:
+      "Pueblo patrimonial de calles tradicionales, arquitectura colonial y ambiente tranquilo.",
+  },
+  {
+    name: "Tamesis",
+    latitude: 5.6647,
+    longitude: -75.7134,
+    summary:
+      "Destino del Suroeste con montanas, rutas cafeteras, miradores y planes de naturaleza.",
+  },
+  {
+    name: "Sonson",
+    latitude: 5.7106,
+    longitude: -75.3116,
+    summary:
+      "Pueblo tradicional del Oriente antioqueno con patrimonio, montanas y rutas culturales.",
+  },
+  {
+    name: "Santa Rosa de Osos",
+    latitude: 6.6474,
+    longitude: -75.4603,
+    summary:
+      "Municipio del Norte antioqueno con clima frio, arquitectura religiosa y rutas hacia paisajes rurales.",
+  },
+  {
+    name: "Belmira",
+    latitude: 6.6058,
+    longitude: -75.6664,
+    summary:
+      "Pueblo de clima frio y naturaleza, conocido por rutas hacia paramo y paisajes de montana.",
+  },
+  {
+    name: "Entrerrios",
+    latitude: 6.566,
+    longitude: -75.5166,
+    summary:
+      "Municipio del Norte antioqueno con paisaje lechero, clima fresco y rutas rurales.",
+  },
+];
+
+function getFallbackPuebliarCandidates(
+  latitude,
+  longitude,
+  radiusKm,
+  limit,
+  minDistanceKm
+) {
+  const safeRadius = Math.min(
+    Math.max(Number(radiusKm) || 90, 20),
+    180
+  );
+  const safeLimit = Math.min(
+    Math.max(Number(limit) || 12, 4),
+    20
+  );
+  const safeMinDistance = Math.min(
+    Math.max(Number(minDistanceKm) || 0, 0),
+    safeRadius
+  );
+
+  return PUEBLIAR_FALLBACK_TOWNS.map(
+    (town) => ({
+      ...town,
+      distanceKm:
+        calculateDistanceKm(
+          latitude,
+          longitude,
+          town.latitude,
+          town.longitude
+        ),
+      articleUrl: "",
+      source: "base",
+    })
+  )
+    .filter(
+      (town) =>
+        town.distanceKm >=
+          safeMinDistance &&
+        town.distanceKm <=
+          safeRadius
+    )
+    .sort(
+      (a, b) =>
+        a.distanceKm - b.distanceKm
+    )
+    .slice(0, safeLimit);
+}
+
 function wikiArticleToSummaryUrl(
   articleUrl
 ) {
@@ -2097,7 +2320,8 @@ async function fetchPuebliarCandidates(
   latitude,
   longitude,
   radiusKm,
-  limit
+  limit,
+  minDistanceKm = 0
 ) {
   const safeRadius = Math.min(
     Math.max(Number(radiusKm) || 90, 20),
@@ -2106,6 +2330,14 @@ async function fetchPuebliarCandidates(
   const safeLimit = Math.min(
     Math.max(Number(limit) || 12, 4),
     20
+  );
+  const safeMinDistance = Math.min(
+    Math.max(Number(minDistanceKm) || 0, 0),
+    safeRadius
+  );
+  const queryLimit = Math.min(
+    safeLimit * 12,
+    180
   );
   const query = `
 SELECT DISTINCT ?item ?itemLabel ?coord ?distance ?article WHERE {
@@ -2124,7 +2356,7 @@ SELECT DISTINCT ?item ?itemLabel ?coord ?distance ?article WHERE {
   SERVICE wikibase:label { bd:serviceParam wikibase:language "es,en". }
 }
 ORDER BY ?distance
-LIMIT ${safeLimit * 4}
+LIMIT ${queryLimit}
 `;
   const url =
     `https://query.wikidata.org/sparql?format=json&query=${encodeURIComponent(
@@ -2187,7 +2419,9 @@ LIMIT ${safeLimit * 4}
         !coords ||
         !Number.isFinite(
           distanceKm
-        )
+        ) ||
+        distanceKm <
+          safeMinDistance
       ) {
         continue;
       }
@@ -2210,6 +2444,7 @@ LIMIT ${safeLimit * 4}
         articleUrl:
           binding.article
             ?.value || "",
+        source: "wikidata",
       });
 
       if (
@@ -5052,12 +5287,12 @@ const server =
             );
           const minDistanceKm =
             Math.min(
-              Math.max(
-                Number(
-                  body.minDistanceKm
-                ) || 8,
-                0
-              ),
+                Math.max(
+                  Number(
+                    body.minDistanceKm
+                  ) || 20,
+                  0
+                ),
               60
             );
           const limit =
@@ -5088,7 +5323,8 @@ const server =
                 latitude,
                 longitude,
                 radiusKm,
-                limit
+                limit,
+                minDistanceKm
               );
           } catch (error) {
             sendJson(res, 502, {
@@ -5114,6 +5350,63 @@ const server =
             );
           const created = [];
           const skipped = [];
+          let usedFallback = false;
+
+          if (
+            candidates.length <
+            limit
+          ) {
+            const candidateNames =
+              new Set(
+                candidates.map(
+                  (candidate) =>
+                    normalizeCategory(
+                      candidate.name
+                    )
+                )
+              );
+            const fallback =
+              getFallbackPuebliarCandidates(
+                latitude,
+                longitude,
+                radiusKm,
+                limit,
+                minDistanceKm
+              );
+
+            for (const candidate of fallback) {
+              const key =
+                normalizeCategory(
+                  candidate.name
+                );
+
+              if (
+                candidateNames.has(
+                  key
+                ) ||
+                existingNames.has(
+                  key
+                )
+              ) {
+                continue;
+              }
+
+              candidates.push(
+                candidate
+              );
+              candidateNames.add(
+                key
+              );
+              usedFallback = true;
+
+              if (
+                candidates.length >=
+                limit
+              ) {
+                break;
+              }
+            }
+          }
 
           for (const candidate of candidates) {
             const key =
@@ -5133,13 +5426,16 @@ const server =
             }
 
             const extract =
-              await fetchWikipediaExtract(
-                candidate.articleUrl
-              );
+              candidate.articleUrl
+                ? await fetchWikipediaExtract(
+                    candidate.articleUrl
+                  )
+                : "";
             const description =
               cleanLimitedText(
                 [
-                  extract ||
+                  candidate.summary ||
+                    extract ||
                     `${candidate.name} aparece como pueblo cercano para Puebliar.`,
                   "Pendiente por revisar: ferias, fiestas, gastronomia y atractivos tipicos.",
                 ].join(" "),
@@ -5153,7 +5449,10 @@ const server =
               cleanLimitedText(
                 candidate.articleUrl
                   ? `Fuente: ${candidate.articleUrl}`
-                  : "Fuente: Wikidata",
+                  : candidate.source ===
+                      "base"
+                    ? "Fuente: base inicial Parchar, revisar antes de activar"
+                    : "Fuente: Wikidata",
                 180
               );
 
@@ -5203,7 +5502,11 @@ const server =
             ok: true,
             created,
             skipped,
-            message: `${created.length} pueblos importados como pausados para revision.`,
+            message:
+              `${created.length} pueblos importados como pausados para revision.` +
+              (usedFallback
+                ? " Se uso respaldo inicial de Parchar para completar resultados."
+                : ""),
           });
           return;
         }

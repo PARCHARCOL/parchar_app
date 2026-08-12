@@ -2059,7 +2059,7 @@ async function importPuebliarSites() {
     "Importando...";
   setFeedback(
     siteMessage,
-    "Buscando pueblos cercanos en fuentes externas..."
+    "Buscando pueblos cercanos en fuentes externas y respaldo inicial de Parchar..."
   );
 
   try {
@@ -2078,7 +2078,7 @@ async function importPuebliarSites() {
             longitude:
               coordinates.longitude,
             radiusKm: 90,
-            minDistanceKm: 8,
+            minDistanceKm: 20,
             limit: 12,
           }),
         }
