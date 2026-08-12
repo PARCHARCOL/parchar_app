@@ -5316,24 +5316,6 @@ const server =
             return;
           }
 
-          let candidates = [];
-          try {
-            candidates =
-              await fetchPuebliarCandidates(
-                latitude,
-                longitude,
-                radiusKm,
-                limit,
-                minDistanceKm
-              );
-          } catch (error) {
-            sendJson(res, 502, {
-              error:
-                "No se pudo consultar la fuente externa de pueblos. Intenta de nuevo mas tarde.",
-            });
-            return;
-          }
-
           const existingResult =
             await pool.query(`
               SELECT name
@@ -5350,7 +5332,15 @@ const server =
             );
           const created = [];
           const skipped = [];
-          let usedFallback = false;
+          let usedFallback = true;
+          let candidates =
+            getFallbackPuebliarCandidates(
+              latitude,
+              longitude,
+              radiusKm,
+              limit,
+              minDistanceKm
+            );
 
           const candidateNames =
             new Set(
@@ -5361,36 +5351,63 @@ const server =
                   )
               )
             );
-          const fallback =
-            getFallbackPuebliarCandidates(
-              latitude,
-              longitude,
-              radiusKm,
-              limit,
-              minDistanceKm
-            );
 
-          for (const candidate of fallback) {
-            const key =
-              normalizeCategory(
-                candidate.name
-              );
+          if (
+            candidates.length <
+            limit
+          ) {
+            try {
+              const externalCandidates =
+                await fetchPuebliarCandidates(
+                  latitude,
+                  longitude,
+                  radiusKm,
+                  limit,
+                  minDistanceKm
+                );
 
-            if (
-              candidateNames.has(
-                key
-              )
-            ) {
-              continue;
+              for (const candidate of externalCandidates) {
+                const key =
+                  normalizeCategory(
+                    candidate.name
+                  );
+
+                if (
+                  candidateNames.has(
+                    key
+                  )
+                ) {
+                  continue;
+                }
+
+                candidates.push(
+                  candidate
+                );
+                candidateNames.add(
+                  key
+                );
+
+                if (
+                  candidates.length >=
+                  limit
+                ) {
+                  break;
+                }
+              }
+            } catch {
+              // La importacion no debe bloquearse por fuentes externas.
             }
+          }
 
-            candidates.push(
-              candidate
-            );
-            candidateNames.add(
-              key
-            );
-            usedFallback = true;
+          if (!candidates.length) {
+            sendJson(res, 200, {
+              ok: true,
+              created,
+              skipped,
+              message:
+                "0 pueblos importados. No hay pueblos en la base inicial para esas coordenadas.",
+            });
+            return;
           }
 
           for (const candidate of candidates) {
@@ -5410,17 +5427,10 @@ const server =
               continue;
             }
 
-            const extract =
-              candidate.articleUrl
-                ? await fetchWikipediaExtract(
-                    candidate.articleUrl
-                  )
-                : "";
             const description =
               cleanLimitedText(
                 [
                   candidate.summary ||
-                    extract ||
                     `${candidate.name} aparece como pueblo cercano para Puebliar.`,
                   "Pendiente por revisar: ferias, fiestas, gastronomia y atractivos tipicos.",
                 ].join(" "),

@@ -2073,7 +2073,7 @@ async function importPuebliarSites() {
     "Importando...";
   setFeedback(
     siteMessage,
-    "Buscando pueblos cercanos en fuentes externas y respaldo inicial de Parchar..."
+    "Importando pueblos cercanos desde la base inicial de Parchar..."
   );
 
   try {
