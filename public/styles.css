@@ -1440,6 +1440,66 @@ textarea {
   font-size: 0.78rem;
 }
 
+.admin-section-tabs {
+  position: sticky;
+  top: 8px;
+  z-index: 9;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(190, 137, 255, 0.28);
+  background:
+    linear-gradient(160deg, rgba(47, 13, 93, 0.96), rgba(24, 5, 52, 0.96));
+  padding: 8px;
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-section-tab {
+  position: relative;
+  min-height: 44px;
+  border: 1px solid rgba(190, 137, 255, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.07);
+  color: #ead8ff;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.admin-section-tab.active {
+  color: #fff8df;
+  border-color: rgba(255, 190, 106, 0.72);
+  background:
+    linear-gradient(145deg, rgba(255, 142, 45, 0.36), rgba(138, 55, 186, 0.52));
+}
+
+.admin-tab-badge {
+  display: none;
+  position: absolute;
+  top: -7px;
+  right: -6px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 999px;
+  place-items: center;
+  padding: 2px 7px;
+  background: linear-gradient(145deg, #ff6151, #ff3d95);
+  color: #fff;
+  font-size: 0.72rem;
+  line-height: 1;
+  box-shadow: 0 0 0 3px rgba(255, 93, 130, 0.2);
+}
+
+.admin-tab-badge.has-alert {
+  display: inline-grid;
+}
+
+.admin-section-panel.is-hidden {
+  display: none;
+}
+
 .ghost-btn.is-muted {
   opacity: 0.72;
 }
@@ -2585,6 +2645,10 @@ body > .ad-banner {
 
   .admin-alert-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-section-tabs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .action-btn {

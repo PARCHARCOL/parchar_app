@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=78"
+      href="/styles.css?v=79"
     />
 
   </head>
@@ -144,6 +144,7 @@
               href="#admin-business-section"
               class="admin-alert-card"
               data-admin-alert-card="businesses"
+              data-admin-open-section="businesses"
             >
               <span>Locales pendientes</span>
               <strong data-admin-alert-count="businesses">0</strong>
@@ -153,6 +154,7 @@
               href="#admin-ads-section"
               class="admin-alert-card"
               data-admin-alert-card="adRequests"
+              data-admin-open-section="ads"
             >
               <span>Solicitudes de pauta</span>
               <strong data-admin-alert-count="adRequests">0</strong>
@@ -160,16 +162,19 @@
 
             <a
               href="#admin-sites-section"
-              class="admin-alert-card admin-shortcut-card"
+              class="admin-alert-card"
+              data-admin-alert-card="sites"
+              data-admin-open-section="sites"
             >
-              <span>Cargar sitios/bici</span>
-              <strong>Abrir</strong>
+              <span>Sitios por revisar</span>
+              <strong data-admin-alert-count="sites">0</strong>
             </a>
 
             <a
               href="#admin-review-section"
               class="admin-alert-card"
               data-admin-alert-card="reviews"
+              data-admin-open-section="reviews"
             >
               <span>Resenas activas</span>
               <strong data-admin-alert-count="reviews">0</strong>
@@ -179,6 +184,7 @@
               href="#admin-review-section"
               class="admin-alert-card"
               data-admin-alert-card="reports"
+              data-admin-open-section="reviews"
             >
               <span>Reportes pendientes</span>
               <strong data-admin-alert-count="reports">0</strong>
@@ -186,7 +192,80 @@
           </div>
         </section>
 
-      <section class="form-block glass-card">
+        <nav
+          class="admin-section-tabs"
+          aria-label="Secciones del panel interno"
+        >
+          <button
+            type="button"
+            class="admin-section-tab active"
+            data-admin-section-tab="businesses"
+          >
+            Locales
+            <span
+              class="admin-tab-badge"
+              data-admin-alert-count="businesses"
+            >0</span>
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab"
+            data-admin-section-tab="ads"
+          >
+            Publicidad
+            <span
+              class="admin-tab-badge"
+              data-admin-alert-count="adRequests"
+            >0</span>
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab"
+            data-admin-section-tab="sites"
+          >
+            Sitios
+            <span
+              class="admin-tab-badge"
+              data-admin-alert-count="sites"
+            >0</span>
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab"
+            data-admin-section-tab="reviews"
+          >
+            Resenas
+            <span
+              class="admin-tab-badge"
+              data-admin-alert-count="reports"
+            >0</span>
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab admin-only"
+            data-admin-section-tab="staff"
+          >
+            Asesores
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab"
+            data-admin-section-tab="access"
+          >
+            Mi acceso
+          </button>
+        </nav>
+
+      <section
+        id="staff-access-section"
+        class="form-block glass-card admin-section-panel is-hidden"
+        data-admin-section-panel="access"
+      >
 
         <h2>
           Mi acceso
@@ -240,7 +319,8 @@
 
       <section
         id="staff-users-section"
-        class="form-block glass-card admin-only"
+        class="form-block glass-card admin-section-panel is-hidden admin-only"
+        data-admin-section-panel="staff"
       >
 
         <h2>
@@ -330,7 +410,11 @@
 
       </section>
 
-      <section id="admin-business-section" class="form-block glass-card">
+      <section
+        id="admin-business-section"
+        class="form-block glass-card admin-section-panel"
+        data-admin-section-panel="businesses"
+      >
 
         <h2>
           Administracion de negocios
@@ -404,7 +488,8 @@
 
       <section
         id="admin-sites-section"
-        class="form-block glass-card"
+        class="form-block glass-card admin-section-panel is-hidden"
+        data-admin-section-panel="sites"
       >
 
         <h2>
@@ -623,7 +708,8 @@
 
       <section
         id="admin-ads-section"
-        class="form-block glass-card"
+        class="form-block glass-card admin-section-panel is-hidden"
+        data-admin-section-panel="ads"
       >
 
         <h2>
@@ -909,7 +995,8 @@
 
       <section
         id="admin-review-section"
-        class="form-block glass-card"
+        class="form-block glass-card admin-section-panel is-hidden"
+        data-admin-section-panel="reviews"
       >
 
         <div class="my-businesses-head">
@@ -995,8 +1082,8 @@
 
     </main>
 
-    <script src="/update.js?v=78"></script>
-    <script src="/admin.js?v=78"></script>
+    <script src="/update.js?v=79"></script>
+    <script src="/admin.js?v=79"></script>
 
   </body>
 </html>

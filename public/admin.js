@@ -67,6 +67,18 @@ const refreshStaffUsersButton =
 const tabs = document.querySelectorAll(
   ".admin-tab"
 );
+const adminSectionTabs =
+  document.querySelectorAll(
+    "[data-admin-section-tab]"
+  );
+const adminSectionPanels =
+  document.querySelectorAll(
+    "[data-admin-section-panel]"
+  );
+const adminSectionOpeners =
+  document.querySelectorAll(
+    "[data-admin-open-section]"
+  );
 
 const adForm = document.querySelector(
   "#admin-ad-form"
@@ -171,6 +183,8 @@ const adminAlertCards =
 
 let currentStatus =
   "pendiente";
+let currentAdminSection =
+  "businesses";
 let staffToken = "";
 let currentStaff = null;
 let currentBusinesses = [];
@@ -343,6 +357,13 @@ function getActiveReviews() {
   );
 }
 
+function getSitesForReview() {
+  return currentOpenSites.filter(
+    (item) =>
+      item.status === "pausado"
+  );
+}
+
 function getMaxNumericId(items) {
   return (items || []).reduce(
     (max, item) =>
@@ -381,6 +402,8 @@ function getAdminAlertSnapshot() {
     getOpenAdRequests();
   const activeReviews =
     getActiveReviews();
+  const sitesForReview =
+    getSitesForReview();
   const reportCount =
     currentReviews.reduce(
       (total, item) =>
@@ -399,6 +422,8 @@ function getAdminAlertSnapshot() {
         openAdRequests.length,
       reviews:
         activeReviews.length,
+      sites:
+        sitesForReview.length,
       reports: reportCount,
     },
     markers: {
@@ -413,6 +438,10 @@ function getAdminAlertSnapshot() {
       reviews:
         getMaxNumericId(
           activeReviews
+        ),
+      sites:
+        getMaxNumericId(
+          sitesForReview
         ),
       reports:
         `${reportCount}:${getLatestReportMarker(
@@ -507,10 +536,11 @@ function renderAdminAlertCenter(
   });
 
   const total =
-    Number(counts.businesses || 0) +
-    Number(counts.adRequests || 0) +
-    Number(counts.reviews || 0) +
-    Number(counts.reports || 0);
+    Object.values(counts).reduce(
+      (sum, value) =>
+        sum + Number(value || 0),
+      0
+    );
 
   document.title =
     total > 0
@@ -539,10 +569,11 @@ function updateAdminAlertCenter({
   const counts =
     nextSnapshot.counts;
   const total =
-    Number(counts.businesses || 0) +
-    Number(counts.adRequests || 0) +
-    Number(counts.reviews || 0) +
-    Number(counts.reports || 0);
+    Object.values(counts).reduce(
+      (sum, value) =>
+        sum + Number(value || 0),
+      0
+    );
 
   setAdminAlertStatus(
     total > 0
@@ -729,6 +760,74 @@ function isAdmin() {
   return currentStaff?.role === "admin";
 }
 
+function showAdminSection(
+  section,
+  { scroll = false } = {}
+) {
+  const requestedSection =
+    String(section || "").trim() ||
+    "businesses";
+  const sectionToOpen =
+    requestedSection === "staff" &&
+    !isAdmin()
+      ? "businesses"
+      : requestedSection;
+  const panelExists =
+    Array.from(
+      adminSectionPanels
+    ).some(
+      (panel) =>
+        panel.dataset
+          .adminSectionPanel ===
+        sectionToOpen
+    );
+  const finalSection = panelExists
+    ? sectionToOpen
+    : "businesses";
+
+  currentAdminSection =
+    finalSection;
+
+  adminSectionTabs.forEach(
+    (tab) => {
+      const isActive =
+        tab.dataset
+          .adminSectionTab ===
+        finalSection;
+      tab.classList.toggle(
+        "active",
+        isActive
+      );
+      tab.setAttribute(
+        "aria-selected",
+        isActive ? "true" : "false"
+      );
+    }
+  );
+
+  adminSectionPanels.forEach(
+    (panel) => {
+      panel.classList.toggle(
+        "is-hidden",
+        panel.dataset
+          .adminSectionPanel !==
+          finalSection
+      );
+    }
+  );
+
+  if (scroll) {
+    document
+      .querySelector(
+        `[data-admin-section-panel="${finalSection}"]`
+      )
+      ?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+  }
+}
+
 function showStaffLogin(
   message = "",
   isError = false
@@ -781,6 +880,9 @@ function showAdminDashboard() {
       element.hidden = !isAdmin();
     });
 
+  showAdminSection(
+    currentAdminSection
+  );
   updateAdminSoundButton();
   setDefaultCampaignDates();
   syncAdCreativeFields();
@@ -1893,7 +1995,10 @@ function renderSites(items) {
       .join("");
 }
 
-async function loadSites() {
+async function loadSites({
+  notify = true,
+  updateAlerts = true,
+} = {}) {
   if (!siteList) {
     return;
   }
@@ -1916,6 +2021,11 @@ async function loadSites() {
     renderSites(
       data.items || []
     );
+    if (updateAlerts) {
+      updateAdminAlertCenter({
+        notify,
+      });
+    }
   } catch (error) {
     siteList.innerHTML = `
       <div class="glass-card">
@@ -3658,7 +3768,10 @@ async function loadDashboardData({
       notify: false,
       updateAlerts: false,
     }),
-    loadSites(),
+    loadSites({
+      notify: false,
+      updateAlerts: false,
+    }),
   ];
 
   if (isAdmin()) {
@@ -3771,6 +3884,25 @@ staffLoginForm?.addEventListener(
     }
   }
 );
+
+adminSectionTabs.forEach((tab) => {
+  tab.addEventListener("click", () => {
+    showAdminSection(
+      tab.dataset.adminSectionTab,
+      { scroll: true }
+    );
+  });
+});
+
+adminSectionOpeners.forEach((opener) => {
+  opener.addEventListener("click", (event) => {
+    event.preventDefault();
+    showAdminSection(
+      opener.dataset.adminOpenSection,
+      { scroll: true }
+    );
+  });
+});
 
 staffLogoutButton?.addEventListener(
   "click",
