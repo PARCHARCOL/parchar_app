@@ -443,25 +443,6 @@ async function fetchWeatherForCoords(
   longitude
 ) {
   try {
-    const response = await fetch(
-      `/api/weather/current?lat=${encodeURIComponent(
-        String(latitude)
-      )}&lng=${encodeURIComponent(
-        String(longitude)
-      )}`
-    );
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-          "Clima no disponible."
-      );
-    }
-
-    return data.weather;
-  } catch {
     const url =
       new URL(
         "https://api.open-meteo.com/v1/forecast"
@@ -501,6 +482,25 @@ async function fetchWeatherForCoords(
     return normalizeOpenMeteoWeather(
       data
     );
+  } catch {
+    const response = await fetch(
+      `/api/weather/current?lat=${encodeURIComponent(
+        String(latitude)
+      )}&lng=${encodeURIComponent(
+        String(longitude)
+      )}`
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Clima no disponible."
+      );
+    }
+
+    return data.weather;
   }
 }
 
