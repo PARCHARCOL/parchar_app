@@ -110,6 +110,9 @@ const internalPublicSiteTags = new Set([
 let openSites = [];
 let userCoords = null;
 let locationResolved = false;
+const weatherIconCache =
+  new Map();
+let weatherIconObserver = null;
 
 function isBikeMode() {
   const params = new URLSearchParams(window.location.search);
@@ -279,6 +282,190 @@ function buildWazeRouteUrl(site) {
   url.searchParams.set("navigate", "yes");
   url.searchParams.set("utm_source", "parchar");
   return url.toString();
+}
+
+function getWeatherKey(site) {
+  const latitude =
+    Number(site.latitude);
+  const longitude =
+    Number(site.longitude);
+
+  if (
+    !isValidCoordinate(
+      latitude,
+      longitude
+    )
+  ) {
+    return "";
+  }
+
+  return `${latitude.toFixed(3)},${longitude.toFixed(3)}`;
+}
+
+function renderWeatherIcon(site) {
+  const key = getWeatherKey(site);
+
+  if (!key) {
+    return "";
+  }
+
+  const [latitude, longitude] =
+    key.split(",");
+
+  return `
+    <span
+      class="weather-icon is-loading"
+      data-weather-lat="${escapeHtml(latitude)}"
+      data-weather-lng="${escapeHtml(longitude)}"
+      aria-label="Cargando clima actual"
+      title="Clima actual"
+    ></span>
+  `;
+}
+
+function applyWeatherIcon(element, weather) {
+  if (!weather?.icon) {
+    element.classList.add(
+      "is-unavailable"
+    );
+    return;
+  }
+
+  const label =
+    weather.label ||
+    "clima actual";
+  element.textContent =
+    weather.icon;
+  element.classList.remove(
+    "is-loading"
+  );
+  element.setAttribute(
+    "aria-label",
+    `Clima actual: ${label}`
+  );
+  element.title =
+    `Clima actual: ${label}`;
+}
+
+async function loadWeatherIcon(element) {
+  if (
+    element.dataset.weatherLoaded ===
+    "true"
+  ) {
+    return;
+  }
+
+  element.dataset.weatherLoaded =
+    "true";
+  const latitude =
+    Number(element.dataset.weatherLat);
+  const longitude =
+    Number(element.dataset.weatherLng);
+
+  if (
+    !isValidCoordinate(
+      latitude,
+      longitude
+    )
+  ) {
+    element.classList.add(
+      "is-unavailable"
+    );
+    return;
+  }
+
+  const key = `${latitude.toFixed(
+    3
+  )},${longitude.toFixed(3)}`;
+
+  if (weatherIconCache.has(key)) {
+    applyWeatherIcon(
+      element,
+      weatherIconCache.get(key)
+    );
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `/api/weather/current?lat=${encodeURIComponent(
+        String(latitude)
+      )}&lng=${encodeURIComponent(
+        String(longitude)
+      )}`
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Clima no disponible."
+      );
+    }
+
+    weatherIconCache.set(
+      key,
+      data.weather
+    );
+    applyWeatherIcon(
+      element,
+      data.weather
+    );
+  } catch {
+    element.classList.add(
+      "is-unavailable"
+    );
+  }
+}
+
+function hydrateWeatherIcons(root) {
+  const icons = [
+    ...(root || document).querySelectorAll(
+      ".weather-icon[data-weather-lat][data-weather-lng]"
+    ),
+  ];
+
+  if (!icons.length) {
+    return;
+  }
+
+  if (
+    "IntersectionObserver" in window &&
+    !weatherIconObserver
+  ) {
+    weatherIconObserver =
+      new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) {
+              return;
+            }
+
+            weatherIconObserver.unobserve(
+              entry.target
+            );
+            loadWeatherIcon(
+              entry.target
+            );
+          });
+        },
+        {
+          rootMargin: "160px",
+        }
+      );
+  }
+
+  icons.forEach((icon) => {
+    if (weatherIconObserver) {
+      weatherIconObserver.observe(
+        icon
+      );
+      return;
+    }
+
+    loadWeatherIcon(icon);
+  });
 }
 
 function getInitialFilter() {
@@ -629,6 +816,8 @@ function renderSiteCard(site) {
           ${escapeHtml(estimateTravelText(distanceKm))}
         </span>
 
+        ${renderWeatherIcon(site)}
+
         <details class="route-menu">
           <summary class="route-btn">Ir</summary>
           <div class="route-options">
@@ -695,6 +884,9 @@ function renderSites() {
   }
 
   siteResultsEl.innerHTML = filteredSites.map(renderSiteCard).join("");
+  hydrateWeatherIcons(
+    siteResultsEl
+  );
 }
 
 async function loadSites() {

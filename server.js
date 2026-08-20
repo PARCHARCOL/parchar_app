@@ -252,6 +252,9 @@ const VIDEO_MAX_SECONDS = 20;
 const REVIEW_VIDEO_SECONDS = 15;
 const REVIEW_VIDEO_TOLERANCE_SECONDS = 1;
 const REVIEW_ACTIVE_DAYS = 15;
+const WEATHER_CACHE_TTL_MS =
+  20 * 60 * 1000;
+const WEATHER_CACHE_MAX_ITEMS = 500;
 const AD_MEDIA_MAX_BYTES =
   15 * 1024 * 1024;
 const SITE_MEDIA_MAX_BYTES =
@@ -420,6 +423,8 @@ const upload = multer({
       50 * 1024 * 1024,
   },
 });
+
+const weatherCache = new Map();
 
 for (const dir of [
   PUBLIC_DIR,
@@ -2047,6 +2052,306 @@ function calculateDistanceKm(
   );
 }
 
+function getWeatherIcon(
+  code,
+  isDay = true
+) {
+  if (code === 0) {
+    return isDay ? "☀️" : "🌙";
+  }
+
+  if ([1, 2].includes(code)) {
+    return isDay ? "🌤️" : "☁️";
+  }
+
+  if (code === 3) {
+    return "☁️";
+  }
+
+  if ([45, 48].includes(code)) {
+    return "🌫️";
+  }
+
+  if (
+    [
+      51, 53, 55, 56, 57, 61, 63, 65, 66, 67,
+      80, 81, 82,
+    ].includes(code)
+  ) {
+    return "🌧️";
+  }
+
+  if (
+    [71, 73, 75, 77, 85, 86].includes(
+      code
+    )
+  ) {
+    return "❄️";
+  }
+
+  if ([95, 96, 99].includes(code)) {
+    return "⛈️";
+  }
+
+  return "🌡️";
+}
+
+function getWeatherLabel(code) {
+  if (code === 0) {
+    return "despejado";
+  }
+
+  if ([1, 2].includes(code)) {
+    return "parcialmente nublado";
+  }
+
+  if (code === 3) {
+    return "nublado";
+  }
+
+  if ([45, 48].includes(code)) {
+    return "neblina";
+  }
+
+  if ([51, 53, 55, 56, 57].includes(code)) {
+    return "llovizna";
+  }
+
+  if (
+    [61, 63, 65, 66, 67, 80, 81, 82].includes(
+      code
+    )
+  ) {
+    return "lluvia";
+  }
+
+  if (
+    [71, 73, 75, 77, 85, 86].includes(
+      code
+    )
+  ) {
+    return "nieve";
+  }
+
+  if ([95, 96, 99].includes(code)) {
+    return "tormenta";
+  }
+
+  return "clima disponible";
+}
+
+function rememberWeather(
+  key,
+  value
+) {
+  if (
+    weatherCache.size >=
+    WEATHER_CACHE_MAX_ITEMS
+  ) {
+    const firstKey =
+      weatherCache.keys().next()
+        .value;
+    weatherCache.delete(firstKey);
+  }
+
+  weatherCache.set(key, {
+    expiresAt:
+      Date.now() +
+      WEATHER_CACHE_TTL_MS,
+    value,
+  });
+}
+
+async function getCurrentWeather(
+  latitude,
+  longitude
+) {
+  const key = `${Number(latitude).toFixed(
+    3
+  )},${Number(longitude).toFixed(3)}`;
+  const cached =
+    weatherCache.get(key);
+
+  if (
+    cached &&
+    cached.expiresAt > Date.now()
+  ) {
+    return cached.value;
+  }
+
+  const url =
+    new URL(
+      "https://api.open-meteo.com/v1/forecast"
+    );
+  url.searchParams.set(
+    "latitude",
+    String(latitude)
+  );
+  url.searchParams.set(
+    "longitude",
+    String(longitude)
+  );
+  url.searchParams.set(
+    "current",
+    "weather_code,is_day"
+  );
+  url.searchParams.set(
+    "timezone",
+    "auto"
+  );
+  url.searchParams.set(
+    "forecast_days",
+    "1"
+  );
+
+  const controller =
+    new AbortController();
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      4500
+    );
+
+  try {
+    const response = await fetch(
+      url,
+      {
+        headers: {
+          "User-Agent":
+            "ParcharApp/1.0",
+        },
+        signal:
+          controller.signal,
+      }
+    );
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      throw new Error(
+        "Clima no disponible."
+      );
+    }
+
+    const data =
+      await response.json();
+    const code = Number(
+      data.current?.weather_code
+    );
+
+    if (!Number.isFinite(code)) {
+      throw new Error(
+        "Clima no disponible."
+      );
+    }
+
+    const isDay =
+      Number(data.current?.is_day) !==
+      0;
+    const weather = {
+      code,
+      icon:
+        getWeatherIcon(code, isDay),
+      label:
+        getWeatherLabel(code),
+      isDay,
+      observedAt:
+        data.current?.time || null,
+    };
+
+    rememberWeather(key, weather);
+    return weather;
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+}
+
+function inferPuebliarSiteType(candidate) {
+  const explicitType =
+    normalizeOpenSiteType(
+      candidate.siteType ||
+        candidate.site_type
+    );
+
+  if (explicitType) {
+    return explicitType;
+  }
+
+  const text =
+    normalizeCategory(
+      [
+        candidate.name,
+        candidate.summary,
+        candidate.typeLabel,
+        candidate.targetTypeLabel,
+      ].join(" ")
+    );
+
+  if (
+    /charco|rio|rios|quebrada|cascada|salto|balneario|pozo|agua|embalse/.test(
+      text
+    )
+  ) {
+    return "charco";
+  }
+
+  if (
+    /mirador|cerro|alto|montana|piedra|panoram|vista/.test(
+      text
+    )
+  ) {
+    return "mirador";
+  }
+
+  if (/parque/.test(text)) {
+    return "parque";
+  }
+
+  if (
+    /naturaleza|reserva|bosque|paramo|paisaje|aventura|rural/.test(
+      text
+    )
+  ) {
+    return "naturaleza";
+  }
+
+  if (
+    /ruta|rodada|carretera|sendero|camino/.test(
+      text
+    )
+  ) {
+    return "ruta_pueblo";
+  }
+
+  return "pueblo";
+}
+
+function getPuebliarTagsForType(siteType) {
+  const tagsByType = {
+    charco:
+      "charco, agua, puebliar",
+    mirador:
+      "mirador, vista, puebliar",
+    parque:
+      "parque, puebliar, familia",
+    naturaleza:
+      "naturaleza, puebliar, ruta",
+    ruta_pueblo:
+      "ruta, puebliar, escapada",
+    ruta_moto:
+      "ruta, puebliar, moto",
+    ruta_bici:
+      "bici, ruta, puebliar",
+    pueblo:
+      "pueblo, puebliar, ruta",
+  };
+
+  return cleanTags(
+    tagsByType[siteType] ||
+      tagsByType.pueblo
+  );
+}
+
 const PUEBLIAR_FALLBACK_TOWNS = [
   {
     name: "Guatape",
@@ -3529,6 +3834,55 @@ const server =
               ? "postgres"
               : "sqlite",
           });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/weather/current" &&
+          req.method === "GET"
+        ) {
+          const latitude =
+            validateLatitude(
+              requestUrl.searchParams.get(
+                "lat"
+              )
+            );
+          const longitude =
+            validateLongitude(
+              requestUrl.searchParams.get(
+                "lng"
+              )
+            );
+
+          if (
+            latitude === null ||
+            longitude === null
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Coordenadas de clima invalidas.",
+            });
+            return;
+          }
+
+          try {
+            const weather =
+              await getCurrentWeather(
+                latitude,
+                longitude
+              );
+
+            sendJson(res, 200, {
+              ok: true,
+              weather,
+            });
+          } catch {
+            sendJson(res, 502, {
+              error:
+                "Clima no disponible en este momento.",
+            });
+          }
           return;
         }
 
@@ -5313,7 +5667,7 @@ const server =
           ) {
             sendJson(res, 400, {
               error:
-                "Debes enviar coordenadas validas para importar pueblos cercanos.",
+                "Debes enviar coordenadas validas para importar lugares cercanos.",
             });
             return;
           }
@@ -5407,7 +5761,7 @@ const server =
               created,
               skipped,
               message:
-                "0 pueblos importados. No hay pueblos en la base inicial para esas coordenadas.",
+                "0 destinos importados. No hay lugares cercanos en la base inicial para esas coordenadas.",
             });
             return;
           }
@@ -5435,9 +5789,13 @@ const server =
                   `${candidate.name} es un destino cercano para puebliar y hacer una escapada.`,
                 420
               );
+            const siteType =
+              inferPuebliarSiteType(
+                candidate
+              );
             const tags =
-              cleanTags(
-                "pueblo, puebliar, ruta"
+              getPuebliarTagsForType(
+                siteType
               );
             const address = "";
 
@@ -5463,7 +5821,7 @@ const server =
               `,
               [
                 candidate.name,
-                "pueblo",
+                siteType,
                 description,
                 address,
                 "Puebliar",
@@ -5495,7 +5853,7 @@ const server =
             created,
             skipped,
             message:
-              `${created.length} pueblos importados como pausados para revision.` +
+              `${created.length} destinos importados como pausados para revision.` +
               (usedFallback
                 ? " Se uso respaldo inicial de Parchar para completar resultados."
                 : ""),

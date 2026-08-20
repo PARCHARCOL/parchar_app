@@ -2191,7 +2191,7 @@ async function getPuebliarImportCoordinates() {
     return await requestAdminLocation();
   } catch {
     const typed = prompt(
-      "No pude leer tu ubicacion. Escribe latitud,longitud para importar pueblos cercanos:"
+      "No pude leer tu ubicacion. Escribe latitud,longitud para importar lugares cercanos:"
     );
 
     return parseCoordinatePair(
@@ -2224,7 +2224,7 @@ async function importPuebliarSites() {
     "Importando...";
   setFeedback(
     siteMessage,
-    "Importando pueblos cercanos desde la base inicial de Parchar..."
+    "Importando lugares cercanos desde la base inicial de Parchar..."
   );
 
   try {
@@ -2254,7 +2254,7 @@ async function importPuebliarSites() {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "No se pudieron importar pueblos."
+          "No se pudieron importar lugares."
       );
     }
 

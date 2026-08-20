@@ -576,6 +576,28 @@ a {
   min-width: 0;
 }
 
+.weather-icon {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 216, 105, 0.55);
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
+  font-size: 1.18rem;
+  line-height: 1;
+}
+
+.weather-icon.is-loading {
+  opacity: 0;
+}
+
+.weather-icon.is-unavailable {
+  display: none;
+}
+
 .route-btn {
   flex-shrink: 0;
   border-radius: 11px;
