@@ -323,6 +323,187 @@ function renderWeatherIcon(site) {
   `;
 }
 
+function getClientWeatherIcon(code, isDay = true) {
+  if (code === 0) {
+    return isDay ? "☀️" : "🌙";
+  }
+
+  if ([1, 2].includes(code)) {
+    return isDay ? "🌤️" : "☁️";
+  }
+
+  if (code === 3) {
+    return "☁️";
+  }
+
+  if ([45, 48].includes(code)) {
+    return "🌫️";
+  }
+
+  if (
+    [
+      51, 53, 55, 56, 57, 61, 63, 65, 66, 67,
+      80, 81, 82,
+    ].includes(code)
+  ) {
+    return "🌧️";
+  }
+
+  if (
+    [71, 73, 75, 77, 85, 86].includes(
+      code
+    )
+  ) {
+    return "❄️";
+  }
+
+  if ([95, 96, 99].includes(code)) {
+    return "⛈️";
+  }
+
+  return "🌡️";
+}
+
+function getClientWeatherLabel(code) {
+  if (code === 0) {
+    return "despejado";
+  }
+
+  if ([1, 2].includes(code)) {
+    return "parcialmente nublado";
+  }
+
+  if (code === 3) {
+    return "nublado";
+  }
+
+  if ([45, 48].includes(code)) {
+    return "neblina";
+  }
+
+  if ([51, 53, 55, 56, 57].includes(code)) {
+    return "llovizna";
+  }
+
+  if (
+    [61, 63, 65, 66, 67, 80, 81, 82].includes(
+      code
+    )
+  ) {
+    return "lluvia";
+  }
+
+  if (
+    [71, 73, 75, 77, 85, 86].includes(
+      code
+    )
+  ) {
+    return "nieve";
+  }
+
+  if ([95, 96, 99].includes(code)) {
+    return "tormenta";
+  }
+
+  return "clima disponible";
+}
+
+function normalizeOpenMeteoWeather(data) {
+  const code = Number(
+    data.current?.weather_code
+  );
+
+  if (!Number.isFinite(code)) {
+    throw new Error(
+      "Clima no disponible."
+    );
+  }
+
+  const isDay =
+    Number(data.current?.is_day) !==
+    0;
+
+  return {
+    code,
+    icon:
+      getClientWeatherIcon(
+        code,
+        isDay
+      ),
+    label:
+      getClientWeatherLabel(code),
+    isDay,
+    observedAt:
+      data.current?.time || null,
+  };
+}
+
+async function fetchWeatherForCoords(
+  latitude,
+  longitude
+) {
+  try {
+    const response = await fetch(
+      `/api/weather/current?lat=${encodeURIComponent(
+        String(latitude)
+      )}&lng=${encodeURIComponent(
+        String(longitude)
+      )}`
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "Clima no disponible."
+      );
+    }
+
+    return data.weather;
+  } catch {
+    const url =
+      new URL(
+        "https://api.open-meteo.com/v1/forecast"
+      );
+    url.searchParams.set(
+      "latitude",
+      String(latitude)
+    );
+    url.searchParams.set(
+      "longitude",
+      String(longitude)
+    );
+    url.searchParams.set(
+      "current",
+      "weather_code,is_day"
+    );
+    url.searchParams.set(
+      "timezone",
+      "auto"
+    );
+    url.searchParams.set(
+      "forecast_days",
+      "1"
+    );
+
+    const response =
+      await fetch(url.toString());
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        "Clima no disponible."
+      );
+    }
+
+    return normalizeOpenMeteoWeather(
+      data
+    );
+  }
+}
+
 function applyWeatherIcon(element, weather) {
   if (!weather?.icon) {
     element.classList.add(
@@ -387,30 +568,19 @@ async function loadWeatherIcon(element) {
   }
 
   try {
-    const response = await fetch(
-      `/api/weather/current?lat=${encodeURIComponent(
-        String(latitude)
-      )}&lng=${encodeURIComponent(
-        String(longitude)
-      )}`
-    );
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-          "Clima no disponible."
+    const weather =
+      await fetchWeatherForCoords(
+        latitude,
+        longitude
       );
-    }
 
     weatherIconCache.set(
       key,
-      data.weather
+      weather
     );
     applyWeatherIcon(
       element,
-      data.weather
+      weather
     );
   } catch {
     element.classList.add(
