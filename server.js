@@ -2209,7 +2209,7 @@ async function getCurrentWeather(
   const timer =
     setTimeout(
       () => controller.abort(),
-      4500
+      9000
     );
 
   try {
@@ -2217,6 +2217,8 @@ async function getCurrentWeather(
       url,
       {
         headers: {
+          Accept:
+            "application/json",
           "User-Agent":
             "ParcharApp/1.0",
         },
