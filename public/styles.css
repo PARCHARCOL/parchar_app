@@ -588,6 +588,11 @@ a {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.18);
   font-size: 1.18rem;
   line-height: 1;
+  pointer-events: none;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .weather-icon.is-loading {
