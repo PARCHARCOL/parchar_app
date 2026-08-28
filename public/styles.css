@@ -2112,6 +2112,14 @@ body > .ad-banner {
   gap: 7px 14px;
 }
 
+.ad-banner.has-media.ad-cta-hidden,
+.ad-banner.ad-cta-hidden:has(.ad-media:not([hidden])) {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "pill"
+    "text";
+}
+
 .ad-banner.has-media::after,
 .ad-banner:has(.ad-media:not([hidden]))::after {
   content: "";
@@ -2325,6 +2333,10 @@ body > .ad-banner {
   font-weight: 800;
   color: #3b1d00;
   background: linear-gradient(145deg, #ffd869, #ffa038);
+}
+
+.ad-cta[hidden] {
+  display: none !important;
 }
 
 .ad-cta:disabled {

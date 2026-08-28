@@ -655,6 +655,9 @@ async function loadAdBanner() {
   adBanner.classList.remove(
     "has-template"
   );
+  adBanner.classList.remove(
+    "ad-cta-hidden"
+  );
   adBanner.removeAttribute("style");
   [pill, text, button].forEach(
     (element) => {
@@ -673,6 +676,8 @@ async function loadAdBanner() {
   if (button) {
     button.textContent = "Anunciar";
     button.disabled = false;
+    button.hidden = false;
+    button.removeAttribute("aria-hidden");
     delete button.dataset.adTargetUrl;
     delete button.dataset.adCampaignId;
     delete button.dataset.adCampaignActive;
@@ -697,10 +702,31 @@ async function loadAdBanner() {
 
     const banner =
       data.banner || {};
+    const isTemplate =
+      isTemplateBanner(banner);
+    const hasCreative =
+      banner.enabled &&
+      (banner.mediaPath ||
+        (isTemplate &&
+          (banner.logoPath ||
+            banner.productPath)));
+    const hasTargetUrl = Boolean(
+      banner.enabled &&
+        banner.targetUrl
+    );
+    const showBannerCta = Boolean(
+      button &&
+        (!banner.enabled ||
+          (hasTargetUrl && !hasCreative))
+    );
+
+    adBanner.classList.toggle(
+      "ad-cta-hidden",
+      !showBannerCta
+    );
 
     if (
-      banner.enabled &&
-      banner.targetUrl
+      hasTargetUrl
     ) {
       adBanner.classList.add(
         "is-clickable"
@@ -757,8 +783,20 @@ async function loadAdBanner() {
 
     if (button) {
       button.textContent =
-        banner.ctaLabel || "Anunciar";
-      button.disabled = false;
+        banner.enabled
+          ? banner.ctaLabel ||
+            "Ver oferta"
+          : "Pautar aqui";
+      button.disabled =
+        !showBannerCta;
+      button.hidden =
+        !showBannerCta;
+      button.setAttribute(
+        "aria-hidden",
+        showBannerCta
+          ? "false"
+          : "true"
+      );
 
       if (
         banner.enabled
@@ -768,13 +806,10 @@ async function loadAdBanner() {
         button.dataset.adCampaignActive =
           "true";
 
-        if (banner.targetUrl) {
+        if (hasTargetUrl) {
           button.dataset.adTargetUrl =
             banner.targetUrl;
         } else {
-          button.textContent =
-            "Sin enlace";
-          button.disabled = true;
           delete button.dataset
             .adTargetUrl;
         }
@@ -795,15 +830,6 @@ async function loadAdBanner() {
     mediaContainer?.removeAttribute(
       "style"
     );
-
-    const isTemplate =
-      isTemplateBanner(banner);
-    const hasCreative =
-      banner.enabled &&
-      (banner.mediaPath ||
-        (isTemplate &&
-          (banner.logoPath ||
-            banner.productPath)));
 
     if (hasCreative) {
       adBanner.classList.add(
@@ -870,9 +896,13 @@ async function loadAdBanner() {
           background: "#130227",
           display: "grid",
           gridTemplateColumns:
-            "minmax(0, 1fr) auto",
+            showBannerCta
+              ? "minmax(0, 1fr) auto"
+              : "minmax(0, 1fr)",
           gridTemplateAreas:
-            '"pill cta" "text cta"',
+            showBannerCta
+              ? '"pill cta" "text cta"'
+              : '"pill" "text"',
           alignItems: "center",
           gap: "7px 14px",
           overflow: "hidden",
