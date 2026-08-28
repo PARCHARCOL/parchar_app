@@ -15,5 +15,17 @@
     "multer": "^2.2.0",
     "pg": "^8.13.1"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PARCHARCOL/parchar_app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PARCHARCOL/parchar_app/issues"
+  },
+  "homepage": "https://github.com/PARCHARCOL/parchar_app#readme"
 }
