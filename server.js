@@ -288,6 +288,7 @@ const ALLOWED_SITE_TYPES =
     "parada_ciclista",
     "parque",
     "pueblo",
+    "burgermaster",
     "naturaleza",
     "ruta_pueblo",
     "ruta_moto",
@@ -2344,6 +2345,8 @@ function getPuebliarTagsForType(siteType) {
       "ruta, puebliar, moto",
     ruta_bici:
       "bici, ruta, puebliar",
+    burgermaster:
+      "burgermaster, hamburguesa, restaurante, evento",
     pueblo:
       "pueblo, puebliar, ruta",
   };
@@ -2352,6 +2355,1002 @@ function getPuebliarTagsForType(siteType) {
     tagsByType[siteType] ||
       tagsByType.pueblo
   );
+}
+
+const BURGER_MASTER_SOURCE_URL =
+  "https://tuliorecomienda.com/participantes-burger-master-medellin-y-antioquia/";
+const OVERPASS_API_URL =
+  "https://overpass-api.de/api/interpreter";
+const NOMINATIM_SEARCH_URL =
+  "https://nominatim.openstreetmap.org/search";
+const IMPORT_FETCH_TIMEOUT_MS =
+  12000;
+const GEOCODE_DELAY_MS = 500;
+const GEOCODE_FETCH_TIMEOUT_MS = 4500;
+const GEOCODE_MAX_ATTEMPTS = 14;
+
+const OPEN_SITE_IMPORT_SEEDS = {
+  charcos: [
+    {
+      name: "Charcos de San Rafael",
+      city: "San Rafael",
+      query:
+        "Charcos de San Rafael Antioquia Colombia",
+      summary:
+        "Zona reconocida por rios, pozos naturales y planes de agua cerca del Oriente antioqueno.",
+    },
+    {
+      name: "Cascadas de San Carlos",
+      city: "San Carlos",
+      query:
+        "Cascadas de San Carlos Antioquia Colombia",
+      summary:
+        "Destino natural con cascadas, rios y senderos para planes de agua y aventura.",
+    },
+    {
+      name: "Rio Claro Reserva Natural",
+      city: "Puerto Triunfo",
+      query:
+        "Reserva Natural Rio Claro Antioquia Colombia",
+      summary:
+        "Reserva natural con rio cristalino, senderos y actividades de naturaleza.",
+    },
+    {
+      name: "Quebrada La Miel",
+      city: "Caldas",
+      query:
+        "Quebrada La Miel Caldas Antioquia Colombia",
+      summary:
+        "Quebrada y zona natural usada para caminatas y planes de agua cerca del sur del Valle de Aburra.",
+    },
+  ],
+  miradores: [
+    {
+      name: "Mirador Las Palmas",
+      city: "Medellin",
+      query:
+        "Mirador Las Palmas Medellin Antioquia Colombia",
+      summary:
+        "Punto panoramico tradicional para ver Medellin y el Valle de Aburra.",
+    },
+    {
+      name: "Cerro Nutibara",
+      city: "Medellin",
+      query:
+        "Cerro Nutibara Medellin Antioquia Colombia",
+      summary:
+        "Cerro urbano con vista de la ciudad y acceso al Pueblito Paisa.",
+    },
+    {
+      name: "Cerro El Volador",
+      city: "Medellin",
+      query:
+        "Cerro El Volador Medellin Antioquia Colombia",
+      summary:
+        "Eco-parque urbano con senderos, zonas verdes y visuales amplias de Medellin.",
+    },
+    {
+      name: "Mirador San Felix",
+      city: "Bello",
+      query:
+        "Mirador San Felix Bello Antioquia Colombia",
+      summary:
+        "Zona alta reconocida por vista panoramica, parapente y planes de carretera.",
+    },
+    {
+      name: "Piedra del Penol",
+      city: "Guatape",
+      query:
+        "Piedra del Penol Guatape Antioquia Colombia",
+      summary:
+        "Mirador natural sobre el embalse de Guatape y uno de los puntos mas visitados del Oriente antioqueno.",
+    },
+  ],
+  burgermaster: [
+    {
+      name: "Andes Burger - Laureles",
+      city: "Medellin",
+      address:
+        "Avenida 74B #39-58, Laureles",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Inmerso - Avenida Las Vegas",
+      city: "Medellin",
+      address:
+        "Carrera 48 #66B sur-07, Avenida Las Vegas",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Canibal - Sabaneta",
+      city: "Sabaneta",
+      address:
+        "Calle 66 sur #43C-86",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Fixion Burger - Provenza",
+      city: "Medellin",
+      address:
+        "Carrera 33 #7-135, Provenza, El Poblado",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "The Vice Burger - Floresta",
+      city: "Medellin",
+      address:
+        "Transversal 45D #84-47",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Rib Eye Parrilla & Bar - Envigado",
+      city: "Envigado",
+      address:
+        "Carrera 38 #37 sur-35",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Sexy Burgers - Buenos Aires",
+      city: "Medellin",
+      address:
+        "Calle 49 #29-35, Tranvia Bulevar, LC 307",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+    {
+      name: "Raj Burger - Belen",
+      city: "Medellin",
+      address:
+        "Calle 14 #70-20",
+      summary:
+        "Participante Burger Master Medellin y Antioquia. Revisa disponibilidad antes de ir.",
+    },
+  ],
+};
+
+function normalizeSiteImportMode(
+  value
+) {
+  const mode =
+    normalizeCategory(value);
+
+  if (
+    [
+      "puebliar",
+      "pueblo",
+      "pueblos",
+    ].includes(mode)
+  ) {
+    return "puebliar";
+  }
+
+  if (
+    [
+      "charco",
+      "charcos",
+    ].includes(mode)
+  ) {
+    return "charcos";
+  }
+
+  if (
+    [
+      "mirador",
+      "miradores",
+    ].includes(mode)
+  ) {
+    return "miradores";
+  }
+
+  if (
+    [
+      "burgermaster",
+      "burger_master",
+      "burger-master",
+      "burger master",
+    ].includes(mode)
+  ) {
+    return "burgermaster";
+  }
+
+  return "puebliar";
+}
+
+function getImportConfig(
+  mode
+) {
+  const configs = {
+    puebliar: {
+      label: "destinos Puebliar",
+      city: "Puebliar",
+      siteType: "",
+    },
+    charcos: {
+      label: "charcos",
+      city: "Charcos",
+      siteType: "charco",
+    },
+    miradores: {
+      label: "miradores",
+      city: "Miradores",
+      siteType: "mirador",
+    },
+    burgermaster: {
+      label:
+        "restaurantes BurgerMaster",
+      city: "BurgerMaster",
+      siteType: "burgermaster",
+    },
+  };
+
+  return configs[mode] ||
+    configs.puebliar;
+}
+
+function decodeHtmlEntities(
+  value
+) {
+  return String(value || "")
+    .replace(/&#(\d+);/g, (_, code) =>
+      String.fromCodePoint(
+        Number(code)
+      )
+    )
+    .replace(
+      /&#x([0-9a-f]+);/gi,
+      (_, code) =>
+        String.fromCodePoint(
+          parseInt(code, 16)
+        )
+    )
+    .replace(/&aacute;/g, "a")
+    .replace(/&eacute;/g, "e")
+    .replace(/&iacute;/g, "i")
+    .replace(/&oacute;/g, "o")
+    .replace(/&uacute;/g, "u")
+    .replace(/&ntilde;/g, "n")
+    .replace(/&Aacute;/g, "A")
+    .replace(/&Eacute;/g, "E")
+    .replace(/&Iacute;/g, "I")
+    .replace(/&Oacute;/g, "O")
+    .replace(/&Uacute;/g, "U")
+    .replace(/&Ntilde;/g, "N")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&nbsp;/g, " ");
+}
+
+function htmlToLines(html) {
+  return decodeHtmlEntities(
+    String(html || "")
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/(p|div|li|h\d)>/gi, "\n")
+      .replace(/<[^>]+>/g, "\n")
+  )
+    .split(/\n+/)
+    .map((line) =>
+      cleanText(line)
+    )
+    .filter(Boolean);
+}
+
+async function fetchTextWithTimeout(
+  url,
+  options = {},
+  timeoutMs = IMPORT_FETCH_TIMEOUT_MS
+) {
+  const controller =
+    new AbortController();
+  const timer =
+    setTimeout(
+      () => controller.abort(),
+      timeoutMs
+    );
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+
+    if (!response.ok) {
+      throw new Error(
+        `No se pudo consultar ${url}`
+      );
+    }
+
+    return await response.text();
+  } catch (error) {
+    clearTimeout(timer);
+    throw error;
+  }
+}
+
+function isPhoneLikeLine(value) {
+  return /^\+?\d[\d\s().-]{6,}$/.test(
+    cleanText(value)
+  );
+}
+
+function isAddressLikeLine(value) {
+  const normalized =
+    normalizeCategory(value);
+
+  return (
+    /\d/.test(value) &&
+    /(calle|carrera|avenida|transversal|trasversal|diagonal|circular|kilometro|cra|cll|cl|av|mall|centro comercial|cc)/.test(
+      normalized
+    )
+  );
+}
+
+function inferBurgerMasterCity(
+  sede,
+  address
+) {
+  const text =
+    normalizeCategory(
+      `${sede} ${address}`
+    );
+  const cities = [
+    "medellin",
+    "envigado",
+    "sabaneta",
+    "bello",
+    "itagui",
+    "rionegro",
+    "guarne",
+    "marinilla",
+    "la ceja",
+    "el carmen de viboral",
+    "caldas",
+    "girardota",
+    "copacabana",
+    "caucasia",
+  ];
+
+  const found =
+    cities.find((city) =>
+      text.includes(city)
+    );
+
+  if (!found) {
+    return "Medellin";
+  }
+
+  return found
+    .split(" ")
+    .map(
+      (part) =>
+        part.charAt(0).toUpperCase() +
+        part.slice(1)
+    )
+    .join(" ");
+}
+
+function parseBurgerMasterCandidates(
+  html,
+  limit
+) {
+  const matches = [
+    ...String(html || "").matchAll(
+      /<h2[^>]*>([\s\S]*?)<\/h2>/gi
+    ),
+  ];
+  const ignoredHeadings =
+    new Set([
+      "participantes burger master 2026 medellin y antioquia",
+      "acceso rapido",
+      "medellin",
+      "rionegro",
+      "guarne",
+      "marinilla",
+      "carmen de viboral",
+      "la ceja",
+      "caldas",
+      "girardota",
+      "copacabana",
+      "caucasia",
+    ]);
+  const candidates = [];
+
+  for (let index = 0; index < matches.length; index += 1) {
+    const title = cleanLimitedText(
+      htmlToLines(
+        matches[index][1]
+      )[0] || "",
+      100
+    );
+    const key =
+      normalizeCategory(title);
+
+    if (
+      !title ||
+      ignoredHeadings.has(key)
+    ) {
+      continue;
+    }
+
+    const start =
+      matches[index].index +
+      matches[index][0].length;
+    const end =
+      index + 1 < matches.length
+        ? matches[index + 1].index
+        : html.length;
+    const section =
+      html.slice(start, end);
+    const lines =
+      htmlToLines(section);
+    const descriptionIndex =
+      lines.findIndex((line) =>
+        normalizeCategory(line) ===
+        "descripcion"
+      );
+    const burgerCopy =
+      descriptionIndex >= 0
+        ? cleanLimitedText(
+            lines[
+              descriptionIndex + 1
+            ],
+            150
+          )
+        : "";
+
+    for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+      const sedeMatch =
+        lines[lineIndex].match(
+          /^Sede:\s*(.+)$/i
+        );
+
+      if (!sedeMatch) {
+        continue;
+      }
+
+      const sede =
+        cleanLimitedText(
+          sedeMatch[1],
+          70
+        );
+      let address = "";
+
+      for (
+        let nextIndex =
+          lineIndex + 1;
+        nextIndex < lines.length;
+        nextIndex += 1
+      ) {
+        const candidateLine =
+          lines[nextIndex];
+
+        if (
+          /^Sede:/i.test(
+            candidateLine
+          )
+        ) {
+          break;
+        }
+
+        if (
+          isPhoneLikeLine(
+            candidateLine
+          )
+        ) {
+          continue;
+        }
+
+        if (
+          isAddressLikeLine(
+            candidateLine
+          )
+        ) {
+          address =
+            cleanLimitedText(
+              candidateLine,
+              160
+            );
+          break;
+        }
+      }
+
+      if (!address) {
+        continue;
+      }
+
+      const city =
+        inferBurgerMasterCity(
+          sede,
+          address
+        );
+      candidates.push({
+        name:
+          sede &&
+          !normalizeCategory(title)
+            .includes(
+              normalizeCategory(sede)
+            )
+            ? `${title} - ${sede}`
+            : title,
+        siteType: "burgermaster",
+        city,
+        address,
+        summary:
+          `Participante Burger Master 2026 en ${city}.` +
+          (burgerCopy
+            ? ` Propuesta: ${burgerCopy}`
+            : " Revisa disponibilidad antes de ir."),
+        tags:
+          "burgermaster, hamburguesa, restaurante, evento",
+        source: "tulio",
+      });
+
+      if (
+        candidates.length >=
+        limit * 3
+      ) {
+        return candidates;
+      }
+    }
+  }
+
+  return candidates;
+}
+
+async function geocodeImportedCandidate(
+  candidate
+) {
+  if (
+    validateLatitude(
+      candidate.latitude
+    ) !== null &&
+    validateLongitude(
+      candidate.longitude
+    ) !== null
+  ) {
+    return candidate;
+  }
+
+  const query =
+    candidate.query ||
+    [
+      candidate.name,
+      candidate.address,
+      candidate.city,
+      "Antioquia Colombia",
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+  if (!query) {
+    return null;
+  }
+
+  const url =
+    new URL(NOMINATIM_SEARCH_URL);
+  url.searchParams.set(
+    "format",
+    "jsonv2"
+  );
+  url.searchParams.set(
+    "limit",
+    "1"
+  );
+  url.searchParams.set(
+    "countrycodes",
+    "co"
+  );
+  url.searchParams.set(
+    "q",
+    query
+  );
+
+  try {
+    const text =
+      await fetchTextWithTimeout(
+        url.toString(),
+        {
+          headers: {
+            Accept:
+              "application/json",
+            "User-Agent":
+              "ParcharApp/1.0",
+          },
+        },
+        GEOCODE_FETCH_TIMEOUT_MS
+      );
+    const data =
+      JSON.parse(text);
+    const first =
+      Array.isArray(data)
+        ? data[0]
+        : null;
+
+    if (!first) {
+      return null;
+    }
+
+    const latitude =
+      validateLatitude(
+        first.lat
+      );
+    const longitude =
+      validateLongitude(
+        first.lon
+      );
+
+    if (
+      latitude === null ||
+      longitude === null
+    ) {
+      return null;
+    }
+
+    return {
+      ...candidate,
+      latitude,
+      longitude,
+      address:
+        candidate.address ||
+        cleanLimitedText(
+          first.display_name,
+          170
+        ),
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function resolveImportedCandidates(
+  candidates,
+  latitude,
+  longitude,
+  radiusKm,
+  limit,
+  minDistanceKm
+) {
+  const resolved = [];
+  const seen = new Set();
+  let geocodeAttempts = 0;
+
+  for (const candidate of candidates) {
+    const key =
+      normalizeCategory(
+        `${candidate.name} ${candidate.address || ""}`
+      );
+
+    if (
+      !key ||
+      seen.has(key)
+    ) {
+      continue;
+    }
+
+    seen.add(key);
+    let candidateWithCoords =
+      candidate;
+
+    if (
+      validateLatitude(
+        candidate.latitude
+      ) === null ||
+      validateLongitude(
+        candidate.longitude
+      ) === null
+    ) {
+      if (
+        geocodeAttempts >=
+        GEOCODE_MAX_ATTEMPTS
+      ) {
+        continue;
+      }
+
+      geocodeAttempts += 1;
+      candidateWithCoords =
+        await geocodeImportedCandidate(
+          candidate
+        );
+      if (
+        geocodeAttempts <
+        GEOCODE_MAX_ATTEMPTS
+      ) {
+        await new Promise((resolve) =>
+          setTimeout(
+            resolve,
+            GEOCODE_DELAY_MS
+          )
+        );
+      }
+    }
+
+    if (!candidateWithCoords) {
+      continue;
+    }
+
+    const distanceKm =
+      calculateDistanceKm(
+        latitude,
+        longitude,
+        candidateWithCoords.latitude,
+        candidateWithCoords.longitude
+      );
+
+    if (
+      distanceKm < minDistanceKm ||
+      distanceKm > radiusKm
+    ) {
+      continue;
+    }
+
+    resolved.push({
+      ...candidateWithCoords,
+      distanceKm,
+    });
+
+    if (resolved.length >= limit) {
+      break;
+    }
+  }
+
+  return resolved.sort(
+    (a, b) =>
+      a.distanceKm - b.distanceKm
+  );
+}
+
+function getFallbackImportSeeds(
+  mode
+) {
+  return (
+    OPEN_SITE_IMPORT_SEEDS[
+      mode
+    ] || []
+  ).map((seed) => ({
+    ...seed,
+    siteType:
+      getImportConfig(mode)
+        .siteType || seed.siteType,
+    source: "base",
+  }));
+}
+
+function overpassElementsToCandidates(
+  elements,
+  siteType
+) {
+  const candidates = [];
+
+  for (const element of elements || []) {
+    const tags =
+      element.tags || {};
+    const name =
+      cleanLimitedText(
+        tags.name ||
+          tags.alt_name ||
+          "",
+        120
+      );
+    const latitude =
+      validateLatitude(
+        element.lat ||
+          element.center?.lat
+      );
+    const longitude =
+      validateLongitude(
+        element.lon ||
+          element.center?.lon
+      );
+
+    if (
+      !name ||
+      latitude === null ||
+      longitude === null
+    ) {
+      continue;
+    }
+
+    const city =
+      cleanLimitedText(
+        tags["addr:city"] ||
+          tags["is_in:city"] ||
+          getImportConfig(
+            siteType === "charco"
+              ? "charcos"
+              : "miradores"
+          ).city,
+        120
+      );
+    const address =
+      cleanLimitedText(
+        [
+          tags["addr:street"],
+          tags["addr:housenumber"],
+        ]
+          .filter(Boolean)
+          .join(" "),
+        180
+      );
+
+    candidates.push({
+      name,
+      siteType,
+      latitude,
+      longitude,
+      city,
+      address,
+      summary:
+        siteType === "charco"
+          ? `${name} aparece como lugar de agua cercano. Revisa acceso, seguridad y estado antes de activarlo.`
+          : `${name} aparece como mirador o punto panoramico cercano. Revisa acceso, seguridad y estado antes de activarlo.`,
+      tags:
+        getPuebliarTagsForType(
+          siteType
+        ),
+      source: "openstreetmap",
+    });
+  }
+
+  return candidates;
+}
+
+async function fetchOverpassImportCandidates(
+  mode,
+  latitude,
+  longitude,
+  radiusKm,
+  limit,
+  minDistanceKm
+) {
+  const siteType =
+    mode === "charcos"
+      ? "charco"
+      : "mirador";
+  const radiusMeters =
+    Math.round(radiusKm * 1000);
+  const queryLimit =
+    Math.min(limit * 10, 120);
+  const selector =
+    mode === "charcos"
+      ? '["name"~"charco|cascada|salto|balneario|rio|río|quebrada|pozo|embalse",i]'
+      : '["tourism"="viewpoint"]';
+  const nameSelector =
+    mode === "miradores"
+      ? '["name"~"mirador|cerro|alto|piedra|panoram|vista",i]'
+      : selector;
+  const query = `
+[out:json][timeout:14];
+(
+  node(around:${radiusMeters},${latitude},${longitude})${selector};
+  way(around:${radiusMeters},${latitude},${longitude})${selector};
+  relation(around:${radiusMeters},${latitude},${longitude})${selector};
+  node(around:${radiusMeters},${latitude},${longitude})${nameSelector};
+  way(around:${radiusMeters},${latitude},${longitude})${nameSelector};
+  relation(around:${radiusMeters},${latitude},${longitude})${nameSelector};
+);
+out center tags ${queryLimit};
+`;
+
+  const body =
+    `data=${encodeURIComponent(
+      query
+    )}`;
+  const text =
+    await fetchTextWithTimeout(
+      OVERPASS_API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/x-www-form-urlencoded;charset=UTF-8",
+          Accept:
+            "application/json",
+          "User-Agent":
+            "ParcharApp/1.0",
+        },
+        body,
+      },
+      18000
+    );
+  const data =
+    JSON.parse(text);
+
+  return resolveImportedCandidates(
+    overpassElementsToCandidates(
+      data.elements,
+      siteType
+    ),
+    latitude,
+    longitude,
+    radiusKm,
+    limit,
+    minDistanceKm
+  );
+}
+
+async function fetchBurgerMasterCandidates(
+  latitude,
+  longitude,
+  radiusKm,
+  limit,
+  minDistanceKm
+) {
+  const html =
+    await fetchTextWithTimeout(
+      BURGER_MASTER_SOURCE_URL,
+      {
+        headers: {
+          Accept: "text/html",
+          "User-Agent":
+            "ParcharApp/1.0",
+        },
+      },
+      15000
+    );
+
+  return resolveImportedCandidates(
+    parseBurgerMasterCandidates(
+      html,
+      limit
+    ),
+    latitude,
+    longitude,
+    radiusKm,
+    limit,
+    minDistanceKm
+  );
+}
+
+async function fetchImportCandidates(
+  mode,
+  latitude,
+  longitude,
+  radiusKm,
+  limit,
+  minDistanceKm
+) {
+  if (mode === "puebliar") {
+    return fetchPuebliarCandidates(
+      latitude,
+      longitude,
+      radiusKm,
+      limit,
+      minDistanceKm
+    );
+  }
+
+  if (
+    mode === "charcos" ||
+    mode === "miradores"
+  ) {
+    return fetchOverpassImportCandidates(
+      mode,
+      latitude,
+      longitude,
+      radiusKm,
+      limit,
+      minDistanceKm
+    );
+  }
+
+  if (mode === "burgermaster") {
+    return fetchBurgerMasterCandidates(
+      latitude,
+      longitude,
+      radiusKm,
+      limit,
+      minDistanceKm
+    );
+  }
+
+  return [];
 }
 
 const PUEBLIAR_FALLBACK_TOWNS = [
@@ -5609,8 +6608,10 @@ const server =
         }
 
         if (
-          pathname ===
-            "/api/admin/sites/puebliar/import" &&
+          (pathname ===
+            "/api/admin/sites/puebliar/import" ||
+            pathname ===
+              "/api/admin/sites/import") &&
           req.method === "POST"
         ) {
           if (
@@ -5625,6 +6626,14 @@ const server =
 
           const body =
             await parseJsonBody(req);
+          const importMode =
+            normalizeSiteImportMode(
+              body.mode
+            );
+          const importConfig =
+            getImportConfig(
+              importMode
+            );
           const latitude =
             validateLatitude(
               body.latitude
@@ -5643,14 +6652,23 @@ const server =
               ),
               180
             );
+          const requestedMinDistanceKm =
+            Number(
+              body.minDistanceKm
+            );
           const minDistanceKm =
             Math.min(
-                Math.max(
-                  Number(
-                    body.minDistanceKm
-                  ) || 20,
-                  0
-                ),
+              Math.max(
+                Number.isFinite(
+                  requestedMinDistanceKm
+                )
+                  ? requestedMinDistanceKm
+                  : importMode ===
+                    "puebliar"
+                  ? 20
+                  : 0,
+                0
+              ),
               60
             );
           const limit =
@@ -5676,84 +6694,97 @@ const server =
 
           const existingResult =
             await pool.query(`
-              SELECT name
+              SELECT name, address
               FROM open_sites
             `);
-          const existingNames =
+          const existingKeys =
             new Set(
               existingResult.rows.map(
                 (row) =>
                   normalizeCategory(
-                    row.name
+                    `${row.name} ${row.address || ""}`
                   )
               )
             );
           const created = [];
           const skipped = [];
-          let usedFallback = true;
-          let candidates =
-            getFallbackPuebliarCandidates(
-              latitude,
-              longitude,
-              radiusKm,
-              limit,
-              minDistanceKm
-            );
+          let usedFallback = false;
+          let candidates = [];
+
+          try {
+            candidates =
+              await fetchImportCandidates(
+                importMode,
+                latitude,
+                longitude,
+                radiusKm,
+                limit,
+                minDistanceKm
+              );
+          } catch {
+            candidates = [];
+          }
 
           const candidateNames =
             new Set(
               candidates.map(
                 (candidate) =>
                   normalizeCategory(
-                    candidate.name
+                    `${candidate.name} ${candidate.address || ""}`
                   )
               )
             );
 
-          if (
-            candidates.length <
-            limit
-          ) {
-            try {
-              const externalCandidates =
-                await fetchPuebliarCandidates(
-                  latitude,
-                  longitude,
-                  radiusKm,
-                  limit,
-                  minDistanceKm
-                );
-
-              for (const candidate of externalCandidates) {
-                const key =
-                  normalizeCategory(
-                    candidate.name
+          if (candidates.length < limit) {
+            const fallbackSeeds =
+              importMode ===
+              "puebliar"
+                ? getFallbackPuebliarCandidates(
+                    latitude,
+                    longitude,
+                    radiusKm,
+                    limit,
+                    minDistanceKm
+                  )
+                : await resolveImportedCandidates(
+                    getFallbackImportSeeds(
+                      importMode
+                    ),
+                    latitude,
+                    longitude,
+                    radiusKm,
+                    limit,
+                    minDistanceKm
                   );
 
-                if (
-                  candidateNames.has(
-                    key
-                  )
-                ) {
-                  continue;
-                }
-
-                candidates.push(
-                  candidate
+            for (const candidate of fallbackSeeds) {
+              const key =
+                normalizeCategory(
+                  `${candidate.name} ${candidate.address || ""}`
                 );
-                candidateNames.add(
+
+              if (
+                candidateNames.has(
                   key
-                );
-
-                if (
-                  candidates.length >=
-                  limit
-                ) {
-                  break;
-                }
+                )
+              ) {
+                continue;
               }
-            } catch {
-              // La importacion no debe bloquearse por fuentes externas.
+
+              candidates.push(
+                candidate
+              );
+              candidateNames.add(
+                key
+              );
+              usedFallback = true;
+
+              if (
+                candidates.length >=
+                limit
+              ) {
+                break;
+              }
             }
           }
 
@@ -5763,7 +6794,7 @@ const server =
               created,
               skipped,
               message:
-                "0 destinos importados. No hay lugares cercanos en la base inicial para esas coordenadas.",
+                `0 ${importConfig.label} importados. No hubo resultados cercanos para esas coordenadas.`,
             });
             return;
           }
@@ -5771,11 +6802,11 @@ const server =
           for (const candidate of candidates) {
             const key =
               normalizeCategory(
-                candidate.name
+                `${candidate.name} ${candidate.address || ""}`
               );
 
             if (
-              existingNames.has(key) ||
+              existingKeys.has(key) ||
               candidate.distanceKm <
                 minDistanceKm
             ) {
@@ -5792,14 +6823,32 @@ const server =
                 420
               );
             const siteType =
+              normalizeOpenSiteType(
+                candidate.siteType ||
+                  candidate.site_type
+              ) ||
               inferPuebliarSiteType(
                 candidate
               );
             const tags =
-              getPuebliarTagsForType(
-                siteType
+              cleanTags(
+                candidate.tags ||
+                  getPuebliarTagsForType(
+                    siteType
+                  )
               );
-            const address = "";
+            const address =
+              cleanLimitedText(
+                candidate.address ||
+                  "",
+                180
+              );
+            const city =
+              cleanLimitedText(
+                candidate.city ||
+                  importConfig.city,
+                120
+              );
 
             await pool.query(
               `
@@ -5826,7 +6875,7 @@ const server =
                 siteType,
                 description,
                 address,
-                "Puebliar",
+                city,
                 candidate.latitude,
                 candidate.longitude,
                 tags,
@@ -5837,7 +6886,7 @@ const server =
                   .username,
               ]
             );
-            existingNames.add(key);
+            existingKeys.add(key);
             created.push(
               candidate.name
             );
@@ -5855,7 +6904,7 @@ const server =
             created,
             skipped,
             message:
-              `${created.length} destinos importados como pausados para revision.` +
+              `${created.length} ${importConfig.label} importados como pausados para revision.` +
               (usedFallback
                 ? " Se uso respaldo inicial de Parchar para completar resultados."
                 : ""),

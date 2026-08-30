@@ -163,6 +163,10 @@ const importPuebliarButton =
   document.querySelector(
     "#import-puebliar-sites"
   );
+const importSiteButtons =
+  document.querySelectorAll(
+    "[data-import-sites]"
+  );
 
 const adminAlertStatus =
   document.querySelector(
@@ -1252,7 +1256,7 @@ async function editBusiness(id) {
   }
 
   const category = prompt(
-    "Categoria: restaurante, bar, bbb o romantico",
+    "Categoria: restaurante o bar",
     item?.category || "restaurante"
   );
   const normalizedCategory = String(
@@ -1275,7 +1279,7 @@ async function editBusiness(id) {
     )
   ) {
     alert(
-      "Categoria invalida. Usa restaurante, bar, bbb o romantico."
+      "Categoria invalida. Usa restaurante o bar."
     );
     return;
   }
@@ -1747,6 +1751,7 @@ function siteTypeLabel(value) {
     parada_ciclista: "Parada ciclista",
     parque: "Parque",
     pueblo: "Pueblo",
+    burgermaster: "BurgerMaster",
     naturaleza: "Naturaleza",
     ruta_pueblo: "Ruta a pueblo",
     ruta_moto: "Ruta a pueblo",
@@ -2200,11 +2205,34 @@ async function getPuebliarImportCoordinates() {
   }
 }
 
-async function importPuebliarSites() {
-  if (!importPuebliarButton) {
+async function importPuebliarSites(event) {
+  const button =
+    event?.currentTarget ||
+    importPuebliarButton;
+
+  if (!button) {
     return;
   }
 
+  const mode =
+    button.dataset.importSites ||
+    "puebliar";
+  const modeLabels = {
+    puebliar: "Puebliar",
+    charcos: "charcos",
+    miradores: "miradores",
+    burgermaster: "BurgerMaster",
+  };
+  const reviewHints = {
+    puebliar:
+      "Revisa los pausados, edita ferias/fiestas y activa los buenos.",
+    charcos:
+      "Revisa acceso, seguridad, coordenadas y activa solo los buenos.",
+    miradores:
+      "Revisa acceso, seguridad, coordenadas y activa solo los buenos.",
+    burgermaster:
+      "Revisa sedes, direccion, vigencia del evento y activa los buenos.",
+  };
   const coordinates =
     await getPuebliarImportCoordinates();
 
@@ -2218,19 +2246,19 @@ async function importPuebliarSites() {
   }
 
   const originalText =
-    importPuebliarButton.textContent;
-  importPuebliarButton.disabled = true;
-  importPuebliarButton.textContent =
+    button.textContent;
+  button.disabled = true;
+  button.textContent =
     "Importando...";
   setFeedback(
     siteMessage,
-    "Importando lugares cercanos desde la base inicial de Parchar..."
+    `Importando ${modeLabels[mode] || "lugares"} desde fuentes publicas y respaldo de Parchar...`
   );
 
   try {
     const response =
       await staffFetch(
-        "/api/admin/sites/puebliar/import",
+        "/api/admin/sites/import",
         {
           method: "POST",
           headers: {
@@ -2238,12 +2266,16 @@ async function importPuebliarSites() {
               "application/json",
           },
           body: JSON.stringify({
+            mode,
             latitude:
               coordinates.latitude,
             longitude:
               coordinates.longitude,
             radiusKm: 90,
-            minDistanceKm: 20,
+            minDistanceKm:
+              mode === "puebliar"
+                ? 20
+                : 0,
             limit: 12,
           }),
         }
@@ -2260,7 +2292,7 @@ async function importPuebliarSites() {
 
     setFeedback(
       siteMessage,
-      `${data.message || "Importacion lista"} Revisa los pausados, edita ferias/fiestas y activa los buenos.`
+      `${data.message || "Importacion lista"} ${reviewHints[mode] || reviewHints.puebliar}`
     );
     await loadSites();
   } catch (error) {
@@ -2270,8 +2302,8 @@ async function importPuebliarSites() {
       true
     );
   } finally {
-    importPuebliarButton.disabled = false;
-    importPuebliarButton.textContent =
+    button.disabled = false;
+    button.textContent =
       originalText;
   }
 }
@@ -4021,10 +4053,12 @@ refreshSitesButton?.addEventListener(
   loadSites
 );
 
-importPuebliarButton?.addEventListener(
-  "click",
-  importPuebliarSites
-);
+importSiteButtons.forEach((button) => {
+  button.addEventListener(
+    "click",
+    importPuebliarSites
+  );
+});
 
 adminSoundToggle?.addEventListener(
   "click",

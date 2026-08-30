@@ -21,6 +21,10 @@ const SITE_SEARCH_KEYWORDS = [
   "escapadas",
   "rio",
   "rios",
+  "burgermaster",
+  "burger master",
+  "hamburguesa",
+  "hamburguesas",
   "cascada",
   "cascadas",
   "naturaleza",
@@ -99,6 +103,18 @@ function redirectWithSearch(query) {
     /\b(bici|bicicleta|bicicletas|cicloruta|ciclorutas|ciclista|ciclistas)\b/.test(
       normalizedQuery
     );
+  const isBurgerMasterSearch =
+    /\b(burgermaster|burger master|hamburguesa|hamburguesas)\b/.test(
+      normalizedQuery
+    );
+  const isCharcoSearch =
+    /\b(charco|charcos|rio|rios|cascada|cascadas|quebrada|quebradas|salto|balneario)\b/.test(
+      normalizedQuery
+    );
+  const isMiradorSearch =
+    /\b(mirador|miradores|cerro|alto|vista|panoramica|panoramico)\b/.test(
+      normalizedQuery
+    );
   const isPuebliarSearch =
     /\b(pueblo|pueblos|puebliar|puebliando|escapada|escapadas|ruta|rutas|moto|motos|motero|motera|rodada|rodadas)\b/.test(
       normalizedQuery
@@ -109,6 +125,12 @@ function redirectWithSearch(query) {
   );
   if (isBikeSearch) {
     url.searchParams.set("mode", "bike");
+  } else if (isBurgerMasterSearch) {
+    url.searchParams.set("type", "burgermaster");
+  } else if (isCharcoSearch) {
+    url.searchParams.set("type", "charco");
+  } else if (isMiradorSearch) {
+    url.searchParams.set("type", "mirador");
   } else if (isPuebliarSearch) {
     url.searchParams.set("mode", "puebliar");
   }
@@ -127,8 +149,18 @@ function handleCategory(route) {
     return;
   }
 
-  if (route === "sitios") {
-    window.location.href = "/sites.html";
+  if (route === "sitios" || route === "charcos") {
+    window.location.href = "/sites.html?type=charco";
+    return;
+  }
+
+  if (route === "miradores") {
+    window.location.href = "/sites.html?type=mirador";
+    return;
+  }
+
+  if (route === "burgermaster") {
+    window.location.href = "/sites.html?type=burgermaster";
     return;
   }
 

@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
-    <link rel="stylesheet" href="/styles.css?v=86" />
+    <link rel="stylesheet" href="/styles.css?v=87" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -41,7 +41,9 @@
 
         <div id="home-menu-panel" class="quick-panel" hidden>
           <a href="/">Inicio</a>
-          <a href="/sites.html">Sitios</a>
+          <a href="/sites.html?type=charco">Charcos</a>
+          <a href="/sites.html?type=mirador">Miradores</a>
+          <a href="/sites.html?type=burgermaster">BurgerMaster</a>
           <a href="/clients.html">Clientes</a>
           <a href="/social.html">Muro</a>
           <button type="button" data-open-ad-request>Solicitar pauta</button>
@@ -135,11 +137,6 @@
           <span class="action-label">Bares</span>
         </button>
 
-        <button class="action-btn btn-bbb" data-route="bbb">
-          <span class="action-icon">&#127828;</span>
-          <span class="action-label">BBB</span>
-        </button>
-
         <button class="action-btn btn-walking" data-route="walking">
           <span class="action-icon">&#128694;</span>
           <span class="action-label">A pie</span>
@@ -155,14 +152,19 @@
           <span class="action-label">Puebliar</span>
         </button>
 
-        <button class="action-btn btn-sites" data-route="sitios">
-          <span class="action-icon">&#127966;</span>
-          <span class="action-label">Sitios</span>
+        <button class="action-btn btn-charcos" data-route="charcos">
+          <span class="action-icon">&#128167;</span>
+          <span class="action-label">Charcos</span>
         </button>
 
-        <button class="action-btn btn-romantico" data-route="romantico">
-          <span class="action-icon">&#127864;</span>
-          <span class="action-label">Romantico</span>
+        <button class="action-btn btn-miradores" data-route="miradores">
+          <span class="action-icon">&#127748;</span>
+          <span class="action-label">Miradores</span>
+        </button>
+
+        <button class="action-btn btn-burgermaster" data-route="burgermaster">
+          <span class="action-icon">&#127828;</span>
+          <span class="action-label">BurgerMaster</span>
         </button>
 
         <button class="action-btn btn-clientes" data-route="clientes">
@@ -179,22 +181,22 @@
         <div class="suggestion-grid">
           <a
             class="suggestion-card card-romance"
-            href="/places.html?category=romantico"
-            data-suggestion-route="romantico"
+            href="/sites.html?type=mirador"
+            data-suggestion-route="miradores"
           >
             <span class="tag-live">LIVE</span>
-            <h3>Plan romantico</h3>
-            <p>#Cena #Terraza #Vista</p>
+            <h3>Miradores</h3>
+            <p>#Vista #Atardecer #Ruta</p>
           </a>
 
           <a
             class="suggestion-card card-bbb"
-            href="/places.html?category=bbb"
-            data-suggestion-route="bbb"
+            href="/sites.html?type=burgermaster"
+            data-suggestion-route="burgermaster"
           >
             <span class="tag-live">HOT</span>
-            <h3>Comida BBB</h3>
-            <p>#Bueno #Bonito #Barato</p>
+            <h3>BurgerMaster</h3>
+            <p>#Hamburguesa #Evento #Ruta</p>
           </a>
 
           <a
@@ -215,8 +217,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=86"></script>
-    <script src="/update.js?v=85"></script>
-    <script src="/app.js?v=85"></script>
+    <script src="/ads.js?v=87"></script>
+    <script src="/update.js?v=87"></script>
+    <script src="/app.js?v=87"></script>
   </body>
 </html>

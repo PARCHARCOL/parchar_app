@@ -368,14 +368,17 @@ a {
   background: linear-gradient(155deg, #ff9f3e, #bc3d18 72%);
 }
 
+.btn-charcos,
 .btn-sites {
   background: linear-gradient(155deg, #84e4df, #255f68 74%);
 }
 
+.btn-miradores,
 .btn-romantico {
   background: linear-gradient(155deg, #ff71ca, #7c2798 72%);
 }
 
+.btn-burgermaster,
 .btn-bbb {
   background: linear-gradient(155deg, #ffcf59, #c94910 74%);
 }
@@ -1660,6 +1663,19 @@ textarea {
   margin-top: 3px;
   color: #fff8df;
   font-size: 1rem;
+}
+
+.admin-import-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-import-actions .submit-btn,
+.admin-import-actions .ghost-btn {
+  width: auto;
+  min-height: 40px;
+  padding: 8px 12px;
 }
 
 .request-actions {

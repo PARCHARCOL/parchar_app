@@ -7,6 +7,8 @@ const siteLocationStatus = document.querySelector("#site-location-status");
 const siteLocationButton = document.querySelector("#site-location-btn");
 const sitePageTitle = document.querySelector("#site-page-title");
 const sitePageSubtitle = document.querySelector("#site-page-subtitle");
+const siteNavIcon = document.querySelector("#site-nav-icon");
+const siteNavLabel = document.querySelector("#site-nav-label");
 
 const siteTypeLabels = {
   charco: "Charco",
@@ -15,6 +17,7 @@ const siteTypeLabels = {
   parada_ciclista: "Parada ciclista",
   parque: "Parque",
   pueblo: "Pueblo",
+  burgermaster: "BurgerMaster",
   naturaleza: "Naturaleza",
   ruta_pueblo: "Ruta a pueblo",
   ruta_moto: "Ruta a pueblo",
@@ -26,6 +29,7 @@ const defaultSiteFilters = [
   ["charco", "Charcos"],
   ["mirador", "Miradores"],
   ["pueblo", "Pueblos"],
+  ["burgermaster", "BurgerMaster"],
   ["naturaleza", "Naturaleza"],
 ];
 
@@ -123,6 +127,15 @@ function isPuebliarMode() {
   const params = new URLSearchParams(window.location.search);
   const mode = normalizeText(params.get("mode"));
   return mode === "puebliar" || mode === "moto";
+}
+
+function getRequestedSiteType() {
+  const params = new URLSearchParams(window.location.search);
+  const type = normalizeText(
+    params.get("type") || params.get("tipo") || params.get("filter")
+  );
+
+  return siteTypeLabels[type] ? type : "";
 }
 
 function escapeHtml(value) {
@@ -682,8 +695,19 @@ function renderFilterButtons() {
 }
 
 function setupPageMode() {
+  const setModeNav = (icon, label) => {
+    if (siteNavIcon) {
+      siteNavIcon.textContent = icon;
+    }
+
+    if (siteNavLabel) {
+      siteNavLabel.textContent = label;
+    }
+  };
+
   if (isPuebliarMode()) {
     document.title = "Puebliar | Parchar";
+    setModeNav("\u{1f3d8}\ufe0f", "Puebliar");
 
     if (sitePageTitle) {
       sitePageTitle.textContent =
@@ -707,29 +731,88 @@ function setupPageMode() {
     return;
   }
 
-  if (!isBikeMode()) {
+  if (isBikeMode()) {
+    document.title = "En bici | Parchar";
+    setModeNav("\u{1f6b2}", "En bici");
+
+    if (sitePageTitle) {
+      sitePageTitle.textContent = "En bici";
+    }
+
+    if (sitePageSubtitle) {
+      sitePageSubtitle.textContent =
+        "Ciclorutas, rutas urbanas, miradores y paradas utiles para pedalear cerca de ti.";
+    }
+
+    if (siteSearchInput) {
+      siteSearchInput.placeholder =
+        "Buscar cicloruta, ruta o parada";
+    }
+
+    if (siteLocationStatus) {
+      siteLocationStatus.textContent =
+        "Permite ubicacion para ordenar rutas en bici por cercania.";
+    }
     return;
   }
 
-  document.title = "En bici | Parchar";
+  const requestedType = getRequestedSiteType();
+
+  if (!requestedType) {
+    return;
+  }
+
+  const modeCopy = {
+    charco: {
+      title: "Charcos",
+      icon: "\u{1f4a7}",
+      subtitle:
+        "Charcos, rios, cascadas y planes de agua ordenados por cercania.",
+      placeholder: "Buscar charco, rio o cascada",
+      status:
+        "Permite ubicacion para ordenar charcos cercanos.",
+    },
+    mirador: {
+      title: "Miradores",
+      icon: "\u{1f304}",
+      subtitle:
+        "Miradores, cerros y puntos con buena vista cerca de ti.",
+      placeholder: "Buscar mirador, cerro o vista",
+      status:
+        "Permite ubicacion para ordenar miradores cercanos.",
+    },
+    burgermaster: {
+      title: "BurgerMaster",
+      icon: "\u{1f354}",
+      subtitle:
+        "Restaurantes participantes y rutas para ir por hamburguesas cerca de ti.",
+      placeholder: "Buscar restaurante BurgerMaster",
+      status:
+        "Permite ubicacion para ordenar restaurantes BurgerMaster por cercania.",
+    },
+  }[requestedType];
+
+  if (!modeCopy) {
+    return;
+  }
+
+  document.title = `${modeCopy.title} | Parchar`;
+  setModeNav(modeCopy.icon, modeCopy.title);
 
   if (sitePageTitle) {
-    sitePageTitle.textContent = "En bici";
+    sitePageTitle.textContent = modeCopy.title;
   }
 
   if (sitePageSubtitle) {
-    sitePageSubtitle.textContent =
-      "Ciclorutas, rutas urbanas, miradores y paradas utiles para pedalear cerca de ti.";
+    sitePageSubtitle.textContent = modeCopy.subtitle;
   }
 
   if (siteSearchInput) {
-    siteSearchInput.placeholder =
-      "Buscar cicloruta, ruta o parada";
+    siteSearchInput.placeholder = modeCopy.placeholder;
   }
 
   if (siteLocationStatus) {
-    siteLocationStatus.textContent =
-      "Permite ubicacion para ordenar rutas en bici por cercania.";
+    siteLocationStatus.textContent = modeCopy.status;
   }
 }
 
@@ -889,8 +972,26 @@ function getPublicSiteDescription(site) {
     )
     .trim();
 
+  if (description) {
+    return description;
+  }
+
+  const type =
+    site.siteType || site.site_type || "";
+
+  if (type === "burgermaster") {
+    return "Restaurante participante en BurgerMaster. Revisa horario, disponibilidad y ruta antes de ir.";
+  }
+
+  if (type === "charco") {
+    return "Lugar de agua para visitar. Revisa acceso, clima y seguridad antes de salir.";
+  }
+
+  if (type === "mirador") {
+    return "Mirador o punto panoramico cercano. Revisa acceso, clima y ruta antes de salir.";
+  }
+
   return (
-    description ||
     "Destino cercano para puebliar. Revisa distancia y ruta antes de salir."
   );
 }
@@ -1037,11 +1138,23 @@ function renderSites() {
       ? "Aun no hay rutas en bici cargadas."
       : isPuebliarMode()
       ? "Aun no hay pueblos o rutas cargadas."
+      : activeFilter === "charco"
+      ? "Aun no hay charcos cargados."
+      : activeFilter === "mirador"
+      ? "Aun no hay miradores cargados."
+      : activeFilter === "burgermaster"
+      ? "Aun no hay restaurantes BurgerMaster cargados."
       : "No encontramos sitios con ese filtro.";
     const message = isBikeMode()
       ? "Desde admin carga ciclorutas, rutas en bici, paradas ciclistas o sitios con etiqueta bici."
       : isPuebliarMode()
       ? "Desde admin carga pueblos, miradores o rutas a pueblos cercanos."
+      : activeFilter === "charco"
+      ? "Desde admin importa o crea charcos; quedaran pausados hasta que un asesor los revise."
+      : activeFilter === "mirador"
+      ? "Desde admin importa o crea miradores; quedaran pausados hasta que un asesor los revise."
+      : activeFilter === "burgermaster"
+      ? "Desde admin importa BurgerMaster; los participantes quedan pausados para revision antes de mostrarse."
       : "Prueba con charco, mirador, pueblo, rio, cascada o naturaleza.";
 
     siteResultsEl.innerHTML = `

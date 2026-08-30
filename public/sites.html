@@ -3,20 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Sitios | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=86" />
+    <title>Charcos | Parchar</title>
+    <link rel="stylesheet" href="/styles.css?v=87" />
   </head>
   <body class="theme-body list-body">
     <div class="ambient-glow"></div>
     <main class="app-shell">
       <header class="top-strip inner-top">
         <a class="icon-ghost icon-link" href="/" aria-label="Volver">&#8592;</a>
-        <h1 id="site-page-title">Sitios</h1>
+        <h1 id="site-page-title">Charcos</h1>
         <a class="icon-ghost icon-link" href="/social.html" aria-label="Muro">&#128172;</a>
       </header>
 
       <p id="site-page-subtitle" class="subtitle">
-        Charcos, miradores, pueblos y planes abiertos. No son locales comerciales.
+        Charcos, miradores, pueblos, rutas y eventos para ordenar por cercania.
       </p>
 
       <form id="site-search-form" class="search-bar compact-search" role="search">
@@ -27,7 +27,7 @@
           id="site-search"
           type="search"
           name="q"
-          placeholder="Buscar charco, pueblo o mirador"
+          placeholder="Buscar charco, mirador, pueblo o evento"
           autocomplete="off"
         />
       </form>
@@ -44,6 +44,9 @@
         </button>
         <button type="button" class="chip-filter site-filter" data-site-filter="pueblo">
           Pueblos
+        </button>
+        <button type="button" class="chip-filter site-filter" data-site-filter="burgermaster">
+          BurgerMaster
         </button>
         <button type="button" class="chip-filter site-filter" data-site-filter="naturaleza">
           Naturaleza
@@ -66,9 +69,9 @@
           <span>&#128205;</span>
           <strong>Inicio</strong>
         </a>
-        <a class="nav-item active" href="/sites.html">
-          <span>&#127966;</span>
-          <strong>Sitios</strong>
+        <a class="nav-item active" href="/sites.html?type=charco">
+          <span id="site-nav-icon">&#128167;</span>
+          <strong id="site-nav-label">Charcos</strong>
         </a>
         <button type="button" class="nav-item nav-button" data-open-ad-request>
           <span>&#128227;</span>
@@ -87,8 +90,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=86"></script>
-    <script src="/update.js?v=85"></script>
-    <script src="/sites.js?v=85"></script>
+    <script src="/ads.js?v=87"></script>
+    <script src="/update.js?v=87"></script>
+    <script src="/sites.js?v=87"></script>
   </body>
 </html>

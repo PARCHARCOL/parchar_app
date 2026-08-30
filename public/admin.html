@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=86"
+      href="/styles.css?v=87"
     />
 
   </head>
@@ -493,11 +493,11 @@
       >
 
         <h2>
-          Sitios, Puebliar y rutas en bici
+          Lugares, Puebliar y eventos
         </h2>
 
         <p>
-          Aqui se sube la informacion que alimenta los botones Sitios, Puebliar y En bici: charcos, miradores, pueblos, rutas a pueblos, ciclorutas, parques y paradas ciclistas.
+          Aqui se sube la informacion que alimenta los botones Charcos, Miradores, Puebliar, BurgerMaster y En bici: lugares naturales, pueblos, rutas, restaurantes de evento, ciclorutas y paradas ciclistas.
         </p>
 
         <form
@@ -549,6 +549,9 @@
               </option>
               <option value="pueblo">
                 Pueblo
+              </option>
+              <option value="burgermaster">
+                BurgerMaster
               </option>
               <option value="naturaleza">
                 Naturaleza
@@ -678,13 +681,37 @@
             Sitios cargados
           </h3>
 
-          <button
-            id="import-puebliar-sites"
-            type="button"
-            class="submit-btn"
-          >
-            Importar lugares cercanos
-          </button>
+          <div class="admin-import-actions">
+            <button
+              id="import-puebliar-sites"
+              type="button"
+              class="submit-btn"
+              data-import-sites="puebliar"
+            >
+              Importar Puebliar
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="charcos"
+            >
+              Importar charcos
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="miradores"
+            >
+              Importar miradores
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="burgermaster"
+            >
+              Importar BurgerMaster
+            </button>
+          </div>
 
           <button
             id="refresh-admin-sites"
@@ -1082,8 +1109,8 @@
 
     </main>
 
-    <script src="/update.js?v=85"></script>
-    <script src="/admin.js?v=85"></script>
+    <script src="/update.js?v=87"></script>
+    <script src="/admin.js?v=87"></script>
 
   </body>
 </html>
