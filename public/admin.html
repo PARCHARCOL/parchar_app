@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=87"
+      href="/styles.css?v=88"
     />
 
   </head>
@@ -247,6 +247,14 @@
           <button
             type="button"
             class="admin-section-tab admin-only"
+            data-admin-section-tab="brand"
+          >
+            Marca
+          </button>
+
+          <button
+            type="button"
+            class="admin-section-tab admin-only"
             data-admin-section-tab="staff"
           >
             Asesores
@@ -260,6 +268,108 @@
             Mi acceso
           </button>
         </nav>
+
+      <section
+        id="admin-brand-section"
+        class="form-block glass-card admin-section-panel is-hidden admin-only"
+        data-admin-section-panel="brand"
+      >
+
+        <h2>
+          Marca de la app
+        </h2>
+
+        <p>
+          Cambia el logo que ve el usuario en inicio, carga y QR. El icono instalable usa imagen porque Android y el navegador no aceptan video como icono de app.
+        </p>
+
+        <form
+          id="admin-brand-form"
+          class="form-grid"
+          enctype="multipart/form-data"
+        >
+          <div class="brand-preview-box full-row">
+            <strong>
+              Logo de inicio actual
+            </strong>
+            <div
+              id="admin-brand-home-preview"
+              class="brand-preview-media"
+            ></div>
+          </div>
+
+          <label class="full-row">
+            Logo de inicio
+            <input
+              name="homeLogo"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime"
+            />
+            <span class="field-hint">
+              Acepta JPG, PNG, WEBP, GIF, MP4, WEBM o MOV. Recomendado: horizontal o cuadrado, maximo 25 MB.
+            </span>
+          </label>
+
+          <label class="full-row legal-check">
+            <input
+              name="clearHomeLogo"
+              type="checkbox"
+            />
+            Restaurar logo de inicio original
+          </label>
+
+          <div class="brand-preview-box full-row">
+            <strong>
+              Icono instalable actual
+            </strong>
+            <div
+              id="admin-brand-icon-preview"
+              class="brand-preview-media brand-icon-preview"
+            ></div>
+          </div>
+
+          <label class="full-row">
+            Icono de la app instalada
+            <input
+              name="appIcon"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+            />
+            <span class="field-hint">
+              Solo imagen: JPG, PNG, WEBP o GIF. Para mejor resultado usa PNG cuadrado 512 x 512.
+            </span>
+          </label>
+
+          <label class="full-row legal-check">
+            <input
+              name="clearAppIcon"
+              type="checkbox"
+            />
+            Restaurar icono original de la app
+          </label>
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Guardar marca
+          </button>
+
+          <button
+            id="refresh-admin-brand"
+            type="button"
+            class="ghost-btn"
+          >
+            Actualizar marca
+          </button>
+        </form>
+
+        <p
+          id="admin-brand-message"
+          class="feedback"
+        ></p>
+
+      </section>
 
       <section
         id="staff-access-section"
@@ -500,6 +610,46 @@
           Aqui se sube la informacion que alimenta los botones Charcos, Miradores, Puebliar, BurgerMaster y En bici: lugares naturales, pueblos, rutas, restaurantes de evento, ciclorutas y paradas ciclistas.
         </p>
 
+        <div class="admin-import-panel">
+          <strong>
+            Carga automatica
+          </strong>
+          <p>
+            Importa datos cercanos y dejalos pausados para revision antes de mostrarlos al usuario.
+          </p>
+          <div class="admin-import-actions">
+            <button
+              id="import-puebliar-sites"
+              type="button"
+              class="submit-btn"
+              data-import-sites="puebliar"
+            >
+              Importar Puebliar
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="charcos"
+            >
+              Importar charcos
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="miradores"
+            >
+              Importar miradores
+            </button>
+            <button
+              type="button"
+              class="ghost-btn"
+              data-import-sites="burgermaster"
+            >
+              Importar BurgerMaster
+            </button>
+          </div>
+        </div>
+
         <form
           id="admin-site-form"
           class="form-grid"
@@ -680,38 +830,6 @@
           <h3>
             Sitios cargados
           </h3>
-
-          <div class="admin-import-actions">
-            <button
-              id="import-puebliar-sites"
-              type="button"
-              class="submit-btn"
-              data-import-sites="puebliar"
-            >
-              Importar Puebliar
-            </button>
-            <button
-              type="button"
-              class="ghost-btn"
-              data-import-sites="charcos"
-            >
-              Importar charcos
-            </button>
-            <button
-              type="button"
-              class="ghost-btn"
-              data-import-sites="miradores"
-            >
-              Importar miradores
-            </button>
-            <button
-              type="button"
-              class="ghost-btn"
-              data-import-sites="burgermaster"
-            >
-              Importar BurgerMaster
-            </button>
-          </div>
 
           <button
             id="refresh-admin-sites"
@@ -1109,8 +1227,8 @@
 
     </main>
 
-    <script src="/update.js?v=87"></script>
-    <script src="/admin.js?v=87"></script>
+    <script src="/update.js?v=88"></script>
+    <script src="/admin.js?v=88"></script>
 
   </body>
 </html>

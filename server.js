@@ -303,6 +303,20 @@ const ALLOWED_AD_IMAGE_TYPES =
     "image/webp",
     "image/gif",
   ]);
+const BRAND_LOGO_MAX_BYTES =
+  25 * 1024 * 1024;
+const BRAND_ICON_MAX_BYTES =
+  10 * 1024 * 1024;
+const ALLOWED_BRAND_LOGO_TYPES =
+  ALLOWED_AD_MEDIA_TYPES;
+const ALLOWED_BRAND_ICON_TYPES =
+  ALLOWED_AD_IMAGE_TYPES;
+const DEFAULT_BRAND_HOME_LOGO_PATH =
+  "/assets/parchar-logo.png";
+const DEFAULT_BRAND_APP_ICON_PATH =
+  "/assets/icons/icon-512.png";
+const DEFAULT_BRAND_APPLE_ICON_PATH =
+  "/assets/icons/apple-touch-icon-180.png";
 const AD_TEMPLATE_STYLES =
   new Set([
     "spotlight",
@@ -634,6 +648,77 @@ function normalizeAdBanner(row) {
     updatedAt:
       row?.updated_at || null,
   };
+}
+
+function mimeFromPath(value) {
+  const raw = cleanText(value);
+  let pathname = raw;
+
+  if (/^https?:\/\//i.test(raw)) {
+    try {
+      pathname = new URL(raw).pathname;
+    } catch {
+      pathname = raw;
+    }
+  }
+
+  const ext = path
+    .extname(pathname)
+    .toLowerCase();
+  const type =
+    MIME_TYPES[ext] || "";
+
+  return type.split(";")[0] || "";
+}
+
+function normalizeBrandSettings(row) {
+  const homeLogoPath =
+    row?.home_logo_path ||
+    DEFAULT_BRAND_HOME_LOGO_PATH;
+  const appIconPath =
+    row?.app_icon_path ||
+    DEFAULT_BRAND_APP_ICON_PATH;
+  const appIconUrl =
+    row?.app_icon_path
+      ? "/api/brand/app-icon"
+      : DEFAULT_BRAND_APP_ICON_PATH;
+
+  return {
+    homeLogoPath,
+    homeLogoType:
+      row?.home_logo_type ||
+      mimeFromPath(homeLogoPath) ||
+      "image/png",
+    homeLogoIsCustom:
+      Boolean(row?.home_logo_path),
+    appIconPath,
+    appIconUrl,
+    appIconType:
+      row?.app_icon_type ||
+      mimeFromPath(appIconPath) ||
+      "image/png",
+    appIconIsCustom:
+      Boolean(row?.app_icon_path),
+    appleTouchIconUrl:
+      row?.app_icon_path
+        ? "/api/brand/app-icon"
+        : DEFAULT_BRAND_APPLE_ICON_PATH,
+    updatedAt:
+      row?.updated_at || null,
+  };
+}
+
+async function getBrandSettings() {
+  const result = await pool.query(`
+    SELECT *
+    FROM brand_settings
+    WHERE id = 1
+    LIMIT 1
+  `);
+
+  return normalizeBrandSettings(
+    result.rows[0]
+  );
 }
 
 function parseDateOnly(value) {
@@ -1344,7 +1429,8 @@ function sendJson(
 
 function sendFile(
   res,
-  absolutePath
+  absolutePath,
+  extraHeaders = {}
 ) {
   if (
     !absolutePath ||
@@ -1369,6 +1455,7 @@ function sendFile(
 
   const headers = {
     "Content-Type": contentType,
+    ...extraHeaders,
   };
 
   if (
@@ -1392,6 +1479,159 @@ function sendFile(
   fs.createReadStream(
     absolutePath
   ).pipe(res);
+}
+
+function sendManifestJson(
+  res,
+  brand
+) {
+  const iconSrc =
+    brand.appIconIsCustom
+      ? "/api/brand/app-icon"
+      : DEFAULT_BRAND_APP_ICON_PATH;
+  const iconType =
+    brand.appIconType ||
+    "image/png";
+  const manifest = {
+    name: "Parchar",
+    short_name: "Parchar",
+    description:
+      "Descubre lugares cercanos y comparte planes recomendados.",
+    id: "/",
+    start_url:
+      "/index.html?source=pwa",
+    scope: "/",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#140228",
+    theme_color: "#3d146d",
+    lang: "es-CO",
+    categories: [
+      "travel",
+      "food",
+      "lifestyle",
+    ],
+    prefer_related_applications: false,
+    icons: [
+      {
+        src: iconSrc,
+        sizes: "192x192",
+        type: iconType,
+        purpose: "any",
+      },
+      {
+        src: iconSrc,
+        sizes: "512x512",
+        type: iconType,
+        purpose: "any",
+      },
+      {
+        src: iconSrc,
+        sizes: "192x192",
+        type: iconType,
+        purpose: "maskable",
+      },
+      {
+        src: iconSrc,
+        sizes: "512x512",
+        type: iconType,
+        purpose: "maskable",
+      },
+    ],
+  };
+  const body = JSON.stringify(
+    manifest,
+    null,
+    2
+  );
+
+  res.writeHead(200, {
+    "Content-Type":
+      "application/manifest+json; charset=utf-8",
+    "Cache-Control":
+      "no-store, no-cache, must-revalidate",
+    "Content-Length":
+      Buffer.byteLength(body),
+  });
+  res.end(body);
+}
+
+function resolveLocalAssetPath(
+  assetPath,
+  fallbackPath
+) {
+  const raw =
+    cleanText(assetPath) ||
+    fallbackPath;
+
+  if (/^https?:\/\//i.test(raw)) {
+    return raw;
+  }
+
+  const pathname =
+    raw.startsWith("/")
+      ? raw
+      : fallbackPath;
+
+  if (
+    pathname.startsWith("/uploads/")
+  ) {
+    const relativeUploadPath =
+      decodeURIComponent(
+        pathname.replace(
+          /^\/uploads\//,
+          ""
+        )
+      );
+    const uploadPath =
+      path.resolve(
+        UPLOADS_DIR,
+        relativeUploadPath
+      );
+
+    if (
+      uploadPath !== UPLOADS_DIR &&
+      uploadPath.startsWith(
+        `${UPLOADS_DIR}${path.sep}`
+      )
+    ) {
+      return uploadPath;
+    }
+
+    return readPublicPath(
+      fallbackPath
+    );
+  }
+
+  return readPublicPath(pathname);
+}
+
+async function sendBrandAppIcon(res) {
+  const brand =
+    await getBrandSettings();
+  const resolved =
+    resolveLocalAssetPath(
+      brand.appIconPath,
+      DEFAULT_BRAND_APP_ICON_PATH
+    );
+
+  if (
+    typeof resolved === "string" &&
+    /^https?:\/\//i.test(resolved)
+  ) {
+    res.writeHead(302, {
+      Location: resolved,
+      "Cache-Control":
+        "no-store, no-cache, must-revalidate",
+    });
+    res.end();
+    return;
+  }
+
+  sendFile(res, resolved, {
+    "Cache-Control":
+      "no-store, no-cache, must-revalidate",
+  });
 }
 
 function safeDownloadFilename(
@@ -1534,6 +1774,68 @@ function extensionFromMime(
 
   return (
     known[mimetype] || ""
+  );
+}
+
+function mimeFromExtension(ext) {
+  const extension =
+    cleanText(ext).toLowerCase();
+  const known = {
+    ".gif": "image/gif",
+    ".jpeg": "image/jpeg",
+    ".jpg": "image/jpeg",
+    ".png": "image/png",
+    ".webp": "image/webp",
+    ".mp4": "video/mp4",
+    ".mov": "video/quicktime",
+    ".webm": "video/webm",
+  };
+
+  return known[extension] || "";
+}
+
+function getUploadMime(file) {
+  if (!file) {
+    return "";
+  }
+
+  const mimetype =
+    cleanText(file.mimetype)
+      .toLowerCase();
+  const extensionMime =
+    mimeFromExtension(
+      path.extname(
+        file.originalname || ""
+      )
+    );
+
+  if (
+    !mimetype ||
+    mimetype ===
+      "application/octet-stream"
+  ) {
+    return extensionMime;
+  }
+
+  return mimetype;
+}
+
+function hasAllowedUploadType(
+  file,
+  allowedTypes
+) {
+  const mimetype =
+    getUploadMime(file);
+  const extensionMime =
+    mimeFromExtension(
+      path.extname(
+        file?.originalname || ""
+      )
+    );
+
+  return (
+    allowedTypes.has(mimetype) ||
+    allowedTypes.has(extensionMime)
   );
 }
 
@@ -4126,6 +4428,40 @@ async function ensureDefaultAdBanner() {
   );
 }
 
+async function ensureDefaultBrandSettings() {
+  const existing =
+    await pool.query(`
+      SELECT id
+      FROM brand_settings
+      WHERE id = 1
+      LIMIT 1
+    `);
+
+  if (existing.rows.length) {
+    return;
+  }
+
+  await pool.query(
+    `
+    INSERT INTO brand_settings (
+      id,
+      home_logo_path,
+      home_logo_type,
+      app_icon_path,
+      app_icon_type
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      1,
+      "",
+      "",
+      "",
+      "",
+    ]
+  );
+}
+
 async function normalizeDefaultAdBannerState() {
   await pool.query(`
     UPDATE ad_banner_settings
@@ -4225,6 +4561,17 @@ async function initializeSqliteDatabase() {
       media_path TEXT,
       media_type TEXT,
       target_url TEXT,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS brand_settings (
+      id INTEGER PRIMARY KEY,
+      home_logo_path TEXT,
+      home_logo_type TEXT,
+      app_icon_path TEXT,
+      app_icon_type TEXT,
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -4422,6 +4769,26 @@ async function initializeSqliteDatabase() {
     "TEXT"
   );
   await ensureSqliteColumn(
+    "brand_settings",
+    "home_logo_path",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "brand_settings",
+    "home_logo_type",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "brand_settings",
+    "app_icon_path",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "brand_settings",
+    "app_icon_type",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
     "ad_campaigns",
     "creative_type",
     "TEXT DEFAULT 'media'"
@@ -4461,6 +4828,7 @@ async function initializeSqliteDatabase() {
   await normalizeSqliteClientPhones();
   await ensureStaffAccounts();
   await ensureDefaultAdBanner();
+  await ensureDefaultBrandSettings();
   await normalizeDefaultAdBannerState();
 
   await pool.query(`
@@ -4582,6 +4950,17 @@ async function initializeDatabase() {
       media_path TEXT,
       media_type TEXT,
       target_url TEXT,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS brand_settings (
+      id INTEGER PRIMARY KEY,
+      home_logo_path TEXT,
+      home_logo_type TEXT,
+      app_icon_path TEXT,
+      app_icon_type TEXT,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -4718,6 +5097,15 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    ALTER TABLE brand_settings
+    ADD COLUMN IF NOT EXISTS home_logo_path TEXT,
+    ADD COLUMN IF NOT EXISTS home_logo_type TEXT,
+    ADD COLUMN IF NOT EXISTS app_icon_path TEXT,
+    ADD COLUMN IF NOT EXISTS app_icon_type TEXT,
+    ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+  `);
+
+  await pool.query(`
     ALTER TABLE ad_campaigns
     ADD COLUMN IF NOT EXISTS creative_type TEXT DEFAULT 'media',
     ADD COLUMN IF NOT EXISTS template_style TEXT,
@@ -4781,6 +5169,7 @@ async function initializeDatabase() {
 
   await ensureStaffAccounts();
   await ensureDefaultAdBanner();
+  await ensureDefaultBrandSettings();
   await normalizeDefaultAdBannerState();
 
   console.log(
@@ -4884,6 +5273,39 @@ const server =
                 "Clima no disponible en este momento.",
             });
           }
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/brand" &&
+          req.method === "GET"
+        ) {
+          sendJson(res, 200, {
+            brand:
+              await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/manifest.webmanifest" &&
+          req.method === "GET"
+        ) {
+          sendManifestJson(
+            res,
+            await getBrandSettings()
+          );
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/brand/app-icon" &&
+          req.method === "GET"
+        ) {
+          await sendBrandAppIcon(res);
           return;
         }
 
@@ -8188,6 +8610,228 @@ const server =
 
           sendJson(res, 200, {
             ok: true,
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/brand" &&
+          req.method === "GET"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          sendJson(res, 200, {
+            brand:
+              await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/admin/brand" &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          await runMiddleware(
+            req,
+            res,
+            upload.fields([
+              {
+                name: "homeLogo",
+                maxCount: 1,
+              },
+              {
+                name: "appIcon",
+                maxCount: 1,
+              },
+            ])
+          );
+
+          const body = req.body || {};
+          const files =
+            req.files || {};
+          const current =
+            await getBrandSettings();
+          let homeLogoPath =
+            current.homeLogoIsCustom
+              ? current.homeLogoPath
+              : "";
+          let homeLogoType =
+            current.homeLogoIsCustom
+              ? current.homeLogoType
+              : "";
+          let appIconPath =
+            current.appIconIsCustom
+              ? current.appIconPath
+              : "";
+          let appIconType =
+            current.appIconIsCustom
+              ? current.appIconType
+              : "";
+
+          if (
+            parseBooleanFlag(
+              body.clearHomeLogo
+            )
+          ) {
+            homeLogoPath = "";
+            homeLogoType = "";
+          }
+
+          if (
+            parseBooleanFlag(
+              body.clearAppIcon
+            )
+          ) {
+            appIconPath = "";
+            appIconType = "";
+          }
+
+          const homeLogoFile =
+            files.homeLogo?.[0] ||
+            null;
+          const appIconFile =
+            files.appIcon?.[0] ||
+            null;
+
+          if (homeLogoFile) {
+            const detectedMime =
+              getUploadMime(
+                homeLogoFile
+              );
+
+            if (
+              !hasAllowedUploadType(
+                homeLogoFile,
+                ALLOWED_BRAND_LOGO_TYPES
+              )
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El logo de inicio debe ser JPG, PNG, WEBP, GIF, MP4, WEBM o MOV.",
+              });
+              return;
+            }
+
+            if (
+              homeLogoFile.size >
+              BRAND_LOGO_MAX_BYTES
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El logo de inicio no debe superar 25 MB.",
+              });
+              return;
+            }
+
+            homeLogoFile.mimetype =
+              detectedMime ||
+              homeLogoFile.mimetype;
+            const uploadedLogo =
+              await uploadFileToStorage(
+                homeLogoFile,
+                {
+                  resource_type: "auto",
+                  folder:
+                    "parchar/brand",
+                }
+              );
+            homeLogoPath =
+              uploadedLogo.secure_url;
+            homeLogoType =
+              detectedMime;
+          }
+
+          if (appIconFile) {
+            const detectedMime =
+              getUploadMime(
+                appIconFile
+              );
+
+            if (
+              !hasAllowedUploadType(
+                appIconFile,
+                ALLOWED_BRAND_ICON_TYPES
+              )
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El icono instalable de la app debe ser imagen JPG, PNG, WEBP o GIF. No puede ser video MP4.",
+              });
+              return;
+            }
+
+            if (
+              appIconFile.size >
+              BRAND_ICON_MAX_BYTES
+            ) {
+              sendJson(res, 400, {
+                error:
+                  "El icono de la app no debe superar 10 MB.",
+              });
+              return;
+            }
+
+            appIconFile.mimetype =
+              detectedMime ||
+              appIconFile.mimetype;
+            const uploadedIcon =
+              await uploadFileToStorage(
+                appIconFile,
+                {
+                  resource_type: "auto",
+                  folder:
+                    "parchar/brand",
+                }
+              );
+            appIconPath =
+              uploadedIcon.secure_url;
+            appIconType =
+              detectedMime;
+          }
+
+          await pool.query(
+            `
+            UPDATE brand_settings
+            SET
+              home_logo_path = $1,
+              home_logo_type = $2,
+              app_icon_path = $3,
+              app_icon_type = $4,
+              updated_at = NOW()
+            WHERE id = 1
+            `,
+            [
+              homeLogoPath,
+              homeLogoType,
+              appIconPath,
+              appIconType,
+            ]
+          );
+
+          sendJson(res, 200, {
+            ok: true,
+            brand:
+              await getBrandSettings(),
           });
           return;
         }

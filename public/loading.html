@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon-180.png" />
+    <link rel="apple-touch-icon" href="/api/brand/app-icon" />
     <title>Parchar | Cargando</title>
     <style>
       :root {
@@ -57,7 +57,8 @@
         box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
       }
 
-      .logo-wrap img {
+      .logo-wrap img,
+      .logo-wrap video {
         width: 100%;
         display: block;
         animation: glowPulse 2.4s ease-in-out infinite;
@@ -131,6 +132,7 @@
 
       @media (prefers-reduced-motion: reduce) {
         .logo-wrap img,
+        .logo-wrap video,
         .road::before {
           animation: none;
         }
@@ -141,7 +143,7 @@
   <body>
     <main class="splash">
       <div class="logo-wrap">
-        <img src="/assets/parchar-logo.png" alt="Parchar" />
+        <img data-brand-logo src="/assets/parchar-logo.png" alt="Parchar" />
       </div>
 
       <h1>Parchar</h1>
@@ -153,6 +155,7 @@
       <p class="tiny" id="status-extra">Primera carga puede tardar unos segundos.</p>
     </main>
 
+    <script src="/brand.js?v=88"></script>
     <script>
       const statusText = document.querySelector("#status-text");
       const statusExtra = document.querySelector("#status-extra");

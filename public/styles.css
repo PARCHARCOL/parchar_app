@@ -118,7 +118,12 @@ a {
   width: min(238px, 62vw);
   display: block;
   border-radius: var(--radius-sm);
+  object-fit: contain;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+video.brand-logo {
+  background: rgba(7, 1, 18, 0.62);
 }
 
 .icon-ghost {
@@ -1475,7 +1480,7 @@ textarea {
   top: 8px;
   z-index: 9;
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
   gap: 8px;
   border-radius: 16px;
   border: 1px solid rgba(190, 137, 255, 0.28);
@@ -1594,6 +1599,63 @@ textarea {
   font-size: 0.82rem;
   font-weight: 600;
   line-height: 1.35;
+}
+
+.admin-import-panel {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 190, 106, 0.42);
+  background: rgba(255, 142, 45, 0.13);
+  padding: 12px;
+  margin: 12px 0 16px;
+}
+
+.admin-import-panel strong {
+  display: block;
+  color: #ffe1a8;
+  margin-bottom: 4px;
+}
+
+.admin-import-panel p {
+  margin: 0 0 10px;
+  color: #f3e4ff;
+  font-size: 0.88rem;
+}
+
+.brand-preview-box {
+  display: grid;
+  gap: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(190, 137, 255, 0.28);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+}
+
+.brand-preview-box strong {
+  color: #ffe1a8;
+}
+
+.brand-preview-media {
+  display: grid;
+  min-height: 110px;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  background: rgba(8, 1, 20, 0.42);
+  overflow: hidden;
+  color: #dbc4ff;
+  font-weight: 800;
+}
+
+.brand-preview-media img,
+.brand-preview-media video {
+  width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.brand-icon-preview {
+  width: min(180px, 100%);
+  aspect-ratio: 1;
 }
 
 .ad-preview img,

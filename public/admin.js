@@ -63,6 +63,26 @@ const refreshStaffUsersButton =
   document.querySelector(
     "#refresh-staff-users"
   );
+const brandForm =
+  document.querySelector(
+    "#admin-brand-form"
+  );
+const brandMessage =
+  document.querySelector(
+    "#admin-brand-message"
+  );
+const brandHomePreview =
+  document.querySelector(
+    "#admin-brand-home-preview"
+  );
+const brandIconPreview =
+  document.querySelector(
+    "#admin-brand-icon-preview"
+  );
+const refreshBrandButton =
+  document.querySelector(
+    "#refresh-admin-brand"
+  );
 
 const tabs = document.querySelectorAll(
   ".admin-tab"
@@ -257,6 +277,41 @@ function isTemplateCampaign(item) {
   return (
     item?.creativeType === "template"
   );
+}
+
+function isVideoMedia(path, type) {
+  const value = String(
+    `${type || ""} ${path || ""}`
+  ).toLowerCase();
+
+  return (
+    value.includes("video/") ||
+    /\.(mp4|webm|mov)(?:$|\?)/i.test(
+      value
+    )
+  );
+}
+
+function renderMediaPreview(
+  container,
+  path,
+  type,
+  label
+) {
+  if (!container) {
+    return;
+  }
+
+  if (!path) {
+    container.innerHTML =
+      `<span>${escapeHtml(label || "Sin archivo")}</span>`;
+    return;
+  }
+
+  container.innerHTML =
+    isVideoMedia(path, type)
+      ? `<video src="${escapeHtml(path)}" muted loop playsinline controls></video>`
+      : `<img src="${escapeHtml(path)}" alt="${escapeHtml(label || "Vista previa")}" />`;
 }
 
 function renderTemplatePreview(item) {
@@ -778,8 +833,9 @@ function showAdminSection(
     String(section || "").trim() ||
     "businesses";
   const sectionToOpen =
-    requestedSection === "staff" &&
-    !isAdmin()
+    ["staff", "brand"].includes(
+      requestedSection
+    ) && !isAdmin()
       ? "businesses"
       : requestedSection;
   const panelExists =
@@ -930,6 +986,112 @@ async function staffFetch(
   }
 
   return response;
+}
+
+async function loadBrandSettings() {
+  if (!isAdmin()) {
+    return;
+  }
+
+  try {
+    const response = await staffFetch(
+      "/api/admin/brand"
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo cargar la marca."
+      );
+    }
+
+    const brand =
+      data.brand || {};
+    renderMediaPreview(
+      brandHomePreview,
+      brand.homeLogoPath,
+      brand.homeLogoType,
+      brand.homeLogoIsCustom
+        ? "Logo actual"
+        : "Logo original"
+    );
+    renderMediaPreview(
+      brandIconPreview,
+      brand.appIconPath,
+      brand.appIconType,
+      brand.appIconIsCustom
+        ? "Icono actual"
+        : "Icono original"
+    );
+  } catch (error) {
+    setFeedback(
+      brandMessage,
+      error.message,
+      true
+    );
+  }
+}
+
+async function saveBrandSettings(event) {
+  event.preventDefault();
+
+  if (!brandForm || !isAdmin()) {
+    return;
+  }
+
+  setFeedback(
+    brandMessage,
+    "Guardando marca..."
+  );
+
+  try {
+    const response = await staffFetch(
+      "/api/admin/brand",
+      {
+        method: "POST",
+        body: new FormData(
+          brandForm
+        ),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo guardar la marca."
+      );
+    }
+
+    brandForm.reset();
+    const brand =
+      data.brand || {};
+    renderMediaPreview(
+      brandHomePreview,
+      brand.homeLogoPath,
+      brand.homeLogoType,
+      "Logo actual"
+    );
+    renderMediaPreview(
+      brandIconPreview,
+      brand.appIconPath,
+      brand.appIconType,
+      "Icono actual"
+    );
+    setFeedback(
+      brandMessage,
+      "Marca guardada. Si la app ya estaba instalada, usa Actualizar app o reinstalala para refrescar el icono del telefono."
+    );
+  } catch (error) {
+    setFeedback(
+      brandMessage,
+      error.message,
+      true
+    );
+  }
 }
 
 function formatDateTime(value) {
@@ -3854,6 +4016,9 @@ async function loadDashboardData({
     tasks.push(
       loadStaffUsers()
     );
+    tasks.push(
+      loadBrandSettings()
+    );
   }
 
   await Promise.all(tasks);
@@ -4006,6 +4171,16 @@ staffPasswordForm?.addEventListener(
 staffCreateForm?.addEventListener(
   "submit",
   createStaffUser
+);
+
+brandForm?.addEventListener(
+  "submit",
+  saveBrandSettings
+);
+
+refreshBrandButton?.addEventListener(
+  "click",
+  loadBrandSettings
 );
 
 refreshStaffUsersButton?.addEventListener(
