@@ -1699,6 +1699,32 @@ textarea {
   min-height: 40px;
 }
 
+.campaign-schedule-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 8px;
+  margin: 10px 0;
+  border-radius: 13px;
+  border: 1px solid rgba(96, 218, 255, 0.28);
+  background: rgba(71, 178, 255, 0.08);
+  padding: 9px;
+}
+
+.campaign-schedule-editor label {
+  min-width: 150px;
+  flex: 1;
+  margin: 0;
+}
+
+.campaign-schedule-editor input {
+  min-height: 40px;
+}
+
+.campaign-schedule-editor .field-hint {
+  flex-basis: 100%;
+}
+
 .ad-report-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

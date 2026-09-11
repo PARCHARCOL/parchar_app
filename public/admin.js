@@ -1115,9 +1115,24 @@ function formatDateTime(value) {
 }
 
 function formatDateInput(date) {
-  return date
+  const localDate =
+    new Date(date);
+  localDate.setMinutes(
+    localDate.getMinutes() -
+      localDate.getTimezoneOffset()
+  );
+
+  return localDate
     .toISOString()
     .slice(0, 10);
+}
+
+function dateInputFromToday(days = 0) {
+  const date = new Date();
+  date.setDate(
+    date.getDate() + days
+  );
+  return formatDateInput(date);
 }
 
 function setDefaultCampaignDates() {
@@ -2758,11 +2773,25 @@ function renderAdCampaigns(items) {
         const status =
           item.computedStatus ||
           item.status;
+        const isExpired =
+          Boolean(item.isExpired) ||
+          status === "vencida";
         const canActivate =
-          status !== "activa" &&
-          status !== "vencida";
+          item.status !== "activa" &&
+          !isExpired;
         const canPause =
-          item.status === "activa";
+          item.status === "activa" &&
+          !isExpired;
+        const scheduleStartDate =
+          isExpired
+            ? dateInputFromToday()
+            : item.startDate ||
+              dateInputFromToday();
+        const scheduleEndDate =
+          isExpired
+            ? dateInputFromToday(7)
+            : item.endDate ||
+              dateInputFromToday(7);
         const impressions = Number(
           item.impressions || 0
         );
@@ -2867,6 +2896,62 @@ function renderAdCampaigns(items) {
               >
                 Guardar prioridad
               </button>
+            </div>
+
+            <div class="campaign-schedule-editor">
+              <label>
+                Inicio de pauta
+                <input
+                  type="date"
+                  data-ad-start="${Number(
+                    item.id
+                  )}"
+                  value="${escapeHtml(
+                    scheduleStartDate
+                  )}"
+                />
+              </label>
+              <label>
+                Fin de pauta
+                <input
+                  type="date"
+                  data-ad-end="${Number(
+                    item.id
+                  )}"
+                  value="${escapeHtml(
+                    scheduleEndDate
+                  )}"
+                />
+              </label>
+              <button
+                class="ghost-btn"
+                onclick="saveAdCampaignSchedule(${Number(
+                  item.id
+                )})"
+              >
+                Guardar fechas
+              </button>
+              ${
+                isExpired
+                  ? `
+                    <button
+                      class="submit-btn"
+                      onclick="renewAdCampaign(${Number(
+                        item.id
+                      )})"
+                    >
+                      Renovar y activar
+                    </button>
+                  `
+                  : ""
+              }
+              <p class="field-hint">
+                ${
+                  isExpired
+                    ? "La pauta vencida necesita nueva fecha final para volver a publicarse."
+                    : "Puedes ajustar el periodo sin volver a crear la pauta."
+                }
+              </p>
             </div>
 
             <div class="ad-report-strip">
@@ -3076,6 +3161,94 @@ async function setAdCampaignStatus(
   } catch (error) {
     alert(error.message);
   }
+}
+
+function getAdCampaignScheduleValues(id) {
+  const startInput =
+    document.querySelector(
+      `[data-ad-start="${id}"]`
+    );
+  const endInput =
+    document.querySelector(
+      `[data-ad-end="${id}"]`
+    );
+  const startDate =
+    startInput?.value || "";
+  const endDate =
+    endInput?.value || "";
+
+  if (!startDate || !endDate) {
+    throw new Error(
+      "Selecciona inicio y fin de pauta."
+    );
+  }
+
+  if (startDate > endDate) {
+    throw new Error(
+      "La fecha de inicio no puede ser posterior a la fecha de fin."
+    );
+  }
+
+  return {
+    startDate,
+    endDate,
+  };
+}
+
+async function updateAdCampaignSchedule(
+  id,
+  { activate = false } = {}
+) {
+  let payload;
+
+  try {
+    payload =
+      getAdCampaignScheduleValues(id);
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
+
+  if (activate) {
+    payload.status = "activa";
+  }
+
+  try {
+    const response = await staffFetch(
+      `/api/admin/ad-campaigns/${id}/schedule`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify(payload),
+      }
+    );
+    const data =
+      await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudieron actualizar las fechas"
+      );
+    }
+
+    await loadAdCampaigns();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function saveAdCampaignSchedule(id) {
+  await updateAdCampaignSchedule(id);
+}
+
+async function renewAdCampaign(id) {
+  await updateAdCampaignSchedule(id, {
+    activate: true,
+  });
 }
 
 async function saveAdCampaignPriority(

@@ -866,10 +866,6 @@ function getCampaignComputedStatus(row) {
   const baseStatus =
     row?.status || "pausada";
 
-  if (baseStatus !== "activa") {
-    return baseStatus;
-  }
-
   const now = Date.now();
   const startsAt = new Date(
     row.starts_at || row.startsAt || ""
@@ -879,20 +875,31 @@ function getCampaignComputedStatus(row) {
   ).getTime();
 
   if (
-    Number.isFinite(startsAt) &&
-    startsAt > now
-  ) {
-    return "programada";
-  }
-
-  if (
     Number.isFinite(endsAt) &&
     endsAt < now
   ) {
     return "vencida";
   }
 
+  if (baseStatus !== "activa") {
+    return baseStatus;
+  }
+
+  if (
+    Number.isFinite(startsAt) &&
+    startsAt > now
+  ) {
+    return "programada";
+  }
+
   return "activa";
+}
+
+function isAdCampaignExpired(row) {
+  return (
+    getCampaignComputedStatus(row) ===
+    "vencida"
+  );
 }
 
 function normalizeAdCampaign(row) {
@@ -921,6 +928,8 @@ function normalizeAdCampaign(row) {
       row.status || "pausada",
     computedStatus:
       getCampaignComputedStatus(row),
+    isExpired:
+      isAdCampaignExpired(row),
     advertiserName:
       row.advertiser_name || "",
     title:
@@ -8670,6 +8679,162 @@ const server =
           sendJson(res, 200, {
             ok: true,
             priority,
+          });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/ad-campaigns\/\d+\/schedule$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id =
+            pathname.split(
+              "/"
+            )[4];
+          const body =
+            await parseJsonBody(
+              req
+            );
+          const startDate =
+            parseDateOnly(
+              body.startDate
+            );
+          const endDate =
+            parseDateOnly(
+              body.endDate
+            );
+          const startsAt =
+            startDate
+              ? dateOnlyToStartIso(
+                  startDate
+                )
+              : "";
+          const endsAt =
+            endDate
+              ? dateOnlyToEndIso(
+                  endDate
+                )
+              : "";
+          const requestedStatus =
+            cleanText(body.status);
+
+          if (
+            !startDate ||
+            !endDate
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Selecciona fecha de inicio y fecha de fin.",
+            });
+            return;
+          }
+
+          if (
+            new Date(startsAt).getTime() >
+            new Date(endsAt).getTime()
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La fecha de inicio no puede ser posterior a la fecha de fin.",
+            });
+            return;
+          }
+
+          if (
+            new Date(endsAt).getTime() <
+            Date.now()
+          ) {
+            sendJson(res, 400, {
+              error:
+                "La nueva fecha de fin no puede estar vencida.",
+            });
+            return;
+          }
+
+          if (
+            requestedStatus &&
+            !AD_CAMPAIGN_STATUSES.has(
+              requestedStatus
+            )
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Estado de campana invalido.",
+            });
+            return;
+          }
+
+          const existing =
+            await pool.query(
+              `
+              SELECT *
+              FROM ad_campaigns
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const campaign =
+            existing.rows[0];
+
+          if (!campaign) {
+            sendJson(res, 404, {
+              error:
+                "Campana no encontrada.",
+            });
+            return;
+          }
+
+          const nextStatus =
+            requestedStatus ||
+            campaign.status ||
+            "pausada";
+
+          await pool.query(
+            `
+            UPDATE ad_campaigns
+            SET starts_at = $1,
+                ends_at = $2,
+                status = $3,
+                updated_at = NOW()
+            WHERE id = $4
+            `,
+            [
+              startsAt,
+              endsAt,
+              nextStatus,
+              id,
+            ]
+          );
+
+          const updated =
+            await pool.query(
+              `
+              SELECT *
+              FROM ad_campaigns
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+
+          sendJson(res, 200, {
+            ok: true,
+            item: normalizeAdCampaign(
+              updated.rows[0]
+            ),
           });
           return;
         }
