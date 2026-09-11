@@ -261,6 +261,30 @@ const SITE_MEDIA_MAX_BYTES =
   50 * 1024 * 1024;
 const REVIEW_VIDEO_MAX_BYTES =
   25 * 1024 * 1024;
+const BURGERMASTER_PROMO_START_DATE = String(
+  process.env
+    .BURGERMASTER_PROMO_START_DATE ||
+    "2026-04-20"
+).trim();
+const BURGERMASTER_PROMO_END_DATE = String(
+  process.env
+    .BURGERMASTER_PROMO_END_DATE ||
+    "2026-04-26"
+).trim();
+const BURGERMASTER_PROMO_ENABLED = String(
+  process.env
+    .BURGERMASTER_PROMO_ENABLED ||
+    "true"
+)
+  .trim()
+  .toLowerCase() !== "false";
+const BURGERMASTER_PROMO_CITY = String(
+  process.env
+    .BURGERMASTER_PROMO_CITY ||
+    "Medellin"
+).trim();
+const BURGERMASTER_PROMO_SOURCE_URL =
+  "https://www.tropicanafm.com/2026/burger-master-2026-fecha-de-inicio-y-restaurantes-que-participan-en-bogota-y-medellin-463644.html";
 const ALLOWED_CATEGORIES =
   new Set([
     "restaurante",
@@ -743,6 +767,64 @@ function parseDateOnly(value) {
   }
 
   return raw;
+}
+
+function getColombiaDateOnly(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const values = Object.fromEntries(
+    parts.map((part) => [
+      part.type,
+      part.value,
+    ])
+  );
+
+  return `${values.year}-${values.month}-${values.day}`;
+}
+
+function getBurgerMasterPromotionStatus() {
+  const startDate =
+    parseDateOnly(
+      BURGERMASTER_PROMO_START_DATE
+    ) || "2026-04-20";
+  const endDate =
+    parseDateOnly(
+      BURGERMASTER_PROMO_END_DATE
+    ) || "2026-04-26";
+  const today = getColombiaDateOnly();
+  const hasValidRange =
+    startDate <= endDate;
+  const active =
+    BURGERMASTER_PROMO_ENABLED &&
+    hasValidRange &&
+    today >= startDate &&
+    today <= endDate;
+
+  return {
+    key: "burgermaster",
+    slug: "burgermaster-medellin",
+    label: "BurgerMaster",
+    city:
+      BURGERMASTER_PROMO_CITY ||
+      "Medellin",
+    enabled:
+      BURGERMASTER_PROMO_ENABLED,
+    active,
+    startDate,
+    endDate,
+    today,
+    sourceUrl:
+      BURGERMASTER_PROMO_SOURCE_URL,
+  };
+}
+
+function isBurgerMasterPromotionActive() {
+  return getBurgerMasterPromotionStatus()
+    .active;
 }
 
 function dateOnlyToStartIso(value) {
@@ -5284,6 +5366,19 @@ const server =
           sendJson(res, 200, {
             brand:
               await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/promotions/burgermaster" &&
+          req.method === "GET"
+        ) {
+          sendJson(res, 200, {
+            ok: true,
+            promotion:
+              getBurgerMasterPromotionStatus(),
           });
           return;
         }
@@ -9877,6 +9972,8 @@ const server =
             "/api/sites/active" &&
           req.method === "GET"
         ) {
+          const burgerMasterPromotion =
+            getBurgerMasterPromotionStatus();
           const result =
             await pool.query(`
               SELECT *
@@ -9884,11 +9981,21 @@ const server =
               WHERE status = 'activo'
               ORDER BY created_at DESC
             `);
+          const items = result.rows
+            .map(normalizeOpenSiteRow)
+            .filter(
+              (site) =>
+                burgerMasterPromotion.active ||
+                site.siteType !==
+                  "burgermaster"
+            );
 
           sendJson(res, 200, {
-            items: result.rows.map(
-              normalizeOpenSiteRow
-            ),
+            items,
+            promotions: {
+              burgermaster:
+                burgerMasterPromotion,
+            },
           });
           return;
         }

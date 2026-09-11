@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=88" />
+    <link rel="stylesheet" href="/styles.css?v=89" />
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -43,7 +43,7 @@
           <a href="/">Inicio</a>
           <a href="/sites.html?type=charco">Charcos</a>
           <a href="/sites.html?type=mirador">Miradores</a>
-          <a href="/sites.html?type=burgermaster">BurgerMaster</a>
+          <a href="/sites.html?type=burgermaster" data-promotion="burgermaster" hidden>BurgerMaster</a>
           <a href="/clients.html">Clientes</a>
           <a href="/social.html">Muro</a>
           <button type="button" data-open-ad-request>Solicitar pauta</button>
@@ -162,7 +162,7 @@
           <span class="action-label">Miradores</span>
         </button>
 
-        <button class="action-btn btn-burgermaster" data-route="burgermaster">
+        <button class="action-btn btn-burgermaster" data-route="burgermaster" data-promotion="burgermaster" hidden>
           <span class="action-icon">&#127828;</span>
           <span class="action-label">BurgerMaster</span>
         </button>
@@ -193,6 +193,8 @@
             class="suggestion-card card-bbb"
             href="/sites.html?type=burgermaster"
             data-suggestion-route="burgermaster"
+            data-promotion="burgermaster"
+            hidden
           >
             <span class="tag-live">HOT</span>
             <h3>BurgerMaster</h3>
@@ -217,9 +219,9 @@
       </aside>
     </main>
 
-    <script src="/brand.js?v=88"></script>
-    <script src="/ads.js?v=88"></script>
-    <script src="/update.js?v=88"></script>
-    <script src="/app.js?v=88"></script>
+    <script src="/brand.js?v=89"></script>
+    <script src="/ads.js?v=89"></script>
+    <script src="/update.js?v=89"></script>
+    <script src="/app.js?v=89"></script>
   </body>
 </html>

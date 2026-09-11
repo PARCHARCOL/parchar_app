@@ -7,6 +7,9 @@ const alertsPanel = document.querySelector("#home-alerts-panel");
 const searchForm = document.querySelector("#home-search-form");
 const searchInput = document.querySelector("#home-search");
 const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
+const burgerMasterPromotionElements = document.querySelectorAll(
+  '[data-promotion="burgermaster"]'
+);
 
 const SITE_SEARCH_KEYWORDS = [
   "charco",
@@ -56,10 +59,73 @@ const installGuideText = document.querySelector("#install-guide-text");
 const installGuideClose = document.querySelector("#install-guide-close");
 
 let deferredInstallPrompt = null;
+let burgerMasterPromotion = {
+  active: false,
+};
 
 function updateStatus(message) {
   if (!statusEl) return;
   statusEl.textContent = message;
+}
+
+function isBurgerMasterActive() {
+  return Boolean(
+    burgerMasterPromotion &&
+      burgerMasterPromotion.active
+  );
+}
+
+function syncBurgerMasterPromotion() {
+  const isActive =
+    isBurgerMasterActive();
+
+  burgerMasterPromotionElements.forEach(
+    (element) => {
+      element.hidden = !isActive;
+
+      if ("disabled" in element) {
+        element.disabled = !isActive;
+      }
+    }
+  );
+}
+
+async function loadBurgerMasterPromotion() {
+  syncBurgerMasterPromotion();
+
+  try {
+    const response = await fetch(
+      "/api/promotions/burgermaster",
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudo leer BurgerMaster."
+      );
+    }
+
+    burgerMasterPromotion =
+      data.promotion || {
+        active: false,
+      };
+  } catch {
+    burgerMasterPromotion = {
+      active: false,
+    };
+  }
+
+  syncBurgerMasterPromotion();
+}
+
+function showBurgerMasterInactiveStatus() {
+  updateStatus(
+    "BurgerMaster no esta activo en Medellin en este momento."
+  );
 }
 
 function redirectWithCategory(category, coords) {
@@ -103,10 +169,16 @@ function redirectWithSearch(query) {
     /\b(bici|bicicleta|bicicletas|cicloruta|ciclorutas|ciclista|ciclistas)\b/.test(
       normalizedQuery
     );
-  const isBurgerMasterSearch =
-    /\b(burgermaster|burger master|hamburguesa|hamburguesas)\b/.test(
+  const isExplicitBurgerMasterSearch =
+    /\b(burgermaster|burger master)\b/.test(
       normalizedQuery
     );
+  const isHamburgerSearch =
+    /\b(hamburguesa|hamburguesas)\b/.test(normalizedQuery);
+  const isBurgerMasterSearch =
+    isExplicitBurgerMasterSearch ||
+    (isHamburgerSearch &&
+      isBurgerMasterActive());
   const isCharcoSearch =
     /\b(charco|charcos|rio|rios|cascada|cascadas|quebrada|quebradas|salto|balneario)\b/.test(
       normalizedQuery
@@ -119,13 +191,22 @@ function redirectWithSearch(query) {
     /\b(pueblo|pueblos|puebliar|puebliando|escapada|escapadas|ruta|rutas|moto|motos|motero|motera|rodada|rodadas)\b/.test(
       normalizedQuery
     );
+  const opensSitesSearch =
+    shouldSearchSites &&
+    (!isHamburgerSearch ||
+      isBurgerMasterSearch);
   const url = new URL(
-    shouldSearchSites ? "/sites.html" : "/places.html",
+    opensSitesSearch ? "/sites.html" : "/places.html",
     window.location.origin
   );
   if (isBikeSearch) {
     url.searchParams.set("mode", "bike");
   } else if (isBurgerMasterSearch) {
+    if (!isBurgerMasterActive()) {
+      showBurgerMasterInactiveStatus();
+      return;
+    }
+
     url.searchParams.set("type", "burgermaster");
   } else if (isCharcoSearch) {
     url.searchParams.set("type", "charco");
@@ -133,6 +214,11 @@ function redirectWithSearch(query) {
     url.searchParams.set("type", "mirador");
   } else if (isPuebliarSearch) {
     url.searchParams.set("mode", "puebliar");
+  } else if (isHamburgerSearch) {
+    url.searchParams.set(
+      "category",
+      "restaurante"
+    );
   }
   url.searchParams.set("q", cleanQuery);
   window.location.href = url.toString();
@@ -160,6 +246,11 @@ function handleCategory(route) {
   }
 
   if (route === "burgermaster") {
+    if (!isBurgerMasterActive()) {
+      showBurgerMasterInactiveStatus();
+      return;
+    }
+
     window.location.href = "/sites.html?type=burgermaster";
     return;
   }
@@ -519,3 +610,4 @@ for (const link of suggestionLinks) {
 setupQuickPanels();
 setupSearch();
 setupInstallFlow();
+loadBurgerMasterPromotion();

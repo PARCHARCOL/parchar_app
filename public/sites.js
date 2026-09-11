@@ -114,6 +114,7 @@ const internalPublicSiteTags = new Set([
 let openSites = [];
 let userCoords = null;
 let locationResolved = false;
+let promotionStatus = {};
 const weatherIconCache =
   new Map();
 let weatherIconObserver = null;
@@ -136,6 +137,30 @@ function getRequestedSiteType() {
   );
 
   return siteTypeLabels[type] ? type : "";
+}
+
+function isBurgerMasterPromotionActive() {
+  return Boolean(
+    promotionStatus.burgermaster &&
+      promotionStatus.burgermaster.active
+  );
+}
+
+function getAvailableSiteFilters() {
+  const requestedType =
+    getRequestedSiteType();
+  const filters = isBikeMode()
+    ? bikeSiteFilters
+    : isPuebliarMode()
+    ? puebliarSiteFilters
+    : defaultSiteFilters;
+
+  return filters.filter(
+    ([value]) =>
+      value !== "burgermaster" ||
+      isBurgerMasterPromotionActive() ||
+      requestedType === "burgermaster"
+  );
 }
 
 function escapeHtml(value) {
@@ -672,18 +697,25 @@ function getSearchFromUrl() {
 function renderFilterButtons() {
   if (!siteFilterContainer) return;
 
-  const filters = isBikeMode()
-    ? bikeSiteFilters
-    : isPuebliarMode()
-    ? puebliarSiteFilters
-    : defaultSiteFilters;
+  const filters =
+    getAvailableSiteFilters();
+  const initialFilter = getInitialFilter();
+  const activeFilter = filters.some(
+    ([value]) => value === initialFilter
+  )
+    ? initialFilter
+    : filters[0]?.[0] || "todos";
 
   siteFilterContainer.innerHTML = filters
     .map(
-      ([value, label], index) => `
+      ([value, label]) => `
         <button
           type="button"
-          class="chip-filter site-filter ${index === 0 ? "active" : ""}"
+          class="chip-filter site-filter ${
+            value === activeFilter
+              ? "active"
+              : ""
+          }"
           data-site-filter="${escapeHtml(value)}"
         >
           ${escapeHtml(label)}
@@ -1112,6 +1144,20 @@ function renderSites() {
     document.querySelector(".site-filter.active")?.dataset.siteFilter ||
     getInitialFilter();
   const query = siteSearchInput?.value || "";
+
+  if (
+    activeFilter === "burgermaster" &&
+    !isBurgerMasterPromotionActive()
+  ) {
+    siteResultsEl.innerHTML = `
+      <article class="empty-card">
+        <h3>BurgerMaster no esta activo en Medellin.</h3>
+        <p>Este boton se habilita solo durante las fechas oficiales de la promo.</p>
+      </article>
+    `;
+    return;
+  }
+
   const filteredSites = openSites
     .filter((site) =>
       matchesSite(site, query, activeFilter)
@@ -1186,6 +1232,11 @@ async function loadSites() {
     if (!response.ok) {
       throw new Error(data.error || "No se pudieron cargar los sitios.");
     }
+
+    promotionStatus =
+      data.promotions || {};
+    renderFilterButtons();
+    setupSiteFilters();
 
     openSites = (data.items || []).filter((site) =>
       isValidCoordinate(
@@ -1278,7 +1329,16 @@ function setupSiteSearch() {
 
 function setupSiteFilters() {
   const initialFilter = getInitialFilter();
-  setActiveFilter(initialFilter);
+  const availableFilters =
+    getAvailableSiteFilters();
+  const activeFilter =
+    availableFilters.some(
+      ([value]) => value === initialFilter
+    )
+      ? initialFilter
+      : availableFilters[0]?.[0] ||
+        "todos";
+  setActiveFilter(activeFilter);
 
   siteFilterButtons.forEach((button) => {
     button.addEventListener("click", () => {
