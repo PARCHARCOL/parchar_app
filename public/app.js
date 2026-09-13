@@ -10,6 +10,9 @@ const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
 const burgerMasterPromotionElements = document.querySelectorAll(
   '[data-promotion="burgermaster"]'
 );
+const burgerMasterInfoElements = document.querySelectorAll(
+  '[data-promotion-info="burgermaster"]'
+);
 
 const SITE_SEARCH_KEYWORDS = [
   "charco",
@@ -62,6 +65,20 @@ let deferredInstallPrompt = null;
 let burgerMasterPromotion = {
   active: false,
 };
+const monthNames = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
 
 function updateStatus(message) {
   if (!statusEl) return;
@@ -86,6 +103,22 @@ function syncBurgerMasterPromotion() {
       if ("disabled" in element) {
         element.disabled = !isActive;
       }
+    }
+  );
+
+  burgerMasterInfoElements.forEach(
+    (element) => {
+      element.classList.toggle(
+        "is-promo-inactive",
+        !isActive
+      );
+      element.setAttribute(
+        "aria-disabled",
+        String(!isActive)
+      );
+      element.title = isActive
+        ? "BurgerMaster activo"
+        : `BurgerMaster se realiza ${getBurgerMasterPromotionWhenText()}.`;
     }
   );
 }
@@ -124,8 +157,45 @@ async function loadBurgerMasterPromotion() {
 
 function showBurgerMasterInactiveStatus() {
   updateStatus(
-    "BurgerMaster no esta activo en Medellin en este momento."
+    `BurgerMaster en Medellin se realiza ${getBurgerMasterPromotionWhenText()}. El boton se activa cuando la promocion este vigente.`
   );
+}
+
+function getMonthNameFromDateOnly(value) {
+  const month = Number(
+    String(value || "").slice(5, 7)
+  );
+
+  if (
+    !Number.isInteger(month) ||
+    month < 1 ||
+    month > 12
+  ) {
+    return "";
+  }
+
+  return monthNames[month - 1];
+}
+
+function getBurgerMasterPromotionWhenText() {
+  const startMonth =
+    getMonthNameFromDateOnly(
+      burgerMasterPromotion.startDate
+    );
+  const endMonth =
+    getMonthNameFromDateOnly(
+      burgerMasterPromotion.endDate
+    );
+
+  if (
+    startMonth &&
+    endMonth &&
+    startMonth !== endMonth
+  ) {
+    return `entre ${startMonth} y ${endMonth}`;
+  }
+
+  return `en ${startMonth || endMonth || "abril"}`;
 }
 
 function redirectWithCategory(category, coords) {

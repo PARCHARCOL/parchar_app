@@ -388,6 +388,10 @@ video.brand-logo {
   background: linear-gradient(155deg, #ffcf59, #c94910 74%);
 }
 
+.btn-burgermaster.is-promo-inactive {
+  filter: saturate(0.82);
+}
+
 .btn-clientes {
   background: linear-gradient(155deg, #62d2ff, #2e72bf 74%);
 }
