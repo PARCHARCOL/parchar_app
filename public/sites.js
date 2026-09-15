@@ -9,6 +9,9 @@ const sitePageTitle = document.querySelector("#site-page-title");
 const sitePageSubtitle = document.querySelector("#site-page-subtitle");
 const siteNavIcon = document.querySelector("#site-nav-icon");
 const siteNavLabel = document.querySelector("#site-nav-label");
+const siteZoneSelect = document.querySelector("#site-zone-select");
+const siteZoneApplyButton = document.querySelector("#site-zone-apply");
+const siteZoneStatus = document.querySelector("#site-zone-status");
 
 const siteTypeLabels = {
   charco: "Charco",
@@ -115,6 +118,8 @@ let openSites = [];
 let userCoords = null;
 let locationResolved = false;
 let promotionStatus = {};
+let coverageZones = [];
+let selectedCoverageZone = null;
 const weatherIconCache =
   new Map();
 let weatherIconObserver = null;
@@ -177,6 +182,102 @@ function normalizeText(value) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function setZoneStatus(message, isError = false) {
+  if (!siteZoneStatus) {
+    return;
+  }
+
+  siteZoneStatus.textContent =
+    message || "";
+  siteZoneStatus.classList.toggle(
+    "error",
+    Boolean(message) && isError
+  );
+  siteZoneStatus.classList.toggle(
+    "success",
+    Boolean(message) && !isError
+  );
+}
+
+async function loadCoverageZones() {
+  try {
+    const response = await fetch(
+      "/api/coverage/zones",
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudieron cargar zonas."
+      );
+    }
+
+    coverageZones = data.zones || [];
+  } catch {
+    coverageZones = [];
+  }
+
+  if (siteZoneSelect) {
+    siteZoneSelect.innerHTML = `
+      <option value="">Cerca de mi ubicacion</option>
+      ${coverageZones
+        .map(
+          (zone) => `
+            <option value="${escapeHtml(zone.slug)}">
+              ${escapeHtml(zone.label)}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+  }
+}
+
+function getCoverageZoneBySlug(slug) {
+  return (
+    coverageZones.find(
+      (zone) => zone.slug === slug
+    ) || null
+  );
+}
+
+function applySelectedZoneFromUrl() {
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
+  const zoneSlug =
+    params.get("zone") || "";
+  selectedCoverageZone =
+    getCoverageZoneBySlug(zoneSlug);
+
+  if (siteZoneSelect) {
+    siteZoneSelect.value =
+      selectedCoverageZone?.slug || "";
+  }
+
+  if (!selectedCoverageZone) {
+    setZoneStatus("");
+    return;
+  }
+
+  userCoords = {
+    latitude: selectedCoverageZone.latitude,
+    longitude: selectedCoverageZone.longitude,
+  };
+  locationResolved = true;
+  setZoneStatus(
+    `Consultando desde ${selectedCoverageZone.label}, ${selectedCoverageZone.department}.`
+  );
+  setLocationStatus(
+    `Mostrando sitios registrados en ${selectedCoverageZone.label}.`
+  );
 }
 
 function isValidCoordinate(latitude, longitude) {
@@ -866,6 +967,48 @@ function setActiveFilter(filter) {
   });
 }
 
+function matchesSelectedZone(site, zone) {
+  if (!zone) {
+    return true;
+  }
+
+  const city = normalizeText(site.city);
+  const municipality =
+    normalizeText(zone.municipality);
+  const label = normalizeText(zone.label);
+  const aliases = [
+    zone.label,
+    zone.municipality,
+    ...(zone.aliases || []),
+  ]
+    .map(normalizeText)
+    .filter(Boolean);
+
+  if (zone.type === "municipio") {
+    return (
+      city === municipality ||
+      city === label ||
+      aliases.includes(city)
+    );
+  }
+
+  const haystack = normalizeText(
+    [
+      site.name,
+      site.city,
+      site.address,
+      site.description,
+      site.tags,
+    ].join(" ")
+  );
+
+  return aliases.some(
+    (alias) =>
+      alias &&
+      haystack.includes(alias)
+  );
+}
+
 function matchesSite(site, query, filter) {
   const type = site.siteType || site.site_type || "";
 
@@ -1158,7 +1301,7 @@ function renderSites() {
     return;
   }
 
-  const filteredSites = openSites
+  let filteredSites = openSites
     .filter((site) =>
       matchesSite(site, query, activeFilter)
     )
@@ -1179,6 +1322,16 @@ function renderSites() {
       return a.distanceKm - b.distanceKm;
     });
 
+  if (selectedCoverageZone) {
+    filteredSites = filteredSites.filter(
+      (site) =>
+        matchesSelectedZone(
+          site,
+          selectedCoverageZone
+          )
+    );
+  }
+
   if (!filteredSites.length) {
     const title = isBikeMode()
       ? "Aun no hay rutas en bici cargadas."
@@ -1195,6 +1348,8 @@ function renderSites() {
       ? "Desde admin carga ciclorutas, rutas en bici, paradas ciclistas o sitios con etiqueta bici."
       : isPuebliarMode()
       ? "Desde admin carga pueblos, miradores o rutas a pueblos cercanos."
+      : selectedCoverageZone
+      ? `No hay sitios registrados en ${selectedCoverageZone.label}. Elige otra zona o carga sitios de esa zona desde admin.`
       : activeFilter === "charco"
       ? "Desde admin importa o crea charcos; quedaran pausados hasta que un asesor los revise."
       : activeFilter === "mirador"
@@ -1226,6 +1381,9 @@ async function loadSites() {
   `;
 
   try {
+    await loadCoverageZones();
+    applySelectedZoneFromUrl();
+
     const response = await fetch("/api/sites/active");
     const data = await response.json();
 
@@ -1257,6 +1415,21 @@ async function loadSites() {
 }
 
 function requestUserLocation() {
+  selectedCoverageZone = null;
+  setZoneStatus("");
+  if (siteZoneSelect) {
+    siteZoneSelect.value = "";
+  }
+  const url = new URL(
+    window.location.href
+  );
+  url.searchParams.delete("zone");
+  window.history.replaceState(
+    {},
+    "",
+    url.toString()
+  );
+
   if (!navigator.geolocation) {
     locationResolved = true;
     setLocationStatus(
@@ -1350,6 +1523,23 @@ function setupSiteFilters() {
 
 siteLocationButton?.addEventListener("click", () => {
   requestUserLocation();
+});
+
+siteZoneApplyButton?.addEventListener("click", () => {
+  const url = new URL(
+    window.location.href
+  );
+  const zone =
+    siteZoneSelect?.value || "";
+
+  if (zone) {
+    url.searchParams.set("zone", zone);
+  } else {
+    url.searchParams.delete("zone");
+  }
+
+  window.location.href =
+    url.toString();
 });
 
 setupPageMode();

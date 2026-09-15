@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Charcos | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=92" />
+    <link rel="stylesheet" href="/styles.css?v=93" />
   </head>
   <body class="theme-body list-body">
     <div class="ambient-glow"></div>
@@ -31,6 +31,19 @@
           autocomplete="off"
         />
       </form>
+
+      <section class="zone-picker" aria-label="Buscar sitios por zona">
+        <label>
+          Consultar desde sector o municipio
+          <select id="site-zone-select">
+            <option value="">Cerca de mi ubicacion</option>
+          </select>
+        </label>
+        <button id="site-zone-apply" type="button" class="ghost-btn">
+          Consultar zona
+        </button>
+        <p id="site-zone-status" class="status-muted"></p>
+      </section>
 
       <section class="category-chips" aria-label="Filtros de sitios">
         <button type="button" class="chip-filter site-filter active" data-site-filter="todos">
@@ -87,8 +100,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=92"></script>
-    <script src="/update.js?v=92"></script>
-    <script src="/sites.js?v=92"></script>
+    <script src="/ads.js?v=93"></script>
+    <script src="/update.js?v=93"></script>
+    <script src="/sites.js?v=93"></script>
   </body>
 </html>

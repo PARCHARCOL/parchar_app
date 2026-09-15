@@ -361,6 +361,56 @@ function matchesSearchQuery(item, query) {
   return normalizeSearchText(haystack).includes(needle);
 }
 
+function matchesSelectedZone(item, zone) {
+  if (!zone) {
+    return true;
+  }
+
+  const city = normalizeSearchText(
+    item.city
+  );
+  const municipality =
+    normalizeSearchText(
+      zone.municipality
+    );
+  const label = normalizeSearchText(
+    zone.label
+  );
+  const aliases = [
+    zone.label,
+    zone.municipality,
+    ...(zone.aliases || []),
+  ]
+    .map(normalizeSearchText)
+    .filter(Boolean);
+
+  if (zone.type === "municipio") {
+    return (
+      city === municipality ||
+      city === label ||
+      aliases.includes(city)
+    );
+  }
+
+  const haystack =
+    normalizeSearchText(
+      [
+        item.business_name,
+        item.city,
+        item.address,
+        item.description,
+        item.products,
+        item.offerings,
+      ].join(" ")
+    );
+
+  return aliases.some(
+    (alias) =>
+      alias &&
+      haystack.includes(alias)
+  );
+}
+
 function buildRouteUrl(
   item,
   userCoords,
@@ -1784,12 +1834,10 @@ async function loadPlaces() {
     } else if (selectedZone) {
       filtered = filtered.filter(
         (item) =>
-          item.distanceKm !== null &&
-          item.distanceKm <=
-            Number(
-              selectedZone.radiusKm ||
-                10
-            )
+          matchesSelectedZone(
+            item,
+            selectedZone
+          )
       );
     }
 
@@ -1822,7 +1870,7 @@ async function loadPlaces() {
         )} km de ti para ir caminando.`;
     } else if (selectedZone) {
       subtitleEl.textContent =
-        `Locales en ${selectedZone.label} y alrededores, ordenados por cercania.`;
+        `Locales registrados exactamente en ${selectedZone.label}.`;
     } else if (searchQuery) {
       subtitleEl.textContent =
         userCoords
@@ -1857,7 +1905,7 @@ async function loadPlaces() {
               1
             )} km.`
           : selectedZone
-          ? "Puedes elegir otra zona de Antioquia mientras cargamos mas locales."
+          ? `No hay locales registrados en ${selectedZone.label}. Elige otra zona o espera a que un asesor cargue locales alli.`
           : "Parchar mostrara solo negocios seleccionados y aprobados.",
       }
     );
