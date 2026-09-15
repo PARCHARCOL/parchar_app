@@ -418,6 +418,42 @@ video.brand-logo {
   color: var(--error);
 }
 
+.zone-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: end;
+  margin: 10px 0 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 184, 95, 0.24);
+  border-radius: 16px;
+  background: rgba(24, 5, 54, 0.58);
+}
+
+.zone-picker label {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  color: #ffe6bd;
+  font-size: 0.88rem;
+  font-weight: 900;
+}
+
+.zone-picker select {
+  min-height: 42px;
+}
+
+.zone-picker .ghost-btn {
+  min-height: 42px;
+  padding: 8px 12px;
+  white-space: nowrap;
+}
+
+.zone-picker .status-muted {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
 .suggestion-section {
   margin-top: 10px;
 }
@@ -1845,6 +1881,41 @@ textarea {
   margin: 0 0 6px;
 }
 
+.advisor-suggestion {
+  border-radius: 12px;
+  border: 1px solid rgba(255, 190, 106, 0.26);
+  background: rgba(255, 164, 57, 0.08);
+  padding: 8px 10px;
+}
+
+.advisor-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.advisor-stats div {
+  border-radius: 12px;
+  border: 1px solid rgba(183, 132, 245, 0.28);
+  background: rgba(20, 4, 47, 0.58);
+  padding: 8px;
+}
+
+.advisor-stats span {
+  display: block;
+  color: var(--text-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.advisor-stats strong {
+  display: block;
+  color: #ffe1a8;
+  font-size: 1.1rem;
+  margin-top: 2px;
+}
+
 .bottom-nav {
   position: absolute;
   left: 12px;
@@ -3003,5 +3074,17 @@ body > .ad-banner {
 
   .home-body .app-shell {
     padding-bottom: calc(var(--ad-height) + 32px);
+  }
+
+  .zone-picker {
+    grid-template-columns: 1fr;
+  }
+
+  .zone-picker .ghost-btn {
+    width: 100%;
+  }
+
+  .advisor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

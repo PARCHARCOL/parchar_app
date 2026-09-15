@@ -9,6 +9,15 @@ const subtitleEl = document.querySelector(
 const resultsEl = document.querySelector(
   "#results"
 );
+const zoneSelect = document.querySelector(
+  "#zone-select"
+);
+const zoneApplyButton =
+  document.querySelector("#zone-apply");
+const coverageStatusEl =
+  document.querySelector(
+    "#coverage-status"
+  );
 
 const WALKING_MODE = "walking";
 const WALKING_DISTANCE_KM = 1.5;
@@ -81,6 +90,106 @@ const categoryChip = {
 const weatherIconCache =
   new Map();
 let weatherIconObserver = null;
+let coverageZones = [];
+
+function setCoverageStatus(
+  message,
+  isError = false
+) {
+  if (!coverageStatusEl) {
+    return;
+  }
+
+  coverageStatusEl.textContent =
+    message || "";
+  coverageStatusEl.classList.toggle(
+    "error",
+    Boolean(message) && isError
+  );
+  coverageStatusEl.classList.toggle(
+    "success",
+    Boolean(message) && !isError
+  );
+}
+
+async function loadCoverageZones() {
+  try {
+    const response = await fetch(
+      "/api/coverage/zones",
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+          "No se pudieron cargar zonas."
+      );
+    }
+
+    coverageZones = data.zones || [];
+
+    if (zoneSelect) {
+      zoneSelect.innerHTML = `
+        <option value="">Cerca de mi ubicacion</option>
+        ${coverageZones
+          .map(
+            (zone) => `
+              <option value="${escapeHtml(
+                zone.slug
+              )}">
+                ${escapeHtml(
+                  zone.label
+                )}
+              </option>
+            `
+          )
+          .join("")}
+      `;
+    }
+  } catch {
+    coverageZones = [];
+  }
+}
+
+function getZoneBySlug(slug) {
+  return (
+    coverageZones.find(
+      (zone) => zone.slug === slug
+    ) || null
+  );
+}
+
+async function getCoverageStatus(coords) {
+  if (!coords) {
+    return null;
+  }
+
+  try {
+    const url = new URL(
+      "/api/coverage/status",
+      window.location.origin
+    );
+    url.searchParams.set(
+      "lat",
+      String(coords.latitude)
+    );
+    url.searchParams.set(
+      "lng",
+      String(coords.longitude)
+    );
+    const response = await fetch(url);
+    const data = await response.json();
+
+    return response.ok
+      ? data.coverage
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 function isValidCoordinate(
   latitude,
@@ -1471,6 +1580,7 @@ async function loadPlaces() {
     new URLSearchParams(
       window.location.search
     );
+  await loadCoverageZones();
 
   const category =
     params.get(
@@ -1482,8 +1592,19 @@ async function loadPlaces() {
     (
       params.get("q") || ""
     ).trim();
+  const selectedZoneSlug =
+    params.get("zone") || "";
+  const selectedZone =
+    getZoneBySlug(
+      selectedZoneSlug
+    );
   const isWalkingMode =
     mode === WALKING_MODE;
+
+  if (zoneSelect) {
+    zoneSelect.value =
+      selectedZone?.slug || "";
+  }
 
   titleEl.textContent =
     searchQuery
@@ -1515,9 +1636,16 @@ async function loadPlaces() {
   try {
 
     let userCoords =
-      getCoordsFromUrl(
-        params
-      );
+      selectedZone
+        ? {
+            latitude:
+              selectedZone.latitude,
+            longitude:
+              selectedZone.longitude,
+          }
+        : getCoordsFromUrl(
+            params
+          );
 
     if (!userCoords) {
       subtitleEl.textContent =
@@ -1526,6 +1654,42 @@ async function loadPlaces() {
           : "Calculando distancia desde tu ubicacion...";
       userCoords =
         await requestUserCoords();
+    }
+
+    if (selectedZone) {
+      setCoverageStatus(
+        `Explorando ${selectedZone.label}, ${selectedZone.department}.`,
+        false
+      );
+    } else if (userCoords) {
+      const coverage =
+        await getCoverageStatus(
+          userCoords
+        );
+
+      if (coverage && !coverage.enabled) {
+        setCoverageStatus(
+          coverage.message,
+          true
+        );
+        renderCards(
+          [],
+          null,
+          {
+            emptyTitle:
+              "Parchar inicia en Antioquia.",
+            emptyMessage:
+              "Estas abriendo Parchar fuera de Antioquia. Elige un municipio o sector de Antioquia para explorar planes mientras llegamos a tu zona.",
+          }
+        );
+        return;
+      }
+
+      setCoverageStatus(
+        coverage?.message ||
+          "Ubicacion detectada.",
+        false
+      );
     }
 
     if (
@@ -1617,7 +1781,19 @@ async function loadPlaces() {
           item.distanceKm <=
             WALKING_DISTANCE_KM
       );
-    } else if (category) {
+    } else if (selectedZone) {
+      filtered = filtered.filter(
+        (item) =>
+          item.distanceKm !== null &&
+          item.distanceKm <=
+            Number(
+              selectedZone.radiusKm ||
+                10
+            )
+      );
+    }
+
+    if (category) {
       filtered = filtered.filter(
         (item) =>
           String(
@@ -1644,6 +1820,9 @@ async function loadPlaces() {
         `Locales hasta ${WALKING_DISTANCE_KM.toFixed(
           1
         )} km de ti para ir caminando.`;
+    } else if (selectedZone) {
+      subtitleEl.textContent =
+        `Locales en ${selectedZone.label} y alrededores, ordenados por cercania.`;
     } else if (searchQuery) {
       subtitleEl.textContent =
         userCoords
@@ -1668,6 +1847,8 @@ async function loadPlaces() {
           ? "No encontramos resultados."
           : isWalkingMode
           ? "No hay locales caminables cerca."
+          : selectedZone
+          ? `Aun no hay locales activos en ${selectedZone.label}.`
           : "Aun no hay locales activos en esta categoria.",
         emptyMessage: searchQuery
           ? "Prueba con el nombre del local, ciudad, categoria o lo que ofrece."
@@ -1675,6 +1856,8 @@ async function loadPlaces() {
           ? `Por ahora no hay locales activos a menos de ${WALKING_DISTANCE_KM.toFixed(
               1
             )} km.`
+          : selectedZone
+          ? "Puedes elegir otra zona de Antioquia mientras cargamos mas locales."
           : "Parchar mostrara solo negocios seleccionados y aprobados.",
       }
     );
@@ -1698,5 +1881,30 @@ async function loadPlaces() {
     `;
   }
 }
+
+zoneApplyButton?.addEventListener(
+  "click",
+  () => {
+    const url = new URL(
+      window.location.href
+    );
+    const zone =
+      zoneSelect?.value || "";
+
+    if (zone) {
+      url.searchParams.set(
+        "zone",
+        zone
+      );
+      url.searchParams.delete("lat");
+      url.searchParams.delete("lng");
+    } else {
+      url.searchParams.delete("zone");
+    }
+
+    window.location.href =
+      url.toString();
+  }
+);
 
 loadPlaces();

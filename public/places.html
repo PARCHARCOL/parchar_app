@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Locales | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=91" />
+    <link rel="stylesheet" href="/styles.css?v=92" />
   </head>
   <body class="theme-body list-body">
     <div class="ambient-glow"></div>
@@ -20,6 +20,19 @@
         <a href="/places.html?category=restaurante" class="chip-filter">Restaurantes</a>
         <a href="/places.html?category=bar" class="chip-filter">Bares</a>
         <a href="/places.html?mode=walking" class="chip-filter">A pie</a>
+      </section>
+
+      <section class="zone-picker" aria-label="Buscar por zona">
+        <label>
+          Buscar por sector o municipio
+          <select id="zone-select">
+            <option value="">Cerca de mi ubicacion</option>
+          </select>
+        </label>
+        <button id="zone-apply" type="button" class="ghost-btn">
+          Consultar zona
+        </button>
+        <p id="coverage-status" class="status-muted"></p>
       </section>
 
       <section id="results" class="cards-grid"></section>
@@ -50,8 +63,8 @@
       </aside>
     </main>
 
-    <script src="/ads.js?v=91"></script>
-    <script src="/update.js?v=91"></script>
-    <script src="/places.js?v=91"></script>
+    <script src="/ads.js?v=92"></script>
+    <script src="/update.js?v=92"></script>
+    <script src="/places.js?v=92"></script>
   </body>
 </html>

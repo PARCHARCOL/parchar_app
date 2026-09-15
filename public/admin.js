@@ -55,6 +55,10 @@ const staffCreateMessage =
   document.querySelector(
     "#staff-create-message"
   );
+const staffZoneSelect =
+  document.querySelector(
+    "#staff-zone-select"
+  );
 const staffUserList =
   document.querySelector(
     "#staff-user-list"
@@ -214,6 +218,7 @@ let currentStaff = null;
 let currentBusinesses = [];
 let currentAdRequests = [];
 let currentStaffUsers = [];
+let coverageZones = [];
 let currentAdCampaigns = [];
 let currentReviews = [];
 let currentOpenSites = [];
@@ -1127,6 +1132,43 @@ function formatDateInput(date) {
     .slice(0, 10);
 }
 
+async function loadCoverageZones() {
+  try {
+    const response = await fetch(
+      "/api/coverage/zones",
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    if (response.ok) {
+      coverageZones = data.zones || [];
+    }
+  } catch {
+    coverageZones = [];
+  }
+
+  if (staffZoneSelect) {
+    staffZoneSelect.innerHTML = `
+      <option value="">Sin zona fija</option>
+      ${coverageZones
+        .map(
+          (zone) => `
+            <option value="${escapeHtml(
+              zone.slug
+            )}">
+              ${escapeHtml(
+                zone.label
+              )}
+            </option>
+          `
+        )
+        .join("")}
+    `;
+  }
+}
+
 function dateInputFromToday(days = 0) {
   const date = new Date();
   date.setDate(
@@ -1725,6 +1767,31 @@ function renderBusinesses(items) {
             item.category
           )}
         </p>
+
+        ${
+          item.assignedAdvisor
+            ? `
+        <p class="advisor-suggestion">
+          <strong>Asesor sugerido:</strong>
+          ${escapeHtml(
+            item.assignedAdvisor
+              .displayName ||
+              item.assignedAdvisor
+                .username
+          )}
+          ${
+            item.assignedAdvisor
+              .zoneLabel
+              ? `(${escapeHtml(
+                  item.assignedAdvisor
+                    .zoneLabel
+                )})`
+              : ""
+          }
+        </p>
+        `
+            : ""
+        }
 
         <p>
           ${escapeHtml(
@@ -3857,6 +3924,8 @@ function renderStaffUsers(items) {
       .map((item) => {
         const active =
           Boolean(item.active);
+        const stats =
+          item.stats || {};
         return `
           <article class="glass-card admin-card staff-user-card">
             <div class="mini-business-head">
@@ -3875,6 +3944,10 @@ function renderStaffUsers(items) {
             <p><strong>Usuario:</strong> ${escapeHtml(
               item.username
             )}</p>
+            <p><strong>Zona:</strong> ${escapeHtml(
+              item.zoneLabel ||
+                "Sin zona fija"
+            )}</p>
             <p class="tiny">
               Creado: ${escapeHtml(
                 formatDateTime(
@@ -3882,6 +3955,40 @@ function renderStaffUsers(items) {
                 )
               )}
             </p>
+
+            <div class="advisor-stats">
+              <div>
+                <span>Semana</span>
+                <strong>${escapeHtml(
+                  stats.week || 0
+                )}</strong>
+              </div>
+              <div>
+                <span>Total</span>
+                <strong>${escapeHtml(
+                  stats.total || 0
+                )}</strong>
+              </div>
+              <div>
+                <span>Locales</span>
+                <strong>${escapeHtml(
+                  Number(
+                    stats.approveBusiness ||
+                      0
+                  ) +
+                    Number(
+                      stats.rejectBusiness ||
+                        0
+                    )
+                )}</strong>
+              </div>
+              <div>
+                <span>Pautas</span>
+                <strong>${escapeHtml(
+                  stats.adRequests || 0
+                )}</strong>
+              </div>
+            </div>
 
             <div class="request-actions">
               <button
@@ -4462,4 +4569,5 @@ document.addEventListener(
 
 syncAdCreativeFields();
 updateAdminSoundButton();
+loadCoverageZones();
 bootstrapStaffSession();

@@ -65,6 +65,7 @@ let deferredInstallPrompt = null;
 let burgerMasterPromotion = {
   active: false,
 };
+let coverageZones = [];
 const monthNames = [
   "enero",
   "febrero",
@@ -222,7 +223,125 @@ function normalizeHomeSearch(value) {
     .replace(/[\u0300-\u036f]/g, "");
 }
 
-function redirectWithSearch(query) {
+async function loadCoverageZones() {
+  try {
+    const response = await fetch(
+      "/api/coverage/zones",
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    if (response.ok) {
+      coverageZones = data.zones || [];
+    }
+  } catch {
+    coverageZones = [];
+  }
+}
+
+function findCoverageZoneFromSearch(query) {
+  const normalized =
+    normalizeHomeSearch(query);
+
+  return (
+    coverageZones.find((zone) => {
+      const names = [
+        zone.label,
+        zone.municipality,
+        ...(zone.aliases || []),
+      ].map(normalizeHomeSearch);
+
+      return names.some(
+        (name) =>
+          name && normalized === name
+      );
+    }) || null
+  );
+}
+
+async function getCoverageStatus(coords) {
+  if (!coords) {
+    return null;
+  }
+
+  try {
+    const url = new URL(
+      "/api/coverage/status",
+      window.location.origin
+    );
+    url.searchParams.set(
+      "lat",
+      String(coords.latitude)
+    );
+    url.searchParams.set(
+      "lng",
+      String(coords.longitude)
+    );
+    const response = await fetch(
+      url.toString(),
+      {
+        cache: "no-store",
+      }
+    );
+    const data = await response.json();
+
+    return response.ok
+      ? data.coverage
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+async function showHomeCoverageHintIfOutside() {
+  if (
+    !navigator.geolocation ||
+    !navigator.permissions
+  ) {
+    return;
+  }
+
+  try {
+    const permission =
+      await navigator.permissions.query({
+        name: "geolocation",
+      });
+
+    if (permission.state !== "granted") {
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const coverage =
+          await getCoverageStatus(
+            position.coords
+          );
+
+        if (
+          coverage &&
+          !coverage.enabled
+        ) {
+          updateStatus(
+            coverage.message
+          );
+        }
+      },
+      () => {},
+      {
+        enableHighAccuracy: false,
+        timeout: 3500,
+        maximumAge: 10 * 60 * 1000,
+      }
+    );
+  } catch {
+    // Sin permiso previo no se fuerza ningun popup de ubicacion.
+  }
+}
+
+async function redirectWithSearch(query) {
   const cleanQuery = String(query || "").trim();
 
   if (!cleanQuery) {
@@ -231,7 +350,30 @@ function redirectWithSearch(query) {
     return;
   }
 
+  if (!coverageZones.length) {
+    await loadCoverageZones();
+  }
+
   const normalizedQuery = normalizeHomeSearch(cleanQuery);
+  const selectedZone =
+    findCoverageZoneFromSearch(
+      cleanQuery
+    );
+
+  if (selectedZone) {
+    const url = new URL(
+      "/places.html",
+      window.location.origin
+    );
+    url.searchParams.set(
+      "zone",
+      selectedZone.slug
+    );
+    window.location.href =
+      url.toString();
+    return;
+  }
+
   const shouldSearchSites = SITE_SEARCH_KEYWORDS.some((keyword) =>
     normalizedQuery.includes(keyword)
   );
@@ -443,9 +585,9 @@ function setupQuickPanels() {
 }
 
 function setupSearch() {
-  searchForm?.addEventListener("submit", (event) => {
+  searchForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
-    redirectWithSearch(searchInput?.value);
+    await redirectWithSearch(searchInput?.value);
   });
 }
 
@@ -681,3 +823,5 @@ setupQuickPanels();
 setupSearch();
 setupInstallFlow();
 loadBurgerMasterPromotion();
+loadCoverageZones();
+showHomeCoverageHintIfOutside();

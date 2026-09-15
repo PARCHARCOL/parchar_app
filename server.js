@@ -368,6 +368,180 @@ const STAFF_ROLES = new Set([
   "admin",
   "asesor",
 ]);
+const ANTIOQUIA_BOUNDS = {
+  minLatitude: 5.35,
+  maxLatitude: 8.95,
+  minLongitude: -77.35,
+  maxLongitude: -73.65,
+};
+const COVERAGE_ZONES = [
+  {
+    slug: "medellin",
+    label: "Medellin",
+    type: "municipio",
+    municipality: "Medellin",
+    department: "Antioquia",
+    latitude: 6.2442,
+    longitude: -75.5812,
+    radiusKm: 14,
+    aliases: [
+      "medellin",
+      "medallo",
+    ],
+  },
+  {
+    slug: "el-poblado",
+    label: "El Poblado",
+    type: "sector",
+    municipality: "Medellin",
+    department: "Antioquia",
+    latitude: 6.209,
+    longitude: -75.567,
+    radiusKm: 4,
+    aliases: [
+      "poblado",
+      "el poblado",
+      "provenza",
+      "manila",
+    ],
+  },
+  {
+    slug: "laureles",
+    label: "Laureles",
+    type: "sector",
+    municipality: "Medellin",
+    department: "Antioquia",
+    latitude: 6.245,
+    longitude: -75.596,
+    radiusKm: 4,
+    aliases: [
+      "laureles",
+      "estadio",
+    ],
+  },
+  {
+    slug: "belen",
+    label: "Belen",
+    type: "sector",
+    municipality: "Medellin",
+    department: "Antioquia",
+    latitude: 6.226,
+    longitude: -75.603,
+    radiusKm: 4,
+    aliases: [
+      "belen",
+    ],
+  },
+  {
+    slug: "bello",
+    label: "Bello",
+    type: "municipio",
+    municipality: "Bello",
+    department: "Antioquia",
+    latitude: 6.3373,
+    longitude: -75.5579,
+    radiusKm: 10,
+    aliases: [
+      "bello",
+      "niquia",
+      "cabanas",
+    ],
+  },
+  {
+    slug: "sabaneta",
+    label: "Sabaneta",
+    type: "municipio",
+    municipality: "Sabaneta",
+    department: "Antioquia",
+    latitude: 6.1515,
+    longitude: -75.6166,
+    radiusKm: 8,
+    aliases: [
+      "sabaneta",
+    ],
+  },
+  {
+    slug: "envigado",
+    label: "Envigado",
+    type: "municipio",
+    municipality: "Envigado",
+    department: "Antioquia",
+    latitude: 6.1719,
+    longitude: -75.5833,
+    radiusKm: 9,
+    aliases: [
+      "envigado",
+    ],
+  },
+  {
+    slug: "itagui",
+    label: "Itagui",
+    type: "municipio",
+    municipality: "Itagui",
+    department: "Antioquia",
+    latitude: 6.171,
+    longitude: -75.611,
+    radiusKm: 8,
+    aliases: [
+      "itagui",
+      "itagüi",
+    ],
+  },
+  {
+    slug: "la-estrella",
+    label: "La Estrella",
+    type: "municipio",
+    municipality: "La Estrella",
+    department: "Antioquia",
+    latitude: 6.1577,
+    longitude: -75.6432,
+    radiusKm: 8,
+    aliases: [
+      "la estrella",
+    ],
+  },
+  {
+    slug: "rionegro",
+    label: "Rionegro",
+    type: "municipio",
+    municipality: "Rionegro",
+    department: "Antioquia",
+    latitude: 6.153,
+    longitude: -75.374,
+    radiusKm: 14,
+    aliases: [
+      "rionegro",
+    ],
+  },
+  {
+    slug: "guatape",
+    label: "Guatape",
+    type: "municipio",
+    municipality: "Guatape",
+    department: "Antioquia",
+    latitude: 6.234,
+    longitude: -75.159,
+    radiusKm: 10,
+    aliases: [
+      "guatape",
+      "guatapé",
+    ],
+  },
+  {
+    slug: "santa-fe-antioquia",
+    label: "Santa Fe de Antioquia",
+    type: "municipio",
+    municipality: "Santa Fe de Antioquia",
+    department: "Antioquia",
+    latitude: 6.5569,
+    longitude: -75.8278,
+    radiusKm: 12,
+    aliases: [
+      "santa fe",
+      "santa fe de antioquia",
+    ],
+  },
+];
 const DEFAULT_STAFF_ACCOUNTS = [
   {
     username:
@@ -1185,9 +1359,350 @@ function normalizeStaffUser(row) {
     active: Boolean(
       Number(row.active)
     ),
+    zoneSlug:
+      row.zoneSlug ||
+      row.zone_slug ||
+      "",
+    zoneLabel:
+      row.zoneLabel ||
+      row.zone_label ||
+      "",
+    stats:
+      row.stats || {
+        total: 0,
+        week: 0,
+        approveBusiness: 0,
+        rejectBusiness: 0,
+        adRequests: 0,
+        reviews: 0,
+      },
     createdAt:
       row.created_at || null,
   };
+}
+
+function publicCoverageZone(zone) {
+  return {
+    slug: zone.slug,
+    label: zone.label,
+    type: zone.type,
+    municipality: zone.municipality,
+    department: zone.department,
+    latitude: zone.latitude,
+    longitude: zone.longitude,
+    radiusKm: zone.radiusKm,
+    aliases: zone.aliases,
+  };
+}
+
+function getCoverageZoneBySlug(value) {
+  const slug = normalizeCategory(value);
+
+  return (
+    COVERAGE_ZONES.find(
+      (zone) => zone.slug === slug
+    ) || null
+  );
+}
+
+function isWithinAntioquiaBounds(
+  latitude,
+  longitude
+) {
+  return (
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >=
+      ANTIOQUIA_BOUNDS.minLatitude &&
+    latitude <=
+      ANTIOQUIA_BOUNDS.maxLatitude &&
+    longitude >=
+      ANTIOQUIA_BOUNDS.minLongitude &&
+    longitude <=
+      ANTIOQUIA_BOUNDS.maxLongitude
+  );
+}
+
+function findNearestCoverageZone(
+  latitude,
+  longitude
+) {
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude)
+  ) {
+    return null;
+  }
+
+  return COVERAGE_ZONES.map((zone) => ({
+    zone,
+    distanceKm: calculateDistanceKm(
+      latitude,
+      longitude,
+      zone.latitude,
+      zone.longitude
+    ),
+  }))
+    .sort(
+      (a, b) =>
+        a.distanceKm - b.distanceKm
+    )[0] || null;
+}
+
+function getCoverageStatus(
+  latitude,
+  longitude
+) {
+  const nearest =
+    findNearestCoverageZone(
+      latitude,
+      longitude
+    );
+  const inAntioquia =
+    isWithinAntioquiaBounds(
+      latitude,
+      longitude
+    );
+
+  return {
+    enabled: inAntioquia,
+    department: inAntioquia
+      ? "Antioquia"
+      : "Fuera de Antioquia",
+    message: inAntioquia
+      ? "Parchar esta activo en Antioquia."
+      : "Parchar inicia en Antioquia. Aun no esta habilitada fuera de Antioquia, pero puedes explorar municipios antioquenos mientras llegamos a tu zona.",
+    nearestZone: nearest
+      ? {
+          ...publicCoverageZone(
+            nearest.zone
+          ),
+          distanceKm: Number(
+            nearest.distanceKm.toFixed(2)
+          ),
+        }
+      : null,
+  };
+}
+
+function findAdvisorForBusiness(
+  business,
+  advisors
+) {
+  const latitude = Number(
+    business.latitude
+  );
+  const longitude = Number(
+    business.longitude
+  );
+  const city = normalizeCategory(
+    business.city
+  );
+
+  const candidates = advisors
+    .map((advisor) => {
+      const zone = getCoverageZoneBySlug(
+        advisor.zone_slug
+      );
+
+      if (!zone) {
+        return null;
+      }
+
+      const distanceKm =
+        Number.isFinite(latitude) &&
+        Number.isFinite(longitude)
+          ? calculateDistanceKm(
+              latitude,
+              longitude,
+              zone.latitude,
+              zone.longitude
+            )
+          : Number.POSITIVE_INFINITY;
+      const cityMatch =
+        city &&
+        normalizeCategory(
+          zone.municipality
+        ) === city;
+
+      if (
+        !cityMatch &&
+        distanceKm > zone.radiusKm
+      ) {
+        return null;
+      }
+
+      return {
+        advisor,
+        distanceKm,
+        cityMatch,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.cityMatch !== b.cityMatch) {
+        return a.cityMatch ? -1 : 1;
+      }
+
+      return a.distanceKm - b.distanceKm;
+    });
+
+  const selected =
+    candidates[0]?.advisor ||
+    advisors.find(
+      (advisor) => !advisor.zone_slug
+    ) ||
+    null;
+
+  return selected
+    ? {
+        id: selected.id,
+        username: selected.username,
+        displayName:
+          selected.display_name ||
+          selected.username,
+        zoneSlug:
+          selected.zone_slug || "",
+        zoneLabel:
+          selected.zone_label || "",
+      }
+    : null;
+}
+
+async function getAdvisorRows() {
+  const result = await pool.query(`
+    SELECT
+      id,
+      username,
+      display_name,
+      zone_slug,
+      zone_label
+    FROM staff_users
+    WHERE
+      role = 'asesor'
+      AND active = TRUE
+    ORDER BY display_name ASC
+  `);
+
+  return result.rows;
+}
+
+async function logAdvisorActivity({
+  staffAuth,
+  actionType,
+  entityType,
+  entityId,
+  zoneSlug = "",
+  zoneLabel = "",
+  notes = "",
+}) {
+  if (!staffAuth?.staff) {
+    return;
+  }
+
+  try {
+    await pool.query(
+      `
+      INSERT INTO advisor_activity_log (
+        staff_user_id,
+        staff_username,
+        action_type,
+        entity_type,
+        entity_id,
+        zone_slug,
+        zone_label,
+        notes
+      )
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+      `,
+      [
+        staffAuth.staff.id,
+        staffAuth.staff.username,
+        actionType,
+        entityType,
+        Number(entityId) || null,
+        zoneSlug,
+        zoneLabel,
+        notes,
+      ]
+    );
+  } catch (error) {
+    console.warn(
+      "No se pudo registrar actividad de asesor:",
+      error.message
+    );
+  }
+}
+
+async function getAdvisorStatsMap() {
+  const result = await pool.query(`
+    SELECT
+      staff_username,
+      action_type,
+      created_at
+    FROM advisor_activity_log
+  `);
+  const map = new Map();
+  const weekAgo =
+    Date.now() -
+    7 * 24 * 60 * 60 * 1000;
+
+  for (const row of result.rows) {
+    const username =
+      row.staff_username || "";
+
+    if (!username) {
+      continue;
+    }
+
+    const stats =
+      map.get(username) || {
+        total: 0,
+        week: 0,
+        approveBusiness: 0,
+        rejectBusiness: 0,
+        adRequests: 0,
+        reviews: 0,
+      };
+    stats.total += 1;
+
+    const createdAt = new Date(
+      row.created_at || ""
+    ).getTime();
+
+    if (
+      Number.isFinite(createdAt) &&
+      createdAt >= weekAgo
+    ) {
+      stats.week += 1;
+    }
+
+    if (
+      row.action_type ===
+      "approve_business"
+    ) {
+      stats.approveBusiness += 1;
+    } else if (
+      row.action_type ===
+      "reject_business"
+    ) {
+      stats.rejectBusiness += 1;
+    } else if (
+      row.action_type ===
+      "resolve_ad_request"
+    ) {
+      stats.adRequests += 1;
+    } else if (
+      row.action_type ===
+      "remove_review"
+    ) {
+      stats.reviews += 1;
+    }
+
+    map.set(username, stats);
+  }
+
+  return map;
 }
 
 function normalizeExternalUrl(value) {
@@ -4596,6 +5111,8 @@ async function initializeSqliteDatabase() {
       password_hash TEXT NOT NULL,
       display_name TEXT NOT NULL,
       role TEXT NOT NULL,
+      zone_slug TEXT,
+      zone_label TEXT,
       active INTEGER DEFAULT 1,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -4607,6 +5124,21 @@ async function initializeSqliteDatabase() {
       staff_user_id INTEGER NOT NULL REFERENCES staff_users(id) ON DELETE CASCADE,
       token_hash TEXT UNIQUE NOT NULL,
       expires_at TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS advisor_activity_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      staff_user_id INTEGER REFERENCES staff_users(id) ON DELETE SET NULL,
+      staff_username TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER,
+      zone_slug TEXT,
+      zone_label TEXT,
+      notes TEXT,
       created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -4822,6 +5354,20 @@ async function initializeSqliteDatabase() {
     "review_note",
     "TEXT"
   );
+  await ensureSqliteColumn(
+    "staff_users",
+    "zone_slug",
+    "TEXT"
+  );
+  await ensureSqliteColumn(
+    "staff_users",
+    "zone_label",
+    "TEXT"
+  );
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_advisor_activity_staff
+    ON advisor_activity_log (staff_username, created_at);
+  `);
   await pool.exec(`
     CREATE INDEX IF NOT EXISTS idx_business_parches_business
     ON business_parches (business_id);
@@ -4985,6 +5531,8 @@ async function initializeDatabase() {
       password_hash TEXT NOT NULL,
       display_name TEXT NOT NULL,
       role TEXT NOT NULL,
+      zone_slug TEXT,
+      zone_label TEXT,
       active BOOLEAN DEFAULT true,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -4996,6 +5544,21 @@ async function initializeDatabase() {
       staff_user_id INTEGER NOT NULL REFERENCES staff_users(id) ON DELETE CASCADE,
       token_hash TEXT UNIQUE NOT NULL,
       expires_at TIMESTAMP NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS advisor_activity_log (
+      id SERIAL PRIMARY KEY,
+      staff_user_id INTEGER REFERENCES staff_users(id) ON DELETE SET NULL,
+      staff_username TEXT NOT NULL,
+      action_type TEXT NOT NULL,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER,
+      zone_slug TEXT,
+      zone_label TEXT,
+      notes TEXT,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -5212,6 +5775,17 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    ALTER TABLE staff_users
+    ADD COLUMN IF NOT EXISTS zone_slug TEXT,
+    ADD COLUMN IF NOT EXISTS zone_label TEXT;
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_advisor_activity_staff
+    ON advisor_activity_log (staff_username, created_at);
+  `);
+
+  await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_business_parches_business
     ON business_parches (business_id);
   `);
@@ -5375,6 +5949,62 @@ const server =
           sendJson(res, 200, {
             brand:
               await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/coverage/zones" &&
+          req.method === "GET"
+        ) {
+          sendJson(res, 200, {
+            ok: true,
+            enabledDepartment:
+              "Antioquia",
+            zones: COVERAGE_ZONES.map(
+              publicCoverageZone
+            ),
+          });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/coverage/status" &&
+          req.method === "GET"
+        ) {
+          const latitude =
+            validateLatitude(
+              requestUrl.searchParams.get(
+                "lat"
+              )
+            );
+          const longitude =
+            validateLongitude(
+              requestUrl.searchParams.get(
+                "lng"
+              )
+            );
+
+          if (
+            latitude === null ||
+            longitude === null
+          ) {
+            sendJson(res, 400, {
+              error:
+                "Coordenadas invalidas.",
+            });
+            return;
+          }
+
+          sendJson(res, 200, {
+            ok: true,
+            coverage:
+              getCoverageStatus(
+                latitude,
+                longitude
+              ),
           });
           return;
         }
@@ -5725,6 +6355,35 @@ const server =
             pathname.split(
               "/"
             )[4];
+          const existing =
+            await pool.query(
+              `
+              SELECT
+                r.id,
+                b.business_name,
+                b.latitude,
+                b.longitude
+              FROM business_reviews r
+              JOIN businesses b
+                ON b.id = r.business_id
+              WHERE r.id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const review =
+            existing.rows[0];
+          const nearest =
+            review
+              ? findNearestCoverageZone(
+                  Number(
+                    review.latitude
+                  ),
+                  Number(
+                    review.longitude
+                  )
+                )
+              : null;
 
           await pool.query(
             `
@@ -5735,6 +6394,20 @@ const server =
             `,
             [id]
           );
+          await logAdvisorActivity({
+            staffAuth,
+            actionType:
+              "remove_review",
+            entityType: "business_review",
+            entityId: id,
+            zoneSlug:
+              nearest?.zone?.slug || "",
+            zoneLabel:
+              nearest?.zone?.label || "",
+            notes:
+              review?.business_name ||
+              "Resena retirada",
+          });
 
           sendJson(res, 200, {
             ok: true,
@@ -7095,10 +7768,20 @@ const server =
               FROM businesses
               ORDER BY created_at DESC
             `);
+          const advisors =
+            await getAdvisorRows();
 
           sendJson(res, 200, {
-            items:
-              result.rows,
+            items: result.rows.map(
+              (business) => ({
+                ...business,
+                assignedAdvisor:
+                  findAdvisorForBusiness(
+                    business,
+                    advisors
+                  ),
+              })
+            ),
           });
           return;
         }
@@ -7902,16 +8585,25 @@ const server =
                 id,
                 username,
                 display_name AS "displayName",
+                zone_slug AS "zoneSlug",
+                zone_label AS "zoneLabel",
                 role,
                 active,
                 created_at
               FROM staff_users
               ORDER BY role ASC, display_name ASC
             `);
+          const stats =
+            await getAdvisorStatsMap();
 
           sendJson(res, 200, {
-            items: result.rows.map(
-              normalizeStaffUser
+            items: result.rows.map((row) =>
+              normalizeStaffUser({
+                ...row,
+                stats:
+                  stats.get(row.username) ||
+                  undefined,
+              })
             ),
           });
           return;
@@ -7945,6 +8637,10 @@ const server =
               body.displayName,
               120
             ) || username;
+          const zone =
+            getCoverageZoneBySlug(
+              body.zoneSlug
+            );
           const password = cleanText(
             body.password
           );
@@ -7998,15 +8694,19 @@ const server =
               password_hash,
               display_name,
               role,
+              zone_slug,
+              zone_label,
               active
             )
-            VALUES ($1,$2,$3,$4,$5)
+            VALUES ($1,$2,$3,$4,$5,$6,$7)
             `,
             [
               username,
               hashPassword(password),
               displayName,
               "asesor",
+              zone?.slug || "",
+              zone?.label || "",
               true,
             ]
           );
@@ -8018,6 +8718,8 @@ const server =
                 id,
                 username,
                 display_name AS "displayName",
+                zone_slug AS "zoneSlug",
+                zone_label AS "zoneLabel",
                 role,
                 active,
                 created_at
@@ -9354,6 +10056,15 @@ const server =
               id,
             ]
           );
+          await logAdvisorActivity({
+            staffAuth,
+            actionType:
+              "resolve_ad_request",
+            entityType: "ad_request",
+            entityId: id,
+            notes:
+              "Solicitud de pauta contactada",
+          });
 
           sendJson(res, 200, {
             ok: true,
@@ -9381,6 +10092,29 @@ const server =
             pathname.split(
               "/"
             )[4];
+          const existing =
+            await pool.query(
+              `
+              SELECT *
+              FROM businesses
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const business =
+            existing.rows[0];
+          const nearest =
+            business
+              ? findNearestCoverageZone(
+                  Number(
+                    business.latitude
+                  ),
+                  Number(
+                    business.longitude
+                  )
+                )
+              : null;
 
           await pool.query(
             `
@@ -9398,6 +10132,20 @@ const server =
               id,
             ]
           );
+          await logAdvisorActivity({
+            staffAuth,
+            actionType:
+              "approve_business",
+            entityType: "business",
+            entityId: id,
+            zoneSlug:
+              nearest?.zone?.slug || "",
+            zoneLabel:
+              nearest?.zone?.label || "",
+            notes:
+              business?.business_name ||
+              "Local aprobado",
+          });
 
           sendJson(res, 200, {
             ok: true,
@@ -9425,6 +10173,29 @@ const server =
             pathname.split(
               "/"
             )[4];
+          const existing =
+            await pool.query(
+              `
+              SELECT *
+              FROM businesses
+              WHERE id = $1
+              LIMIT 1
+              `,
+              [id]
+            );
+          const business =
+            existing.rows[0];
+          const nearest =
+            business
+              ? findNearestCoverageZone(
+                  Number(
+                    business.latitude
+                  ),
+                  Number(
+                    business.longitude
+                  )
+                )
+              : null;
 
           const body =
             await parseJsonBody(
@@ -9452,6 +10223,21 @@ const server =
               id,
             ]
           );
+          await logAdvisorActivity({
+            staffAuth,
+            actionType:
+              "reject_business",
+            entityType: "business",
+            entityId: id,
+            zoneSlug:
+              nearest?.zone?.slug || "",
+            zoneLabel:
+              nearest?.zone?.label || "",
+            notes:
+              reason ||
+              business?.business_name ||
+              "Local rechazado",
+          });
 
           sendJson(res, 200, {
             ok: true,
