@@ -8,6 +8,20 @@ const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
 let adRequestSeq = 0;
 
+function revealAdBanner(requestSeq) {
+  if (
+    requestSeq !== adRequestSeq ||
+    !adBanner
+  ) {
+    return;
+  }
+
+  document.body.classList.remove(
+    "ad-disabled"
+  );
+  adBanner.hidden = false;
+}
+
 function mountFixedPublicChrome() {
   if (
     publicFixedNav &&
@@ -642,10 +656,10 @@ async function loadAdBanner() {
       ".ad-cta"
     );
 
-  document.body.classList.remove(
+  document.body.classList.add(
     "ad-disabled"
   );
-  adBanner.hidden = false;
+  adBanner.hidden = true;
   adBanner.classList.remove(
     "is-clickable"
   );
@@ -971,6 +985,7 @@ async function loadAdBanner() {
           )
         );
         mediaContainer.hidden = false;
+        revealAdBanner(requestSeq);
         scheduleAdRefresh(
           AD_TEMPLATE_REFRESH_MS
         );
@@ -992,6 +1007,14 @@ async function loadAdBanner() {
       );
 
       if (mediaTag === "video") {
+        media.addEventListener(
+          "loadeddata",
+          () =>
+            revealAdBanner(
+              requestSeq
+            ),
+          { once: true }
+        );
         media.addEventListener(
           "loadedmetadata",
           () =>
@@ -1025,16 +1048,21 @@ async function loadAdBanner() {
       } else {
         media.addEventListener(
           "load",
-          () =>
+          () => {
             setMediaOrientationClass(
               media
-            ),
+            );
+            revealAdBanner(
+              requestSeq
+            );
+          },
           { once: true }
         );
         if (media.complete) {
           setMediaOrientationClass(
             media
           );
+          revealAdBanner(requestSeq);
         }
         scheduleAdRefresh(AD_REFRESH_MS);
       }
@@ -1043,6 +1071,10 @@ async function loadAdBanner() {
       mediaContainer.hidden = false;
 
       if (mediaTag === "video") {
+        window.setTimeout(
+          () => revealAdBanner(requestSeq),
+          5000
+        );
         media.addEventListener(
           "loadedmetadata",
           () => {
@@ -1083,8 +1115,10 @@ async function loadAdBanner() {
       }
     } else if (mediaContainer) {
       mediaContainer.hidden = true;
+      revealAdBanner(requestSeq);
       scheduleAdRefresh(AD_REFRESH_MS);
     } else {
+      revealAdBanner(requestSeq);
       scheduleAdRefresh(AD_REFRESH_MS);
     }
   } catch {
@@ -1095,6 +1129,10 @@ async function loadAdBanner() {
       text.textContent =
         "Pauta tu marca en Parchar";
     }
+    document.body.classList.add(
+      "ad-disabled"
+    );
+    adBanner.hidden = true;
     scheduleAdRefresh(AD_REFRESH_MS);
   }
 }
