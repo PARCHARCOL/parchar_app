@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=95" />
+    <link rel="stylesheet" href="/styles.css?v=96" />
+    <link rel="stylesheet" href="/identity.css?v=96" />
     <script src="/theme.js?v=95" defer></script>
   </head>
   <body class="theme-body home-body">
@@ -89,7 +90,7 @@
 
       <nav class="bottom-nav public-nav home-nav">
         <a class="nav-item active" href="/">
-          <img src="/assets/ui/map-pin.svg" alt="" />
+          <img src="/assets/icons/parchar-pin.png" alt="" />
           <strong>Inicio</strong>
         </a>
 
@@ -109,32 +110,7 @@
         </a>
       </nav>
 
-      <section class="install-cta" aria-label="Descargar app Parchar">
-        <div>
-          <strong>Descargar app</strong>
-          <p id="install-hint">Instala Parchar en tu celular para abrirla como app.</p>
-        </div>
-        <div class="install-actions">
-          <button id="install-app-btn" type="button" class="submit-btn">
-            Descargar app
-          </button>
-          <button id="install-help-btn" type="button" class="ghost-btn">
-            Como instalar
-          </button>
-        </div>
-      </section>
-
-      <section id="install-guide" class="install-guide" hidden>
-        <h3>Instalar Parchar</h3>
-        <p id="install-guide-text">
-          Android: abre este link en Chrome y toca Descargar app. iPhone: abre en Safari, toca Compartir y luego "Agregar a pantalla de inicio".
-        </p>
-        <button id="install-guide-close" type="button" class="ghost-btn">
-          Cerrar
-        </button>
-      </section>
-
-      <section class="button-grid">
+      <section class="button-grid" aria-label="Explorar planes">
         <button class="action-btn btn-restaurante" data-route="restaurante">
           <span class="action-icon"><img src="/assets/ui/utensils.svg" alt="" /></span>
           <span class="action-label">Restaurantes</span>
@@ -192,9 +168,17 @@
             href="/sites.html?type=mirador"
             data-suggestion-route="miradores"
           >
-            <span class="tag-live">LIVE</span>
-            <h3>Miradores</h3>
-            <p>#Vista #Atardecer #Ruta</p>
+            <img src="/assets/discover/miradores.jpg" alt="Paisaje de montanas al atardecer" loading="lazy" />
+            <span class="suggestion-copy"><strong>Miradores</strong><small>Vistas y atardeceres</small></span>
+          </a>
+
+          <a
+            class="suggestion-card card-bar"
+            href="/places.html?category=bar"
+            data-suggestion-route="bar"
+          >
+            <img src="/assets/discover/bares-rooftop.jpg" alt="Terraza con vista de la ciudad" loading="lazy" />
+            <span class="suggestion-copy"><strong>Bares</strong><small>Planes para salir</small></span>
           </a>
 
           <a
@@ -204,20 +188,35 @@
             data-promotion="burgermaster"
             hidden
           >
-            <span class="tag-live">HOT</span>
-            <h3>BurgerMaster</h3>
-            <p>#Hamburguesa #Evento #Ruta</p>
+            <img src="/assets/discover/burgermaster.jpg" alt="Hamburguesa gourmet" loading="lazy" />
+            <span class="suggestion-copy"><strong>BurgerMaster</strong><small>Ver participantes</small></span>
           </a>
 
           <a
             class="suggestion-card card-road"
             href="/sites.html?mode=puebliar"
           >
-            <span class="tag-live">TOP</span>
-            <h3>Puebliar</h3>
-            <p>#Pueblos #Miradores #Ruta</p>
+            <img src="/assets/discover/puebliar.jpg" alt="Plaza de un pueblo colombiano" loading="lazy" />
+            <span class="suggestion-copy"><strong>Puebliar</strong><small>Pueblos para recorrer</small></span>
           </a>
         </div>
+      </section>
+
+      <section class="install-cta" aria-label="Descargar app Parchar">
+        <div>
+          <strong>Descargar app</strong>
+          <p id="install-hint">Instala Parchar en tu celular para abrirla como app.</p>
+        </div>
+        <div class="install-actions">
+          <button id="install-app-btn" type="button" class="submit-btn">Descargar app</button>
+          <button id="install-help-btn" type="button" class="ghost-btn">Como instalar</button>
+        </div>
+      </section>
+
+      <section id="install-guide" class="install-guide" hidden>
+        <h3>Instalar Parchar</h3>
+        <p id="install-guide-text">Android: abre este link en Chrome y toca Descargar app. iPhone: abre en Safari, toca Compartir y luego "Agregar a pantalla de inicio".</p>
+        <button id="install-guide-close" type="button" class="ghost-btn">Cerrar</button>
       </section>
 
       <aside class="ad-banner" aria-label="Publicidad">
