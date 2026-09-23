@@ -3085,7 +3085,7 @@ body > .ad-banner {
 
 .home-body .action-btn {
   --button-accent: #ffbd68;
-  min-height: 88px;
+  min-height: 112px;
   border: 1px solid color-mix(in srgb, var(--button-accent), transparent 55%);
   border-radius: 8px;
   background: linear-gradient(155deg, rgba(32, 17, 51, 0.94), rgba(24, 14, 40, 0.94));
@@ -3100,19 +3100,20 @@ body > .ad-banner {
 }
 
 .home-body .action-icon {
-  width: 34px;
-  height: 34px;
+  width: 52px;
+  height: 52px;
   background: color-mix(in srgb, var(--button-accent), transparent 84%);
   border-radius: 7px;
 }
 
 .home-body .action-icon img {
-  width: 23px;
-  height: 23px;
+  width: 32px;
+  height: 32px;
   filter: brightness(0) invert(1);
 }
 
-.home-body .action-label { font-size: 0.82rem; }
+.home-body .action-label { font-size: 0.92rem; }
+.home-body [hidden] { display: none !important; }
 .home-body .btn-bar { --button-accent: #75cce8; }
 .home-body .btn-walking { --button-accent: #91dbad; }
 .home-body .btn-bike { --button-accent: #b4db75; }
@@ -3212,6 +3213,12 @@ body > .ad-banner {
   }
 
   .advisor-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .home-body .button-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
