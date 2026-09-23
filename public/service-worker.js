@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v94";
+const CACHE_NAME = "parchar-shell-v95";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -12,6 +12,7 @@ const CORE_ASSETS = [
   "/social.html",
   "/styles.css",
   "/app.js",
+  "/theme.js",
   "/brand.js",
   "/update.js",
   "/ads.js",
@@ -26,6 +27,26 @@ const CORE_ASSETS = [
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
   "/assets/icons/apple-touch-icon-180.png",
+  "/assets/ui/menu.svg",
+  "/assets/ui/bell.svg",
+  "/assets/ui/search.svg",
+  "/assets/ui/map-pin.svg",
+  "/assets/ui/utensils.svg",
+  "/assets/ui/megaphone.svg",
+  "/assets/ui/shield.svg",
+  "/assets/ui/wine.svg",
+  "/assets/ui/footprints.svg",
+  "/assets/ui/bike.svg",
+  "/assets/ui/map-pinned.svg",
+  "/assets/ui/waves.svg",
+  "/assets/ui/mountain.svg",
+  "/assets/ui/sandwich.svg",
+  "/assets/ui/store.svg",
+  "/assets/ui/moon.svg",
+  "/assets/ui/sun.svg",
+  "/assets/ui/arrow-left.svg",
+  "/assets/ui/user-round.svg",
+  "/assets/ui/message-circle.svg",
   OFFLINE_URL,
 ];
 

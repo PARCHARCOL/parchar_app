@@ -830,7 +830,8 @@ function renderFilterButtons() {
 function setupPageMode() {
   const setModeNav = (icon, label) => {
     if (siteNavIcon) {
-      siteNavIcon.textContent = icon;
+      const image = siteNavIcon.querySelector("img");
+      if (image) image.src = `/assets/ui/${icon}.svg`;
     }
 
     if (siteNavLabel) {
@@ -840,7 +841,7 @@ function setupPageMode() {
 
   if (isPuebliarMode()) {
     document.title = "Puebliar | Parchar";
-    setModeNav("\u{1f3d8}\ufe0f", "Puebliar");
+    setModeNav("map-pinned", "Puebliar");
 
     if (sitePageTitle) {
       sitePageTitle.textContent =
@@ -866,7 +867,7 @@ function setupPageMode() {
 
   if (isBikeMode()) {
     document.title = "En bici | Parchar";
-    setModeNav("\u{1f6b2}", "En bici");
+    setModeNav("bike", "En bici");
 
     if (sitePageTitle) {
       sitePageTitle.textContent = "En bici";
@@ -898,7 +899,7 @@ function setupPageMode() {
   const modeCopy = {
     charco: {
       title: "Charcos",
-      icon: "\u{1f4a7}",
+      icon: "waves",
       subtitle:
         "Charcos, rios, cascadas y planes de agua ordenados por cercania.",
       placeholder: "Buscar charco, rio o cascada",
@@ -907,7 +908,7 @@ function setupPageMode() {
     },
     mirador: {
       title: "Miradores",
-      icon: "\u{1f304}",
+      icon: "mountain",
       subtitle:
         "Miradores, cerros y puntos con buena vista cerca de ti.",
       placeholder: "Buscar mirador, cerro o vista",
@@ -916,7 +917,7 @@ function setupPageMode() {
     },
     burgermaster: {
       title: "BurgerMaster",
-      icon: "\u{1f354}",
+      icon: "sandwich",
       subtitle:
         "Restaurantes participantes y rutas para ir por hamburguesas cerca de ti.",
       placeholder: "Buscar restaurante BurgerMaster",

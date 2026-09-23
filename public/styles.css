@@ -1,4 +1,5 @@
 :root {
+  --tone-mix: 0%;
   --bg-deep: #130227;
   --bg-mid: #240443;
   --bg-soft: #421772;
@@ -3005,6 +3006,122 @@ body > .ad-banner {
   --ad-height: 238px;
 }
 
+.theme-body {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, #29104e, white var(--tone-mix)),
+    color-mix(in srgb, #10071d, white var(--tone-mix)));
+}
+
+.theme-body .app-shell {
+  background: linear-gradient(178deg,
+    color-mix(in srgb, #392074, white var(--tone-mix)),
+    color-mix(in srgb, #1c0a39, white var(--tone-mix)) 65%);
+}
+
+.home-body .brand-logo {
+  max-height: 260px;
+  object-fit: contain;
+}
+
+.home-body .ad-banner {
+  background: #29104e;
+}
+
+.theme-body .icon-ghost {
+  border-radius: 8px;
+  background: #4b2881;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+}
+
+.theme-body .bottom-nav {
+  border-radius: 8px;
+  background: #301755;
+}
+
+.theme-body .nav-item {
+  border-radius: 6px;
+}
+
+.theme-body .nav-item.active {
+  background: rgba(255, 174, 89, 0.2);
+  color: #fff;
+}
+
+.tone-control {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 4px 2px;
+  color: var(--text-main);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.tone-control img {
+  width: 16px;
+  height: 16px;
+  filter: brightness(0) invert(1);
+  opacity: 0.8;
+}
+
+.tone-control input {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  margin: 0;
+  accent-color: #ffb74b;
+  cursor: pointer;
+}
+
+.icon-ghost img,
+.search-submit img,
+.nav-item img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  filter: brightness(0) invert(1);
+}
+
+.home-body .action-btn {
+  --button-accent: #ffbd68;
+  min-height: 88px;
+  border: 1px solid color-mix(in srgb, var(--button-accent), transparent 55%);
+  border-radius: 8px;
+  background: linear-gradient(155deg, rgba(32, 17, 51, 0.94), rgba(24, 14, 40, 0.94));
+  box-shadow: inset 0 3px 0 var(--button-accent), 0 5px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.home-body .action-btn:hover,
+.home-body .action-btn:focus-visible {
+  transform: translateY(-2px);
+  border-color: var(--button-accent);
+}
+
+.home-body .action-icon {
+  width: 34px;
+  height: 34px;
+  background: color-mix(in srgb, var(--button-accent), transparent 84%);
+  border-radius: 7px;
+}
+
+.home-body .action-icon img {
+  width: 23px;
+  height: 23px;
+  filter: brightness(0) invert(1);
+}
+
+.home-body .action-label { font-size: 0.82rem; }
+.home-body .btn-bar { --button-accent: #75cce8; }
+.home-body .btn-walking { --button-accent: #91dbad; }
+.home-body .btn-bike { --button-accent: #b4db75; }
+.home-body .btn-puebliar { --button-accent: #ffba73; }
+.home-body .btn-charcos { --button-accent: #75d8d6; }
+.home-body .btn-miradores { --button-accent: #ed9dcf; }
+.home-body .btn-burgermaster { --button-accent: #ffd276; }
+.home-body .btn-clientes { --button-accent: #8abde8; }
+
 .home-body .app-shell {
   padding-bottom: calc(var(--ad-height) + 34px);
 }
@@ -3045,12 +3162,17 @@ body > .ad-banner {
     grid-template-areas:
       "top top"
       "search search"
+      "tone tone"
       "nav nav"
       "install install"
       "guide guide"
       "buttons suggest"
       "status suggest";
     padding-bottom: calc(var(--ad-height) + 46px);
+  }
+
+  .home-body .tone-control {
+    grid-area: tone;
   }
 
   .home-body .home-nav {
@@ -3070,6 +3192,11 @@ body > .ad-banner {
 @media (max-width: 540px) {
   .home-body {
     --ad-height: 250px;
+  }
+
+  .home-body .brand-logo {
+    max-height: 270px;
+    object-fit: contain;
   }
 
   .home-body .app-shell {

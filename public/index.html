@@ -10,7 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=93" />
+    <link rel="stylesheet" href="/styles.css?v=95" />
+    <script src="/theme.js?v=95" defer></script>
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -25,7 +26,7 @@
           aria-controls="home-menu-panel"
           aria-expanded="false"
         >
-          &#9776;
+          <img src="/assets/ui/menu.svg" alt="" />
         </button>
         <img class="brand-logo" data-brand-logo src="/assets/parchar-logo.png" alt="Parchar" />
         <button
@@ -36,7 +37,7 @@
           aria-controls="home-alerts-panel"
           aria-expanded="false"
         >
-          &#128276;
+          <img src="/assets/ui/bell.svg" alt="" />
         </button>
 
         <div id="home-menu-panel" class="quick-panel" hidden>
@@ -68,7 +69,7 @@
 
       <form id="home-search-form" class="search-bar" role="search">
         <button class="search-submit" type="submit" aria-label="Buscar">
-          <span class="search-icon">&#128269;</span>
+          <img src="/assets/ui/search.svg" alt="" />
         </button>
         <input
           id="home-search"
@@ -79,24 +80,31 @@
         />
       </form>
 
+      <div class="tone-control">
+        <label for="background-tone">Fondo</label>
+        <img src="/assets/ui/moon.svg" alt="" />
+        <input id="background-tone" type="range" min="0" max="100" value="0" aria-label="Claridad del fondo" />
+        <img src="/assets/ui/sun.svg" alt="" />
+      </div>
+
       <nav class="bottom-nav public-nav home-nav">
         <a class="nav-item active" href="/">
-          <span>&#128205;</span>
+          <img src="/assets/ui/map-pin.svg" alt="" />
           <strong>Inicio</strong>
         </a>
 
         <a class="nav-item" href="/places.html?category=restaurante">
-          <span>&#127860;</span>
+          <img src="/assets/ui/utensils.svg" alt="" />
           <strong>Restaurantes</strong>
         </a>
 
         <button type="button" class="nav-item nav-button" data-open-ad-request>
-          <span>&#128227;</span>
+          <img src="/assets/ui/megaphone.svg" alt="" />
           <strong>Pautar</strong>
         </button>
 
         <a class="nav-item" href="/admin.html">
-          <span>&#128737;</span>
+          <img src="/assets/ui/shield.svg" alt="" />
           <strong>Admin</strong>
         </a>
       </nav>
@@ -128,47 +136,47 @@
 
       <section class="button-grid">
         <button class="action-btn btn-restaurante" data-route="restaurante">
-          <span class="action-icon">&#127860;</span>
+          <span class="action-icon"><img src="/assets/ui/utensils.svg" alt="" /></span>
           <span class="action-label">Restaurantes</span>
         </button>
 
         <button class="action-btn btn-bar" data-route="bar">
-          <span class="action-icon">&#127866;</span>
+          <span class="action-icon"><img src="/assets/ui/wine.svg" alt="" /></span>
           <span class="action-label">Bares</span>
         </button>
 
         <button class="action-btn btn-walking" data-route="walking">
-          <span class="action-icon">&#128694;</span>
+          <span class="action-icon"><img src="/assets/ui/footprints.svg" alt="" /></span>
           <span class="action-label">A pie</span>
         </button>
 
         <button class="action-btn btn-bike" data-route="bici">
-          <span class="action-icon">&#128690;</span>
+          <span class="action-icon"><img src="/assets/ui/bike.svg" alt="" /></span>
           <span class="action-label">En bici</span>
         </button>
 
         <button class="action-btn btn-puebliar" data-route="puebliar">
-          <span class="action-icon">&#127960;</span>
+          <span class="action-icon"><img src="/assets/ui/map-pinned.svg" alt="" /></span>
           <span class="action-label">Puebliar</span>
         </button>
 
         <button class="action-btn btn-charcos" data-route="charcos">
-          <span class="action-icon">&#128167;</span>
+          <span class="action-icon"><img src="/assets/ui/waves.svg" alt="" /></span>
           <span class="action-label">Charcos</span>
         </button>
 
         <button class="action-btn btn-miradores" data-route="miradores">
-          <span class="action-icon">&#127748;</span>
+          <span class="action-icon"><img src="/assets/ui/mountain.svg" alt="" /></span>
           <span class="action-label">Miradores</span>
         </button>
 
         <button class="action-btn btn-burgermaster" data-route="burgermaster" data-promotion-info="burgermaster">
-          <span class="action-icon">&#127828;</span>
+          <span class="action-icon"><img src="/assets/ui/sandwich.svg" alt="" /></span>
           <span class="action-label">BurgerMaster</span>
         </button>
 
         <button class="action-btn btn-clientes" data-route="clientes">
-          <span class="action-icon">&#127970;</span>
+          <span class="action-icon"><img src="/assets/ui/store.svg" alt="" /></span>
           <span class="action-label">Clientes</span>
         </button>
       </section>
