@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v105";
+const CACHE_NAME = "parchar-shell-v106";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -42,6 +42,7 @@ const CORE_ASSETS = [
   "/assets/ui/mountain.svg",
   "/assets/ui/sandwich.svg",
   "/assets/ui/store.svg",
+  "/assets/ui/category-glass-atlas.png",
   "/assets/ui/moon.svg",
   "/assets/ui/sun.svg",
   "/assets/ui/arrow-left.svg",

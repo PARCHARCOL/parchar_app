@@ -2,7 +2,8 @@ const toneStorageKey = "parchar-background-tone";
 
 function applyBackgroundTone(value) {
   const tone = Math.min(100, Math.max(0, Number(value) || 0));
-  document.documentElement.style.setProperty("--tone-mix", `${Math.round(tone * 0.38)}%`);
+  document.documentElement.style.setProperty("--tone-mix", `${tone}%`);
+  document.documentElement.dataset.toneContrast = tone >= 50 ? "light" : "dark";
   return tone;
 }
 

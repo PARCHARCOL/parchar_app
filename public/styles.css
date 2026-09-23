@@ -3018,6 +3018,21 @@ body > .ad-banner {
     color-mix(in srgb, #1c0a39, white var(--tone-mix)) 65%);
 }
 
+html[data-tone-contrast="light"] .theme-body {
+  --text-main: #211632;
+  --text-soft: #514061;
+}
+
+html[data-tone-contrast="light"] .theme-body .app-shell {
+  border-color: #c5b8d4;
+}
+
+html[data-tone-contrast="light"] .home-body .top-strip {
+  margin: -16px -14px 0;
+  padding: 16px 14px 0;
+  background: #311756;
+}
+
 .home-body .brand-logo {
   grid-column: 1 / -1;
   grid-row: 1;
@@ -3093,7 +3108,7 @@ body > .ad-banner {
   min-height: 38px;
   padding: 4px 2px;
   color: var(--text-main);
-  font-size: 0.82rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -3113,6 +3128,20 @@ body > .ad-banner {
   cursor: pointer;
 }
 
+.tone-control label {
+  color: var(--text-main);
+}
+
+html[data-tone-contrast="light"] .home-body .home-nav .nav-item,
+html[data-tone-contrast="light"] .home-body .install-cta {
+  color: #fff;
+}
+
+html[data-tone-contrast="light"] .tone-control img {
+  filter: none;
+  opacity: 1;
+}
+
 .icon-ghost img,
 .search-submit img,
 .nav-item img {
@@ -3123,9 +3152,7 @@ body > .ad-banner {
 }
 
 .home-body .action-btn {
-  --tile-top: #ffbb4a;
-  --tile-bottom: #e24d42;
-  min-height: 114px;
+  min-height: 148px;
   padding: 4px 2px;
   border: 0;
   border-radius: 0;
@@ -3147,50 +3174,37 @@ body > .ad-banner {
 }
 
 .home-body .action-icon {
-  position: relative;
-  width: 76px;
-  height: 76px;
-  flex: 0 0 76px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 16px;
-  background: linear-gradient(145deg, var(--tile-top), var(--tile-bottom));
-  box-shadow: inset 0 2px 1px rgba(255, 255, 255, 0.25), inset 0 -5px 10px rgba(10, 4, 35, 0.08), 0 7px 16px color-mix(in srgb, var(--tile-bottom), transparent 58%);
-}
-
-.home-body .action-icon::before {
-  content: "";
-  position: absolute;
-  inset: 5px 8px auto;
-  height: 22px;
-  border-radius: 12px 12px 30px 30px;
-  background: linear-gradient(rgba(255, 255, 255, 0.17), transparent);
-  pointer-events: none;
-}
-
-.home-body .action-icon img {
-  width: 42px;
-  height: 42px;
-  filter: brightness(0) invert(1) drop-shadow(0 2px 3px rgba(21, 6, 41, 0.24));
+  width: min(112px, 100%);
+  height: auto;
+  aspect-ratio: 1;
+  flex: 0 0 auto;
+  background-color: transparent;
+  background-image: url("/assets/ui/category-glass-atlas.png");
+  background-size: 300% 300%;
+  background-position: var(--icon-x) var(--icon-y);
+  background-repeat: no-repeat;
 }
 
 .home-body .action-label {
   max-width: 100%;
-  color: #f7ecff;
-  font-size: 0.82rem;
-  line-height: 1.12;
+  color: var(--text-main);
+  font-size: 1.125rem;
+  font-weight: 800;
+  line-height: 1.22;
   text-align: center;
+  overflow-wrap: anywhere;
 }
 .home-body [hidden] { display: none !important; }
-.home-body .btn-restaurante { --tile-top: #ffcb25; --tile-bottom: #f25525; }
-.home-body .btn-bar { --tile-top: #ff43ae; --tile-bottom: #b820d5; }
-.home-body .btn-walking { --tile-top: #31ee86; --tile-bottom: #00af64; }
-.home-body .btn-bike { --tile-top: #20d6f4; --tile-bottom: #166cdf; }
-.home-body .btn-puebliar { --tile-top: #ffbb25; --tile-bottom: #ee5227; }
-.home-body .btn-charcos { --tile-top: #25d8fa; --tile-bottom: #087fcd; }
-.home-body .btn-miradores { --tile-top: #b45aff; --tile-bottom: #702bd7; }
-.home-body .btn-burgermaster { --tile-top: #ffca25; --tile-bottom: #ee4d1f; }
-.home-body .btn-clientes { --tile-top: #64b6ff; --tile-bottom: #2f64db; }
+.home-body .button-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-body .btn-restaurante { --icon-x: 0%; --icon-y: 0%; }
+.home-body .btn-bar { --icon-x: 50%; --icon-y: 0%; }
+.home-body .btn-walking { --icon-x: 100%; --icon-y: 0%; }
+.home-body .btn-bike { --icon-x: 0%; --icon-y: 50%; }
+.home-body .btn-puebliar { --icon-x: 50%; --icon-y: 50%; }
+.home-body .btn-charcos { --icon-x: 100%; --icon-y: 50%; }
+.home-body .btn-miradores { --icon-x: 0%; --icon-y: 100%; }
+.home-body .btn-burgermaster { --icon-x: 50%; --icon-y: 100%; }
+.home-body .btn-clientes { --icon-x: 100%; --icon-y: 100%; }
 
 .home-body .app-shell {
   padding-bottom: calc(var(--ad-height) + 34px);
@@ -3265,19 +3279,15 @@ body > .ad-banner {
   }
 
   .home-body .action-btn {
-    min-height: 142px;
+    min-height: 158px;
+  }
+
+  .home-body .button-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .home-body .action-icon {
-    width: min(100px, 100%);
-    height: auto;
-    aspect-ratio: 1;
-    flex: 0 0 auto;
-  }
-
-  .home-body .action-icon img {
-    width: 56px;
-    height: 56px;
+    width: min(118px, 100%);
   }
 
   .home-body .brand-logo {
