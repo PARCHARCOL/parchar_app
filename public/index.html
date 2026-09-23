@@ -11,7 +11,7 @@
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
     <link rel="stylesheet" href="/styles.css?v=96" />
-    <link rel="stylesheet" href="/identity.css?v=96" />
+    <link rel="stylesheet" href="/identity.css?v=97" />
     <script src="/theme.js?v=95" defer></script>
   </head>
   <body class="theme-body home-body">
@@ -160,7 +160,7 @@
       <p id="location-status" class="status-muted"></p>
 
       <section class="suggestion-section">
-        <h2>Sugerencias para ti</h2>
+        <h2>Explora por categoria</h2>
 
         <div class="suggestion-grid">
           <a
@@ -168,7 +168,7 @@
             href="/sites.html?type=mirador"
             data-suggestion-route="miradores"
           >
-            <img src="/assets/discover/miradores.jpg" alt="Paisaje de montanas al atardecer" loading="lazy" />
+            <img class="suggestion-icon" src="/assets/ui/mountain.svg" alt="" />
             <span class="suggestion-copy"><strong>Miradores</strong><small>Vistas y atardeceres</small></span>
           </a>
 
@@ -177,7 +177,7 @@
             href="/places.html?category=bar"
             data-suggestion-route="bar"
           >
-            <img src="/assets/discover/bares-rooftop.jpg" alt="Terraza con vista de la ciudad" loading="lazy" />
+            <img class="suggestion-icon" src="/assets/ui/wine.svg" alt="" />
             <span class="suggestion-copy"><strong>Bares</strong><small>Planes para salir</small></span>
           </a>
 
@@ -188,7 +188,7 @@
             data-promotion="burgermaster"
             hidden
           >
-            <img src="/assets/discover/burgermaster.jpg" alt="Hamburguesa gourmet" loading="lazy" />
+            <img class="suggestion-icon" src="/assets/ui/sandwich.svg" alt="" />
             <span class="suggestion-copy"><strong>BurgerMaster</strong><small>Ver participantes</small></span>
           </a>
 
@@ -196,7 +196,7 @@
             class="suggestion-card card-road"
             href="/sites.html?mode=puebliar"
           >
-            <img src="/assets/discover/puebliar.jpg" alt="Plaza de un pueblo colombiano" loading="lazy" />
+            <img class="suggestion-icon" src="/assets/ui/map-pinned.svg" alt="" />
             <span class="suggestion-copy"><strong>Puebliar</strong><small>Pueblos para recorrer</small></span>
           </a>
         </div>
@@ -219,12 +219,13 @@
         <button id="install-guide-close" type="button" class="ghost-btn">Cerrar</button>
       </section>
 
-      <aside class="ad-banner" aria-label="Publicidad">
-        <span class="ad-pill">Anuncio</span>
-        <p>Espacio para aliados de Parchar</p>
-        <button type="button" class="ad-cta">Anunciar</button>
-      </aside>
     </main>
+
+    <aside class="ad-banner" aria-label="Publicidad">
+      <span class="ad-pill">Anuncio</span>
+      <p>Espacio para aliados de Parchar</p>
+      <button type="button" class="ad-cta">Anunciar</button>
+    </aside>
 
     <script src="/brand.js?v=93"></script>
     <script src="/ads.js?v=93"></script>

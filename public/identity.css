@@ -190,50 +190,37 @@
 .home-body .suggestion-card {
   min-width: 0;
   min-height: 118px;
-  padding: 0;
+  padding: 12px;
   border-radius: 8px;
   border: 1px solid rgba(246, 170, 204, 0.26);
-  background: #190824;
+  background: #301044;
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
-.home-body .suggestion-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(180deg, transparent 35%, rgba(13, 4, 25, 0.88));
-  pointer-events: none;
-}
-
+.home-body .suggestion-card::before,
 .home-body .suggestion-card::after { display: none; }
 
-.home-body .suggestion-card img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.home-body .suggestion-icon {
+  width: 34px;
+  height: 34px;
+  filter: brightness(0) invert(1);
   display: block;
-  transition: transform 220ms ease;
 }
 
-.home-body .suggestion-card:hover img,
-.home-body .suggestion-card:focus-visible img { transform: scale(1.035); }
-
 .home-body .suggestion-copy {
-  position: absolute;
-  z-index: 2;
-  left: 10px;
-  right: 8px;
-  bottom: 9px;
   display: grid;
   gap: 2px;
   color: #fff;
-  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
 
 .home-body .suggestion-copy strong { font-size: 1rem; }
 .home-body .suggestion-copy small { font-size: 0.73rem; }
-.home-body .card-romance { grid-row: span 2; min-height: 245px; }
+.home-body .card-romance { grid-row: span 2; min-height: 245px; background: #51205c; }
+.home-body .card-bar { background: #3a1e59; }
+.home-body .card-bbb { background: #653154; }
 .home-body .card-road { grid-column: auto; min-height: 118px; }
 
 .home-body .install-cta {
@@ -333,6 +320,5 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .home-body .suggestion-card img,
   .home-body .action-btn { transition: none; }
 }
