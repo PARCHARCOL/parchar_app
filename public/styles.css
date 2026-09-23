@@ -3050,14 +3050,16 @@ body > .ad-banner {
 .home-body img.brand-logo[src="/assets/parchar-logo.png"] {
   object-fit: cover;
   object-position: center 37%;
-  mix-blend-mode: screen;
+  mix-blend-mode: lighten;
 }
 
 .home-body video.brand-logo {
   object-fit: cover;
   object-position: center 37%;
+  margin-top: 0;
+  border: 0;
   background: transparent;
-  mix-blend-mode: screen;
+  mix-blend-mode: lighten;
 }
 
 .home-body .ad-banner {
