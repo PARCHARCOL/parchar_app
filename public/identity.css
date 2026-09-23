@@ -57,6 +57,7 @@
 .home-body video.brand-logo {
   object-fit: contain;
   background: transparent;
+  mix-blend-mode: screen;
 }
 
 .home-body .top-strip .icon-ghost {
