@@ -3262,6 +3262,22 @@ body > .ad-banner {
     --ad-height: 250px;
   }
 
+  .home-body .action-btn {
+    min-height: 142px;
+  }
+
+  .home-body .action-icon {
+    width: min(100px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+    flex: 0 0 auto;
+  }
+
+  .home-body .action-icon img {
+    width: 56px;
+    height: 56px;
+  }
+
   .home-body .brand-logo {
     height: 260px;
   }
