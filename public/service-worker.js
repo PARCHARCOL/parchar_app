@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v120";
+const CACHE_NAME = "parchar-shell-v121";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -31,6 +31,7 @@ const CORE_ASSETS = [
   "/assets/icons/parchar-pin.png",
   "/assets/icons/icon-192.png",
   "/assets/icons/icon-512.png",
+  "/assets/icons/parchar-location-pin.png",
   "/assets/icons/apple-touch-icon-180.png",
   "/assets/ui/menu.svg",
   "/assets/ui/bell.svg",

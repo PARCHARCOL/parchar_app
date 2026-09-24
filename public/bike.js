@@ -170,9 +170,9 @@ function updateRider(position) {
       title: "Tu ubicación en la ruta",
       icon: L.divIcon({
         className: "bike-rider-brand-marker",
-        html: '<img src="/assets/icons/icon-512.png" alt="" />',
-        iconSize: [56, 56],
-        iconAnchor: [28, 28],
+        html: '<img src="/assets/icons/parchar-location-pin.png" alt="" />',
+        iconSize: [46, 56],
+        iconAnchor: [23, 28],
       }),
     }).addTo(map).bindTooltip("Tu ubicación · Parchar", { direction: "top", offset: [0, -25] });
     riderAccuracy = L.circle(point, {
