@@ -27,6 +27,7 @@ const {
 const { Pool } = require(
   "pg"
 );
+const bikeRoutes = require("./bike-routes");
 
 const PORT = Number(
   process.env.PORT || 8080
@@ -10915,6 +10916,69 @@ const server =
             message:
               "Resena retirada del muro.",
           });
+          return;
+        }
+
+        if (
+          ["/api/bike/routes", "/api/bike/cycleways", "/api/bike/mtb"].includes(pathname) &&
+          req.method === "GET"
+        ) {
+          const latText = requestUrl.searchParams.get("lat");
+          const lngText = requestUrl.searchParams.get("lng");
+          const lat = latText === null ? 6.2442 : Number(latText);
+          const lng = lngText === null ? -75.5812 : Number(lngText);
+          const radius = Number(requestUrl.searchParams.get("radius") || 25);
+          if (!isWithinAntioquiaBounds(lat, lng) || ![10, 25, 40].includes(radius)) {
+            sendJson(res, 400, { error: "Ubicacion o radio no valido para Antioquia." });
+            return;
+          }
+          try {
+            const kind = pathname.split("/").pop();
+            const items = await bikeRoutes.listRoutes(kind, lat, lng, radius);
+            sendJson(res, 200, { items, centre: { lat, lng }, radius_km: radius });
+          } catch (error) {
+            console.error("Bike routes source:", error);
+            sendJson(res, 503, { error: "La fuente de rutas no responde. Intenta de nuevo mas tarde." });
+          }
+          return;
+        }
+
+        if (pathname.startsWith("/api/bike/route/") && req.method === "GET") {
+          const parts = pathname.split("/");
+          const id = decodeURIComponent(parts[4] || "");
+          const route = bikeRoutes.routeById(id);
+          if (!route) {
+            sendJson(res, 404, { error: "Ruta no disponible. Actualiza la lista." });
+            return;
+          }
+          if (parts[5] === "stops") {
+            const [businesses, sites] = await Promise.all([
+              pool.query("SELECT id, business_name AS name, category, city, latitude, longitude FROM businesses WHERE status = 'activo'"),
+              pool.query("SELECT id, name, site_type, city, latitude, longitude FROM open_sites WHERE status = 'activo'"),
+            ]);
+            const items = [
+              ...businesses.rows.map((row) => ({ ...row, kind: "business" })),
+              ...sites.rows.map((row) => ({ ...row, kind: "site" })),
+            ].filter((row) => row.latitude !== null && row.longitude !== null)
+              .map((row) => ({
+                id: row.id, name: row.name, kind: row.kind,
+                category: row.category || row.site_type || null, city: row.city || null,
+                latitude: Number(row.latitude), longitude: Number(row.longitude),
+                distance_from_route_km: bikeRoutes.nearLineKm(
+                  { lat: Number(row.latitude), lng: Number(row.longitude) }, route.geometry
+                ),
+              }))
+              .filter((row) => Number.isFinite(row.distance_from_route_km) && row.distance_from_route_km <= 0.75)
+              .sort((a, b) => a.distance_from_route_km - b.distance_from_route_km)
+              .slice(0, 30);
+            sendJson(res, 200, { items });
+            return;
+          }
+          if (parts.length === 5) {
+            sendJson(res, 200, { route });
+            return;
+          }
+          sendJson(res, 404, { error: "Ruta no encontrada." });
           return;
         }
 
