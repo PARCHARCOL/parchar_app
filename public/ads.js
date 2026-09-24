@@ -1007,6 +1007,7 @@ async function loadAdBanner() {
         ensureAdSoundButton().hidden = false;
         media.addEventListener("playing", () => {
           if (requestSeq !== adRequestSeq) return;
+          stage.classList.remove("is-poster-fallback");
           clearAdRefreshTimer();
           if (adPlayButton) adPlayButton.hidden = true;
         });
@@ -1043,6 +1044,8 @@ async function loadAdBanner() {
             if (requestSeq !== adRequestSeq) {
               return;
             }
+            stage.classList.add("is-poster-fallback");
+            revealAdBanner(requestSeq);
             ensureAdPlayButton().hidden = false;
             scheduleAdRefresh(AD_REFRESH_MS);
           },
@@ -1075,7 +1078,14 @@ async function loadAdBanner() {
 
       if (mediaTag === "video") {
         window.setTimeout(
-          () => revealAdBanner(requestSeq),
+          () => {
+            if (requestSeq !== adRequestSeq) return;
+            if (media.readyState < 2) {
+              stage.classList.add("is-poster-fallback");
+              ensureAdPlayButton().hidden = false;
+            }
+            revealAdBanner(requestSeq);
+          },
           5000
         );
         playAdVideo(media, requestSeq);

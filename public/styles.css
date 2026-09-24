@@ -2079,6 +2079,19 @@ body > .ad-banner {
   animation: ad-media-pan-x 18s ease-in-out infinite alternate;
 }
 
+.ad-media-stage.is-poster-fallback .ad-media-fill {
+  z-index: 2;
+  opacity: 1;
+  filter: none;
+  object-fit: contain !important;
+  transform: none;
+  background: #090113;
+}
+
+.ad-media-stage.is-poster-fallback .ad-media-main {
+  opacity: 0;
+}
+
 .ad-media .ad-media-fill {
   object-fit: cover !important;
 }
