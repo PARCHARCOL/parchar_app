@@ -166,9 +166,15 @@ function updateRider(position) {
   const point = [position.coords.latitude, position.coords.longitude];
   const accuracy = Math.max(5, Number(position.coords.accuracy) || 20);
   if (!riderMarker) {
-    riderMarker = L.circleMarker(point, {
-      radius: 8, color: "#fff", weight: 3, fillColor: "#1677ff", fillOpacity: 1,
-    }).addTo(map).bindTooltip("Tu ubicación");
+    riderMarker = L.marker(point, {
+      title: "Tu ubicación en la ruta",
+      icon: L.divIcon({
+        className: "bike-rider-brand-marker",
+        html: '<img src="/assets/icons/icon-512.png" alt="" />',
+        iconSize: [56, 56],
+        iconAnchor: [28, 28],
+      }),
+    }).addTo(map).bindTooltip("Tu ubicación · Parchar", { direction: "top", offset: [0, -25] });
     riderAccuracy = L.circle(point, {
       radius: accuracy, color: "#1677ff", weight: 1, fillColor: "#1677ff", fillOpacity: .12,
     }).addTo(map);
