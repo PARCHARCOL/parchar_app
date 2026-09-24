@@ -9,29 +9,11 @@ const dialog = document.querySelector("#bike-dialog");
 const dialogTitle = document.querySelector("#bike-dialog-title");
 const dialogMeta = document.querySelector("#bike-dialog-meta");
 const stopsEl = document.querySelector("#bike-stops");
-const navigationPanel = document.querySelector("#bike-navigation");
-const navigationStatus = document.querySelector("#bike-navigation-status");
-const navigationRemaining = document.querySelector("#bike-navigation-remaining");
-const startNavigationButton = document.querySelector("#bike-start-navigation");
-const reverseNavigationButton = document.querySelector("#bike-reverse-navigation");
-const centerNavigationButton = document.querySelector("#bike-center-navigation");
-const stopNavigationButton = document.querySelector("#bike-stop-navigation");
 let kind = "cycleways";
 let centre = null;
 let routes = [];
 let map = null;
-let routeLayer = null;
-let joinLine = null;
-let joinMarker = null;
 let requestNumber = 0;
-let activeRoute = null;
-let locationWatch = null;
-let positionMarker = null;
-let accuracyCircle = null;
-let navigationDirection = 1;
-let directionChosen = false;
-let lastPosition = null;
-let followingPosition = true;
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -119,135 +101,24 @@ function openMap(route) {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
-  routeLayer = L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 5 } }).addTo(map);
+  const routeLayer = L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 5 } }).addTo(map);
   map.fitBounds(routeLayer.getBounds(), { padding: [18, 18], maxZoom: 15 });
-  map.on("dragstart", () => { followingPosition = false; });
   setTimeout(() => map?.invalidateSize(), 50);
 }
 
-function setNavigationControls(active) {
-  startNavigationButton.hidden = active;
-  reverseNavigationButton.hidden = !active;
-  centerNavigationButton.hidden = !active;
-  stopNavigationButton.hidden = !active;
-}
-
-function stopNavigation(message = "Seguimiento detenido.") {
-  if (locationWatch !== null) navigator.geolocation.clearWatch(locationWatch);
-  locationWatch = null;
-  if (positionMarker && map) map.removeLayer(positionMarker);
-  if (accuracyCircle && map) map.removeLayer(accuracyCircle);
-  if (joinLine && map) map.removeLayer(joinLine);
-  if (joinMarker && map) map.removeLayer(joinMarker);
-  positionMarker = null;
-  accuracyCircle = null;
-  joinLine = null;
-  joinMarker = null;
-  lastPosition = null;
-  navigationRemaining.hidden = true;
-  navigationStatus.textContent = message;
-  setNavigationControls(false);
-}
-
-function updateNavigation(position) {
-  if (locationWatch === null || !activeRoute || !map || !dialog.open) return;
-  const point = { lat: position.coords.latitude, lng: position.coords.longitude };
-  if (!Number.isFinite(point.lat) || !Number.isFinite(point.lng)) return;
-  const accuracy = Number(position.coords.accuracy);
-  lastPosition = position;
-  if (!directionChosen) {
-    navigationDirection = BikeNavigation.nearestEndDirection(activeRoute.geometry, point);
-    directionChosen = true;
-  }
-  const progress = BikeNavigation.nearestOnRoute(activeRoute.geometry, point, navigationDirection);
-  if (!progress) return;
-  if (!positionMarker) {
-    positionMarker = L.circleMarker([point.lat, point.lng], {
-      radius: 8, color: "#fff", weight: 2, fillColor: "#008cff", fillOpacity: 1,
-    }).addTo(map);
-    accuracyCircle = L.circle([point.lat, point.lng], {
-      radius: 1, color: "#008cff", weight: 1, fillOpacity: 0.08,
-    }).addTo(map);
-  } else {
-    positionMarker.setLatLng([point.lat, point.lng]);
-    accuracyCircle.setLatLng([point.lat, point.lng]);
-  }
-  accuracyCircle.setRadius(Number.isFinite(accuracy) ? Math.max(1, accuracy) : 1);
-  const snapped = [progress.snapped.lat, progress.snapped.lng];
-  if (!joinLine) {
-    joinLine = L.polyline([[point.lat, point.lng], snapped], {
-      color: "#49d9ff", weight: 3, dashArray: "6 7", opacity: 0.9,
-    }).addTo(map);
-    joinMarker = L.circleMarker(snapped, {
-      radius: 7, color: "#fff", weight: 2, fillColor: "#49d9ff", fillOpacity: 1,
-    }).addTo(map).bindTooltip("Punto de incorporación al trazado");
-  } else {
-    joinLine.setLatLngs([[point.lat, point.lng], snapped]);
-    joinMarker.setLatLng(snapped);
-  }
-  if (followingPosition && routeLayer) {
-    const bounds = routeLayer.getBounds().extend([point.lat, point.lng]);
-    map.fitBounds(bounds, { padding: [28, 28], maxZoom: 15, animate: false });
-  }
-
-  if (!Number.isFinite(accuracy) || accuracy > 100) {
-    navigationRemaining.hidden = true;
-    navigationStatus.textContent = "Señal GPS imprecisa. Espera una ubicación más precisa para continuar.";
-    return;
-  }
-  navigationRemaining.hidden = false;
-  navigationRemaining.textContent = `${Math.round(progress.remainingMeters)} m hasta el extremo del tramo`;
-  if (progress.crossTrackMeters > Math.max(75, accuracy * 1.5)) {
-    navigationStatus.textContent = `El punto celeste marca dónde unirte al trazado, a ${Math.round(progress.crossTrackMeters)} m en línea recta. Busca una vía segura para llegar; la línea punteada no es una calle.`;
-  } else if (progress.remainingMeters <= 30 && accuracy <= 50) {
-    navigationStatus.textContent = "Llegaste al extremo de este tramo.";
-  } else {
-    navigationStatus.textContent = `Siguiendo el trazado · precisión GPS ±${Math.round(accuracy)} m. Sin indicaciones giro a giro.`;
-  }
-}
-
-function startNavigation() {
-  if (!activeRoute || !navigator.geolocation || locationWatch !== null) {
-    if (!navigator.geolocation) navigationStatus.textContent = "Este dispositivo no ofrece ubicación.";
-    return;
-  }
-  navigationDirection = 1;
-  directionChosen = false;
-  followingPosition = true;
-  navigationStatus.textContent = "Buscando señal GPS...";
-  setNavigationControls(true);
-  try {
-    locationWatch = navigator.geolocation.watchPosition(updateNavigation, (error) => {
-      const message = error.code === 1
-        ? "No se concedió permiso de ubicación."
-        : "No se pudo obtener una señal GPS. Intenta de nuevo.";
-      stopNavigation(message);
-    }, { enableHighAccuracy: true, maximumAge: 0, timeout: 15000 });
-  } catch {
-    stopNavigation("No se pudo iniciar el seguimiento en este dispositivo.");
-  }
-}
-
 async function showDetail(id, showStops) {
-  stopNavigation();
-  activeRoute = null;
   dialogTitle.textContent = "Cargando recorrido...";
   dialogMeta.textContent = "";
   stopsEl.replaceChildren();
-  navigationPanel.hidden = true;
   dialog.showModal();
   try {
     const response = await fetch(`/api/bike/route/${encodeURIComponent(id)}`);
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "No se pudo abrir el recorrido.");
     const route = data.route;
-    activeRoute = route;
     dialogTitle.textContent = route.name;
     dialogMeta.textContent = `${route.distance_km} km · ${route.attribution}`;
     openMap(route);
-    navigationPanel.hidden = route.geometry?.type !== "LineString";
-    if (navigationPanel.hidden) dialogMeta.textContent += " · Trazado no continuo: seguimiento no disponible.";
-    else navigationStatus.textContent = "Guía sobre el trazado. No ofrece indicaciones giro a giro.";
     if (showStops) {
       stopsEl.innerHTML = "<h3>Paradas cercanas</h3><p>Buscando lugares...</p>";
       const stopsResponse = await fetch(`/api/bike/route/${encodeURIComponent(id)}/stops`);
@@ -313,28 +184,8 @@ results.addEventListener("click", (event) => {
   if (button) showDetail(button.dataset.route || button.dataset.stops, Boolean(button.dataset.stops));
 });
 document.querySelector("#bike-close").addEventListener("click", () => dialog.close());
-startNavigationButton.addEventListener("click", startNavigation);
-reverseNavigationButton.addEventListener("click", () => {
-  navigationDirection *= -1;
-  directionChosen = true;
-  if (lastPosition) updateNavigation(lastPosition);
-});
-centerNavigationButton.addEventListener("click", () => {
-  followingPosition = true;
-  if (lastPosition) updateNavigation(lastPosition);
-});
-stopNavigationButton.addEventListener("click", () => stopNavigation());
 dialog.addEventListener("close", () => {
-  stopNavigation();
-  activeRoute = null;
   if (map) map.remove();
   map = null;
-  routeLayer = null;
-});
-window.addEventListener("pagehide", () => stopNavigation());
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && locationWatch !== null) {
-    navigationStatus.textContent = "Comprobando de nuevo tu ubicación GPS...";
-  }
 });
 loadRoutes();

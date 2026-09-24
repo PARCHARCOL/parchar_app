@@ -4,11 +4,64 @@ const publicFixedNav = document.querySelector(
 );
 const AD_REFRESH_MS = 18000;
 const AD_TEMPLATE_REFRESH_MS = 14000;
-const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
 let adRequestSeq = 0;
 let adSoundEnabled = false;
 let adSoundButton = null;
+let adPlayButton = null;
+
+function getAdVideoPoster(mediaPath) {
+  try {
+    const url = new URL(mediaPath);
+    if (url.hostname !== "res.cloudinary.com" || !url.pathname.includes("/video/upload/")) return "";
+    if (!/\.(mp4|mov|webm)$/i.test(url.pathname)) return "";
+    url.pathname = url.pathname.replace(/\.(mp4|mov|webm)$/i, ".jpg");
+    return url.toString();
+  } catch {
+    return "";
+  }
+}
+
+async function playAdVideo(video, requestSeq) {
+  try {
+    await video.play();
+    if (requestSeq === adRequestSeq) {
+      clearAdRefreshTimer();
+      if (adPlayButton) adPlayButton.hidden = true;
+    }
+  } catch {
+    if (requestSeq !== adRequestSeq) return;
+    if (adSoundEnabled) {
+      adSoundEnabled = false;
+      video.muted = true;
+      updateAdSoundButton();
+      try {
+        await video.play();
+        clearAdRefreshTimer();
+        if (adPlayButton) adPlayButton.hidden = true;
+        return;
+      } catch { /* User-initiated playback remains available below. */ }
+    }
+    ensureAdPlayButton().hidden = false;
+    scheduleAdRefresh(AD_REFRESH_MS);
+  }
+}
+
+function ensureAdPlayButton() {
+  if (adPlayButton) return adPlayButton;
+  adPlayButton = document.createElement("button");
+  adPlayButton.type = "button";
+  adPlayButton.className = "ad-play-toggle";
+  adPlayButton.textContent = "Reproducir video";
+  adPlayButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const video = adBanner.querySelector("video.ad-media-main");
+    if (video) playAdVideo(video, adRequestSeq);
+  });
+  adPlayButton.addEventListener("keydown", (event) => event.stopPropagation());
+  adBanner.appendChild(adPlayButton);
+  return adPlayButton;
+}
 
 function updateAdSoundButton() {
   if (!adSoundButton) return;
@@ -163,11 +216,12 @@ function createAdaptiveMediaStage(
   stage.className =
     "ad-media-stage";
 
-  const backdrop =
-    document.createElement(mediaTag);
+  const poster = mediaTag === "video" ? getAdVideoPoster(banner.mediaPath) : "";
+  const backdrop = document.createElement(mediaTag === "video" ? "img" : mediaTag);
   backdrop.className =
     "ad-media-fill";
-  backdrop.src = banner.mediaPath;
+  if (poster || mediaTag !== "video") backdrop.src = poster || banner.mediaPath;
+  else backdrop.hidden = true;
   backdrop.setAttribute(
     "aria-hidden",
     "true"
@@ -178,6 +232,7 @@ function createAdaptiveMediaStage(
   media.className =
     "ad-media-main";
   media.src = banner.mediaPath;
+  if (poster) media.poster = poster;
   media.setAttribute(
     "aria-label",
     banner.advertiserName ||
@@ -185,7 +240,7 @@ function createAdaptiveMediaStage(
   );
 
   if (mediaTag === "video") {
-    configureAdVideo(backdrop, true);
+    backdrop.alt = "";
     configureAdVideo(media, false);
   } else {
     backdrop.alt = "";
@@ -582,7 +637,7 @@ function bindAdBannerClick() {
     (event) => {
       if (
         event.target.closest(
-          ".ad-cta, .ad-media, .ad-sound-toggle"
+          ".ad-cta, .ad-media, .ad-sound-toggle, .ad-play-toggle"
         )
       ) {
         return;
@@ -666,6 +721,7 @@ async function loadAdBanner() {
     }
     if (requestSeq !== adRequestSeq) return;
     if (adSoundButton) adSoundButton.hidden = true;
+    if (adPlayButton) adPlayButton.hidden = true;
 
   adBanner.querySelector(".ad-media")?.setAttribute("hidden", "");
   adBanner.classList.remove(
@@ -949,6 +1005,11 @@ async function loadAdBanner() {
       if (mediaTag === "video") {
         media.muted = !adSoundEnabled;
         ensureAdSoundButton().hidden = false;
+        media.addEventListener("playing", () => {
+          if (requestSeq !== adRequestSeq) return;
+          clearAdRefreshTimer();
+          if (adPlayButton) adPlayButton.hidden = true;
+        });
         media.addEventListener(
           "loadeddata",
           () =>
@@ -982,7 +1043,7 @@ async function loadAdBanner() {
             if (requestSeq !== adRequestSeq) {
               return;
             }
-
+            ensureAdPlayButton().hidden = false;
             scheduleAdRefresh(AD_REFRESH_MS);
           },
           { once: true }
@@ -1017,47 +1078,12 @@ async function loadAdBanner() {
           () => revealAdBanner(requestSeq),
           5000
         );
-        media.addEventListener(
-          "loadedmetadata",
-          () => {
-            if (requestSeq !== adRequestSeq) {
-              return;
-            }
-
-            const durationMs =
-              Number.isFinite(
-                media.duration
-              ) && media.duration > 0
-                ? Math.ceil(
-                    media.duration * 1000
-                  ) + 800
-                : AD_VIDEO_FALLBACK_MS;
-            scheduleAdRefresh(
-              Math.max(
-                durationMs,
-                5000
-              )
-            );
-          },
-          { once: true }
-        );
-
-        backdrop
-          .play?.()
-          .catch(() => {});
-        media.play?.().catch(() => {
-          if (requestSeq !== adRequestSeq) {
-            return;
+        playAdVideo(media, requestSeq);
+        window.setTimeout(() => {
+          if (requestSeq === adRequestSeq && media.readyState < 2) {
+            ensureAdPlayButton().hidden = false;
           }
-          if (adSoundEnabled) {
-            adSoundEnabled = false;
-            media.muted = true;
-            updateAdSoundButton();
-            media.play?.().catch(() => scheduleAdRefresh(AD_VIDEO_FALLBACK_MS));
-          } else {
-            scheduleAdRefresh(AD_VIDEO_FALLBACK_MS);
-          }
-        });
+        }, 6000);
       }
     } else if (mediaContainer) {
       mediaContainer.hidden = true;
