@@ -7,6 +7,45 @@ const AD_TEMPLATE_REFRESH_MS = 14000;
 const AD_VIDEO_FALLBACK_MS = 45000;
 let adRefreshTimer = null;
 let adRequestSeq = 0;
+let adSoundEnabled = false;
+let adSoundButton = null;
+
+function updateAdSoundButton() {
+  if (!adSoundButton) return;
+  const label = adSoundEnabled ? "Silenciar publicidad" : "Activar audio de la publicidad";
+  adSoundButton.textContent = adSoundEnabled ? "🔊 Silenciar" : "🔇 Activar audio";
+  adSoundButton.setAttribute("aria-label", label);
+  adSoundButton.setAttribute("aria-pressed", String(adSoundEnabled));
+  adSoundButton.title = label;
+}
+
+function ensureAdSoundButton() {
+  if (adSoundButton) return adSoundButton;
+  adSoundButton = document.createElement("button");
+  adSoundButton.type = "button";
+  adSoundButton.className = "ad-sound-toggle";
+  adSoundButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const video = adBanner.querySelector(".ad-media-main");
+    if (video?.tagName !== "VIDEO") return;
+    adSoundEnabled = !adSoundEnabled;
+    video.muted = !adSoundEnabled;
+    video.volume = 1;
+    updateAdSoundButton();
+    if (adSoundEnabled && video.paused && !video.ended) {
+      video.play().catch(() => {
+        adSoundEnabled = false;
+        video.muted = true;
+        updateAdSoundButton();
+        video.play().catch(() => {});
+      });
+    }
+  });
+  adSoundButton.addEventListener("keydown", (event) => event.stopPropagation());
+  adBanner.appendChild(adSoundButton);
+  updateAdSoundButton();
+  return adSoundButton;
+}
 
 function revealAdBanner(requestSeq) {
   if (
@@ -543,34 +582,13 @@ function bindAdBannerClick() {
     (event) => {
       if (
         event.target.closest(
-          ".ad-cta, .ad-media"
+          ".ad-cta, .ad-media, .ad-sound-toggle"
         )
       ) {
         return;
       }
 
-      const opensRequest =
-        adBanner.dataset
-          .adOpenRequest === "true";
-      const opensCampaign =
-        adBanner.dataset
-          .adCampaignActive ===
-          "true" &&
-        adBanner.dataset.adTargetUrl;
-
-      if (
-        !opensRequest &&
-        !opensCampaign
-      ) {
-        return;
-      }
-
-      openAdTarget(
-        adBanner.dataset.adTargetUrl,
-        adBanner.dataset.adCampaignId,
-        adBanner.dataset
-          .adCampaignActive === "true"
-      );
+      if (adBanner.dataset.adOpenRequest === "true") openAdRequestModal();
     }
   );
 
@@ -584,29 +602,9 @@ function bindAdBannerClick() {
         return;
       }
 
+      if (event.target !== adBanner || adBanner.dataset.adOpenRequest !== "true") return;
       event.preventDefault();
-      const opensRequest =
-        adBanner.dataset
-          .adOpenRequest === "true";
-      const opensCampaign =
-        adBanner.dataset
-          .adCampaignActive ===
-          "true" &&
-        adBanner.dataset.adTargetUrl;
-
-      if (
-        !opensRequest &&
-        !opensCampaign
-      ) {
-        return;
-      }
-
-      openAdTarget(
-        adBanner.dataset.adTargetUrl,
-        adBanner.dataset.adCampaignId,
-        adBanner.dataset
-          .adCampaignActive === "true"
-      );
+      openAdRequestModal();
     }
   );
 }
@@ -667,6 +665,7 @@ async function loadAdBanner() {
       throw new Error(data.error || "No se pudo cargar publicidad.");
     }
     if (requestSeq !== adRequestSeq) return;
+    if (adSoundButton) adSoundButton.hidden = true;
 
   adBanner.querySelector(".ad-media")?.setAttribute("hidden", "");
   adBanner.classList.remove(
@@ -722,8 +721,7 @@ async function loadAdBanner() {
     );
     const showBannerCta = Boolean(
       button &&
-        (!banner.enabled ||
-          (hasTargetUrl && !hasCreative))
+        (!banner.enabled || hasTargetUrl)
     );
 
     adBanner.classList.toggle(
@@ -731,24 +729,12 @@ async function loadAdBanner() {
       !showBannerCta
     );
 
-    if (
-      hasTargetUrl
-    ) {
-      adBanner.classList.add(
-        "is-clickable"
-      );
-      adBanner.setAttribute(
-        "role",
-        "link"
-      );
-      adBanner.tabIndex = 0;
-      adBanner.dataset.adTargetUrl =
-        banner.targetUrl;
+    if (banner.enabled) {
       adBanner.dataset.adCampaignId =
         banner.id || "";
       adBanner.dataset
         .adCampaignActive = "true";
-    } else if (!banner.enabled) {
+    } else {
       adBanner.classList.add(
         "is-clickable"
       );
@@ -777,22 +763,18 @@ async function loadAdBanner() {
               "Conoce nuestros aliados."
             }`
           : "Pauta tu marca en Parchar";
-      text.classList.toggle(
-        "ad-link-copy",
-        Boolean(
-          banner.enabled &&
-            banner.targetUrl
-        )
-      );
+      text.classList.remove("ad-link-copy");
       text.onclick = null;
     }
 
     if (button) {
       button.textContent =
         banner.enabled
-          ? banner.ctaLabel ||
-            "Ver oferta"
+          ? hasTargetUrl ? "Sitio web ↗" : "Ver oferta"
           : "Pautar aqui";
+      button.title = hasTargetUrl ? "Abrir sitio del anunciante en otra pestaña" : "";
+      button.setAttribute("aria-label", hasTargetUrl
+        ? "Abrir sitio del anunciante en otra pestaña" : "Pautar en Parchar");
       button.disabled =
         !showBannerCta;
       button.hidden =
@@ -848,33 +830,14 @@ async function loadAdBanner() {
 
       if (!mediaContainer) {
         mediaContainer =
-          document.createElement(
-            banner.targetUrl
-              ? "a"
-              : "div"
-          );
+          document.createElement("div");
         mediaContainer.className =
           "ad-media";
         adBanner.insertBefore(
           mediaContainer,
           pill
         );
-      } else if (
-        banner.targetUrl &&
-        mediaContainer.tagName !== "A"
-      ) {
-        const replacement =
-          document.createElement("a");
-        replacement.className =
-          "ad-media";
-        mediaContainer.replaceWith(
-          replacement
-        );
-        mediaContainer = replacement;
-      } else if (
-        !banner.targetUrl &&
-        mediaContainer.tagName === "A"
-      ) {
+      } else if (mediaContainer.tagName !== "DIV") {
         const replacement =
           document.createElement("div");
         replacement.className =
@@ -955,21 +918,6 @@ async function loadAdBanner() {
         });
       }
 
-      if (banner.targetUrl) {
-        mediaContainer.href =
-          banner.targetUrl;
-        mediaContainer.target =
-          "_blank";
-        mediaContainer.rel =
-          "noopener noreferrer";
-        mediaContainer.onclick = (event) => {
-          trackAdClick(
-            banner.id
-          );
-          event.stopPropagation();
-        };
-      }
-
       if (isTemplate) {
         mediaContainer.appendChild(
           createAdTemplateElement(
@@ -999,6 +947,8 @@ async function loadAdBanner() {
       );
 
       if (mediaTag === "video") {
+        media.muted = !adSoundEnabled;
+        ensureAdSoundButton().hidden = false;
         media.addEventListener(
           "loadeddata",
           () =>
@@ -1099,10 +1049,14 @@ async function loadAdBanner() {
           if (requestSeq !== adRequestSeq) {
             return;
           }
-
-          scheduleAdRefresh(
-            AD_VIDEO_FALLBACK_MS
-          );
+          if (adSoundEnabled) {
+            adSoundEnabled = false;
+            media.muted = true;
+            updateAdSoundButton();
+            media.play?.().catch(() => scheduleAdRefresh(AD_VIDEO_FALLBACK_MS));
+          } else {
+            scheduleAdRefresh(AD_VIDEO_FALLBACK_MS);
+          }
         });
       }
     } else if (mediaContainer) {

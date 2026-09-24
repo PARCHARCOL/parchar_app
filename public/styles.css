@@ -3010,6 +3010,47 @@ body > .ad-banner {
   display: none !important;
 }
 
+.ad-banner .ad-sound-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 4;
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 6px;
+  background: rgba(18, 5, 37, 0.9);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ad-banner .ad-sound-toggle[hidden] {
+  display: none !important;
+}
+
+.ad-banner .ad-sound-toggle:focus-visible {
+  outline: 3px solid #ffd869;
+  outline-offset: 2px;
+}
+
+.ad-banner.has-media .ad-cta:not([hidden]) {
+  position: absolute !important;
+  right: 10px;
+  bottom: 10px;
+  z-index: 4;
+  grid-area: auto !important;
+  justify-self: auto;
+  min-width: 0;
+  min-height: 38px;
+  padding: 7px 10px;
+}
+
+.ad-banner.has-media:not(.ad-cta-hidden) p {
+  max-width: calc(100% - 125px);
+}
+
 .theme-body {
   background: linear-gradient(160deg,
     color-mix(in srgb, #29104e, white var(--tone-mix)),
