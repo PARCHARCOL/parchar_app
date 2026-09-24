@@ -6294,8 +6294,8 @@ const server =
         }
 
         if (
-          pathname ===
-            "/api/ads/banner" &&
+          (pathname === "/api/public/feature" ||
+            pathname === "/api/ads/banner") &&
           req.method === "GET"
         ) {
           const campaignResult =

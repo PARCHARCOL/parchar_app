@@ -712,7 +712,7 @@ async function loadAdBanner() {
 
   try {
     const response = await fetch(
-      `/api/ads/banner?t=${Date.now()}`,
+      `/api/public/feature?slot=bottom&t=${Date.now()}`,
       { cache: "no-store" }
     );
     const data = await response.json();
