@@ -208,11 +208,21 @@ function isValidCoordinate(
 function getCoordsFromUrl(
   params
 ) {
+  const latParam = params.get("lat");
+  const lngParam = params.get("lng");
+
+  if (
+    !latParam?.trim() ||
+    !lngParam?.trim()
+  ) {
+    return null;
+  }
+
   const latitude = Number(
-    params.get("lat")
+    latParam
   );
   const longitude = Number(
-    params.get("lng")
+    lngParam
   );
 
   if (
