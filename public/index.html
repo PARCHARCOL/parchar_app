@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=106" />
+    <link rel="stylesheet" href="/styles.css?v=108" />
     <script src="/theme.js?v=106" defer></script>
   </head>
   <body class="theme-body home-body">
@@ -87,28 +87,6 @@
         <img src="/assets/ui/sun.svg" alt="" />
       </div>
 
-      <nav class="bottom-nav public-nav home-nav">
-        <a class="nav-item active" href="/">
-          <img src="/assets/ui/map-pin.svg" alt="" />
-          <strong>Inicio</strong>
-        </a>
-
-        <a class="nav-item" href="/places.html?category=restaurante">
-          <img src="/assets/ui/utensils.svg" alt="" />
-          <strong>Restaurantes</strong>
-        </a>
-
-        <button type="button" class="nav-item nav-button" data-open-ad-request>
-          <img src="/assets/ui/megaphone.svg" alt="" />
-          <strong>Pautar</strong>
-        </button>
-
-        <a class="nav-item" href="/admin.html">
-          <img src="/assets/ui/shield.svg" alt="" />
-          <strong>Admin</strong>
-        </a>
-      </nav>
-
       <section class="install-cta" aria-label="Descargar app Parchar">
         <div>
           <strong>Descargar app</strong>
@@ -179,46 +157,19 @@
           <span class="action-icon" aria-hidden="true"></span>
           <span class="action-label">Clientes</span>
         </button>
+
+        <button type="button" class="action-btn btn-pautar" data-open-ad-request>
+          <span class="action-icon" aria-hidden="true"></span>
+          <span class="action-label">Pautar</span>
+        </button>
+
+        <a class="action-btn btn-admin" href="/admin.html">
+          <span class="action-icon" aria-hidden="true"></span>
+          <span class="action-label">Admin</span>
+        </a>
       </section>
 
       <p id="location-status" class="status-muted"></p>
-
-      <section class="suggestion-section">
-        <h2>Sugerencias para ti</h2>
-
-        <div class="suggestion-grid">
-          <a
-            class="suggestion-card card-romance"
-            href="/sites.html?type=mirador"
-            data-suggestion-route="miradores"
-          >
-            <span class="tag-live">LIVE</span>
-            <h3>Miradores</h3>
-            <p>#Vista #Atardecer #Ruta</p>
-          </a>
-
-          <a
-            class="suggestion-card card-bbb"
-            href="/sites.html?type=burgermaster"
-            data-suggestion-route="burgermaster"
-            data-promotion="burgermaster"
-            hidden
-          >
-            <span class="tag-live">HOT</span>
-            <h3>BurgerMaster</h3>
-            <p>#Hamburguesa #Evento #Ruta</p>
-          </a>
-
-          <a
-            class="suggestion-card card-road"
-            href="/sites.html?mode=puebliar"
-          >
-            <span class="tag-live">TOP</span>
-            <h3>Puebliar</h3>
-            <p>#Pueblos #Miradores #Ruta</p>
-          </a>
-        </div>
-      </section>
 
     </main>
 
@@ -229,8 +180,8 @@
     </aside>
 
     <script src="/brand.js?v=93"></script>
-    <script src="/ads.js?v=93"></script>
+    <script src="/ads.js?v=107"></script>
     <script src="/update.js?v=93"></script>
-    <script src="/app.js?v=93"></script>
+    <script src="/app.js?v=108"></script>
   </body>
 </html>

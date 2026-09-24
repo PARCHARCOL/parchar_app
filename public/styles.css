@@ -3132,7 +3132,6 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   color: var(--text-main);
 }
 
-html[data-tone-contrast="light"] .home-body .home-nav .nav-item,
 html[data-tone-contrast="light"] .home-body .install-cta {
   color: #fff;
 }
@@ -3152,13 +3151,14 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 .home-body .action-btn {
-  min-height: 148px;
-  padding: 4px 2px;
+  min-height: 178px;
+  padding: 8px 2px;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
   gap: 7px;
+  text-decoration: none;
   transition: transform 160ms ease;
 }
 
@@ -3180,7 +3180,7 @@ html[data-tone-contrast="light"] .tone-control img {
   flex: 0 0 auto;
   background-color: transparent;
   background-image: url("/assets/ui/category-glass-atlas.png");
-  background-size: 300% 300%;
+  background-size: 310% 310%;
   background-position: var(--icon-x) var(--icon-y);
   background-repeat: no-repeat;
 }
@@ -3195,32 +3195,38 @@ html[data-tone-contrast="light"] .tone-control img {
   overflow-wrap: anywhere;
 }
 .home-body [hidden] { display: none !important; }
-.home-body .button-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.home-body .button-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  row-gap: 22px;
+}
 .home-body .btn-restaurante { --icon-x: 0%; --icon-y: 0%; }
-.home-body .btn-bar { --icon-x: 50%; --icon-y: 0%; }
-.home-body .btn-walking { --icon-x: 100%; --icon-y: 0%; }
-.home-body .btn-bike { --icon-x: 0%; --icon-y: 50%; }
-.home-body .btn-puebliar { --icon-x: 50%; --icon-y: 50%; }
-.home-body .btn-charcos { --icon-x: 100%; --icon-y: 50%; }
-.home-body .btn-miradores { --icon-x: 0%; --icon-y: 100%; }
-.home-body .btn-burgermaster { --icon-x: 50%; --icon-y: 100%; }
-.home-body .btn-clientes { --icon-x: 100%; --icon-y: 100%; }
+.home-body .btn-bar { --icon-x: 47.5%; --icon-y: 0%; }
+.home-body .btn-walking { --icon-x: 95.5%; --icon-y: 0%; }
+.home-body .btn-bike { --icon-x: 0%; --icon-y: 47.5%; }
+.home-body .btn-puebliar { --icon-x: 47.5%; --icon-y: 47.5%; }
+.home-body .btn-charcos { --icon-x: 95.5%; --icon-y: 47.5%; }
+.home-body .btn-charcos .action-icon {
+  background-image: url("/assets/ui/charcos-waterfall-glass.png");
+  background-size: contain;
+  background-position: center;
+}
+.home-body .btn-miradores { --icon-x: 0%; --icon-y: 95.5%; }
+.home-body .btn-burgermaster { --icon-x: 47.5%; --icon-y: 95.5%; }
+.home-body .btn-clientes { --icon-x: 95.5%; --icon-y: 95.5%; }
+.home-body .btn-pautar .action-icon,
+.home-body .btn-admin .action-icon {
+  background-size: contain;
+  background-position: center;
+}
+.home-body .btn-pautar .action-icon {
+  background-image: url("/assets/ui/pautar-glass.png");
+}
+.home-body .btn-admin .action-icon {
+  background-image: url("/assets/ui/admin-glass.png");
+}
 
 .home-body .app-shell {
   padding-bottom: calc(var(--ad-height) + 34px);
-}
-
-.home-body .home-nav {
-  position: static;
-  left: auto;
-  right: auto;
-  bottom: auto;
-  margin: 12px 0 0;
-  width: 100%;
-}
-
-.home-body .home-nav .nav-item {
-  min-height: 58px;
 }
 
 .home-body .ad-banner {
@@ -3244,24 +3250,19 @@ html[data-tone-contrast="light"] .tone-control img {
 
   .home-body .app-shell {
     grid-template-areas:
-      "top top"
-      "search search"
-      "tone tone"
-      "nav nav"
-      "install install"
-      "guide guide"
-      "buttons suggest"
-      "status suggest";
+      "top"
+      "search"
+      "tone"
+      "install"
+      "guide"
+      "buttons"
+      "status";
+    grid-template-columns: minmax(0, 1fr);
     padding-bottom: calc(var(--ad-height) + 46px);
   }
 
   .home-body .tone-control {
     grid-area: tone;
-  }
-
-  .home-body .home-nav {
-    grid-area: nav;
-    margin-top: 0;
   }
 
   .home-body .install-cta {
@@ -3271,6 +3272,13 @@ html[data-tone-contrast="light"] .tone-control img {
   .home-body #install-guide {
     grid-area: guide;
   }
+
+  .home-body .button-grid {
+    width: 100%;
+    max-width: 920px;
+    justify-self: center;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 540px) {
@@ -3279,11 +3287,12 @@ html[data-tone-contrast="light"] .tone-control img {
   }
 
   .home-body .action-btn {
-    min-height: 158px;
+    min-height: 190px;
   }
 
   .home-body .button-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 20px;
   }
 
   .home-body .action-icon {

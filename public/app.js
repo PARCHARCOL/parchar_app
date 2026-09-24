@@ -804,6 +804,7 @@ function setupInstallFlow() {
 for (const button of buttons) {
   button.addEventListener("click", () => {
     const route = button.dataset.route;
+    if (!route) return;
     handleCategory(route);
   });
 }

@@ -656,10 +656,9 @@ async function loadAdBanner() {
       ".ad-cta"
     );
 
-  document.body.classList.add(
-    "ad-disabled"
-  );
-  adBanner.hidden = true;
+  adBanner.querySelector(
+    ".ad-media"
+  )?.setAttribute("hidden", "");
   adBanner.classList.remove(
     "is-clickable"
   );
@@ -688,7 +687,7 @@ async function loadAdBanner() {
     .adOpenRequest;
 
   if (button) {
-    button.textContent = "Anunciar";
+    button.textContent = "Pautar aqui";
     button.disabled = false;
     button.hidden = false;
     button.removeAttribute("aria-hidden");
@@ -1129,10 +1128,14 @@ async function loadAdBanner() {
       text.textContent =
         "Pauta tu marca en Parchar";
     }
-    document.body.classList.add(
-      "ad-disabled"
+    adBanner.classList.add(
+      "is-clickable"
     );
-    adBanner.hidden = true;
+    adBanner.setAttribute("role", "button");
+    adBanner.tabIndex = 0;
+    adBanner.dataset.adOpenRequest =
+      "true";
+    revealAdBanner(requestSeq);
     scheduleAdRefresh(AD_REFRESH_MS);
   }
 }
