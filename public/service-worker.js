@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v117";
+const CACHE_NAME = "parchar-shell-v119";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -20,6 +20,7 @@ const CORE_ASSETS = [
   "/places.js",
   "/sites.js",
   "/bike.js",
+  "/bike-navigation.js",
   "/vendor/leaflet/leaflet.css",
   "/vendor/leaflet/leaflet.js",
   "/clients.js",

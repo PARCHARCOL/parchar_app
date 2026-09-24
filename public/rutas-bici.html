@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rutas en bici | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=115" />
+    <link rel="stylesheet" href="/styles.css?v=116" />
     <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
     <script src="/theme.js?v=106" defer></script>
   </head>
@@ -62,6 +62,21 @@
         <button id="bike-close" type="button" class="icon-ghost" aria-label="Cerrar">✕</button>
       </div>
       <div id="bike-map" aria-label="Mapa del recorrido"></div>
+      <section id="bike-navigation" class="bike-navigation" hidden aria-live="polite">
+        <div class="bike-navigation-copy">
+          <strong id="bike-navigation-status">Ruta publicada en dorado</strong>
+          <p class="bike-map-legend"><span><i class="bike-legend-published"></i> Trazado publicado</span><span><i class="bike-legend-guidance"></i> Ruta calculada por calles ciclables</span></p>
+          <p id="bike-navigation-step" hidden></p>
+          <p id="bike-navigation-remaining" hidden></p>
+          <small>La ruta completa se calcula con FOSSGIS Routing y datos de OpenStreetMap. Se envían tu ubicación y puntos del recorrido publicado; las consultas quedan registradas. Verifica señales y condiciones de la vía. <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">Privacidad y atribución</a></small>
+        </div>
+        <div class="bike-navigation-controls">
+          <button id="bike-start-navigation" type="button" class="primary-btn">Guiarme por toda la ruta</button>
+          <button id="bike-center-navigation" type="button" class="ghost-btn" hidden>Centrar ciclista</button>
+          <button id="bike-fit-route" type="button" class="ghost-btn">Ver trazado publicado</button>
+          <button id="bike-stop-navigation" type="button" class="ghost-btn" hidden>Detener guía</button>
+        </div>
+      </section>
       <p id="bike-dialog-meta"></p>
       <div id="bike-stops"></div>
     </dialog>
@@ -74,6 +89,7 @@
     <script src="/vendor/leaflet/leaflet.js"></script>
     <script src="/ads.js?v=116"></script>
     <script src="/update.js?v=93"></script>
-    <script src="/bike.js?v=114"></script>
+    <script src="/bike-navigation.js?v=2"></script>
+    <script src="/bike.js?v=116"></script>
   </body>
 </html>
