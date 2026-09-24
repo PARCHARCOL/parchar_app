@@ -25,6 +25,8 @@ const PARCHAR_VISITOR_KEY =
   "parchar_visitor_key";
 const REVIEW_SECONDS = 15;
 let fallbackVisitorKey = "";
+const LOCATION_SESSION_KEY = "parchar-location-v1";
+const LOCATION_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 let reviewRecorder = null;
 let reviewStream = null;
@@ -240,9 +242,44 @@ function getCoordsFromUrl(
   };
 }
 
+function readCachedUserCoords() {
+  try {
+    const cached = JSON.parse(
+      sessionStorage.getItem(LOCATION_SESSION_KEY) || "null"
+    );
+    if (
+      Date.now() - Number(cached?.savedAt) > LOCATION_CACHE_MAX_AGE_MS ||
+      !isValidCoordinate(Number(cached?.latitude), Number(cached?.longitude))
+    ) {
+      return null;
+    }
+    return {
+      latitude: Number(cached.latitude),
+      longitude: Number(cached.longitude),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function rememberUserCoords(coords) {
+  try {
+    sessionStorage.setItem(
+      LOCATION_SESSION_KEY,
+      JSON.stringify({ ...coords, savedAt: Date.now() })
+    );
+  } catch {}
+}
+
 function requestUserCoords() {
   return new Promise(
     (resolve) => {
+      const cached = readCachedUserCoords();
+      if (cached) {
+        resolve(cached);
+        return;
+      }
+
       if (!navigator.geolocation) {
         resolve(null);
         return;
@@ -250,20 +287,22 @@ function requestUserCoords() {
 
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          resolve({
+          const coords = {
             latitude:
               position.coords
                 .latitude,
             longitude:
               position.coords
                 .longitude,
-          });
+          };
+          rememberUserCoords(coords);
+          resolve(coords);
         },
         () => resolve(null),
         {
-          enableHighAccuracy: true,
-          timeout: 7000,
-          maximumAge: 60000,
+          enableHighAccuracy: false,
+          timeout: 3500,
+          maximumAge: LOCATION_CACHE_MAX_AGE_MS,
         }
       );
     }
@@ -1654,6 +1693,16 @@ async function loadPlaces() {
     ).trim();
   const selectedZoneSlug =
     params.get("zone") || "";
+  const legacyCoords = getCoordsFromUrl(params);
+  if (legacyCoords) {
+    rememberUserCoords(legacyCoords);
+  }
+  if (params.has("lat") || params.has("lng")) {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.searchParams.delete("lat");
+    cleanUrl.searchParams.delete("lng");
+    window.history.replaceState(window.history.state, "", cleanUrl.toString());
+  }
   const selectedZone =
     getZoneBySlug(
       selectedZoneSlug
@@ -1705,7 +1754,7 @@ async function loadPlaces() {
           }
         : getCoordsFromUrl(
             params
-          );
+          ) || readCachedUserCoords();
 
     if (!userCoords) {
       subtitleEl.textContent =
@@ -1752,6 +1801,15 @@ async function loadPlaces() {
       );
     }
 
+    if (isWalkingMode && selectedZone) {
+      renderCards([], null, {
+        emptyTitle: "Activa tu ubicacion para calcular el recorrido a pie.",
+        emptyMessage: `La zona ${selectedZone.label} permite consultar locales de ese sector, pero no calcular un recorrido caminable desde donde estas. Vuelve a Inicio y permite el GPS para usar el filtro "A pie".`,
+        routeMode: "walking",
+      });
+      return;
+    }
+
     if (
       isWalkingMode &&
       !userCoords
@@ -1763,7 +1821,7 @@ async function loadPlaces() {
           emptyTitle:
             "Activa tu ubicacion para ver locales a pie.",
           emptyMessage:
-            "Este filtro necesita saber donde estas para mostrar locales cercanos caminables.",
+            "Este filtro necesita tu GPS para calcular distancias reales. Permite la ubicacion para buscar locales caminables; puedes volver a Inicio y elegir un municipio o sector para explorar locales por esa zona.",
           routeMode: "walking",
         }
       );

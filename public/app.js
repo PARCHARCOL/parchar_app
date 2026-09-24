@@ -201,18 +201,13 @@ function getBurgerMasterPromotionWhenText() {
   return `en ${startMonth || endMonth || "abril"}`;
 }
 
-function redirectWithCategory(category, coords) {
+function redirectWithCategory(category) {
   const url = new URL("/places.html", window.location.origin);
 
   if (category === "walking") {
     url.searchParams.set("mode", "walking");
   } else {
     url.searchParams.set("category", category);
-  }
-
-  if (coords) {
-    url.searchParams.set("lat", String(coords.latitude));
-    url.searchParams.set("lng", String(coords.longitude));
   }
 
   window.location.href = url.toString();
@@ -480,47 +475,12 @@ function handleCategory(route) {
     return;
   }
 
-  if (!navigator.geolocation) {
-    updateStatus(
-      route === "walking"
-        ? "Para mostrar locales a pie necesitamos tu ubicacion."
-        : "No se pudo leer tu ubicacion. Te mostrare locales generales por categoria."
-    );
-
-    if (route !== "walking") {
-      redirectWithCategory(route, null);
-    }
-    return;
-  }
-
   updateStatus(
     route === "walking"
-      ? "Buscando locales para ir caminando desde donde estas..."
-      : "Buscando tu ubicacion para mostrar lugares cercanos..."
+      ? "Abriendo locales cercanos. La ubicacion se solicitara en la siguiente pantalla."
+      : "Abriendo locales por categoria. Puedes ordenar por cercania en la siguiente pantalla."
   );
-
-  navigator.geolocation.getCurrentPosition(
-    (position) => {
-      updateStatus("Ubicacion lista. Abriendo resultados...");
-      redirectWithCategory(route, position.coords);
-    },
-    () => {
-      updateStatus(
-        route === "walking"
-          ? "No autorizaste ubicacion. No puedo calcular locales para ir a pie."
-          : "No autorizaste ubicacion. Te mostrare locales generales por categoria."
-      );
-
-      if (route !== "walking") {
-        redirectWithCategory(route, null);
-      }
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 7000,
-      maximumAge: 0,
-    }
-  );
+  redirectWithCategory(route);
 }
 
 function setPanelState(button, panel, isOpen) {

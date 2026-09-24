@@ -12,6 +12,8 @@ const siteNavLabel = document.querySelector("#site-nav-label");
 const siteZoneSelect = document.querySelector("#site-zone-select");
 const siteZoneApplyButton = document.querySelector("#site-zone-apply");
 const siteZoneStatus = document.querySelector("#site-zone-status");
+const LOCATION_SESSION_KEY = "parchar-location-v1";
+const LOCATION_CACHE_MAX_AGE_MS = 5 * 60 * 1000;
 
 const siteTypeLabels = {
   charco: "Charco",
@@ -1416,6 +1418,15 @@ async function loadSites() {
 }
 
 function requestUserLocation() {
+  const cached = readCachedUserCoords();
+  if (cached) {
+    userCoords = cached;
+    locationResolved = true;
+    setLocationStatus("Usando la ubicacion reciente de esta pestaña.");
+    renderSites();
+    return;
+  }
+
   selectedCoverageZone = null;
   setZoneStatus("");
   if (siteZoneSelect) {
@@ -1455,6 +1466,7 @@ function requestUserLocation() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       };
+      rememberUserCoords(userCoords);
       locationResolved = true;
       setLocationStatus(
         isBikeMode()
@@ -1479,11 +1491,39 @@ function requestUserLocation() {
       renderSites();
     },
     {
-      enableHighAccuracy: true,
-      timeout: 8000,
-      maximumAge: 60000,
+      enableHighAccuracy: false,
+      timeout: 3500,
+      maximumAge: LOCATION_CACHE_MAX_AGE_MS,
     }
   );
+}
+
+function readCachedUserCoords() {
+  try {
+    const cached = JSON.parse(
+      sessionStorage.getItem(LOCATION_SESSION_KEY) || "null"
+    );
+    const latitude = Number(cached?.latitude);
+    const longitude = Number(cached?.longitude);
+    if (
+      Date.now() - Number(cached?.savedAt) > LOCATION_CACHE_MAX_AGE_MS ||
+      !isValidCoordinate(latitude, longitude)
+    ) {
+      return null;
+    }
+    return { latitude, longitude };
+  } catch {
+    return null;
+  }
+}
+
+function rememberUserCoords(coords) {
+  try {
+    sessionStorage.setItem(
+      LOCATION_SESSION_KEY,
+      JSON.stringify({ ...coords, savedAt: Date.now() })
+    );
+  } catch {}
 }
 
 function setupSiteSearch() {
