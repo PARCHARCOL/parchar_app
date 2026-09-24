@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rutas en bici | Parchar</title>
+    <link rel="stylesheet" href="/styles.css?v=110" />
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
+    <script src="/theme.js?v=106" defer></script>
+  </head>
+  <body class="theme-body list-body bike-body">
+    <main class="app-shell">
+      <header class="top-strip inner-top">
+        <a class="icon-ghost icon-link" href="/" aria-label="Volver al inicio"><img src="/assets/ui/arrow-left.svg" alt="" /></a>
+        <h1>Rutas en bici</h1>
+        <span aria-hidden="true" class="bike-header-icon"><img src="/assets/ui/bike.svg" alt="" /></span>
+      </header>
+
+      <nav class="bike-tabs" aria-label="Tipos de recorridos">
+        <button type="button" class="bike-tab" data-kind="routes">Rutas</button>
+        <button type="button" class="bike-tab active" data-kind="cycleways" aria-current="page">Ciclorrutas oficiales</button>
+        <button type="button" class="bike-tab" data-kind="mtb">MTB / Gravel</button>
+      </nav>
+
+      <section class="bike-tools" aria-label="Filtros de rutas">
+        <label>Tipo
+          <select id="bike-type">
+            <option value="">Todos</option>
+            <option value="urban">Urbana</option>
+            <option value="road">Carretera</option>
+            <option value="mtb">MTB</option>
+            <option value="gravel">Gravel</option>
+          </select>
+        </label>
+        <label>Dificultad
+          <select id="bike-difficulty">
+            <option value="">Todas</option>
+            <option value="easy">Fácil</option>
+            <option value="medium">Media</option>
+            <option value="hard">Difícil</option>
+          </select>
+        </label>
+        <label>Radio
+          <select id="bike-radius">
+            <option value="10">10 km</option>
+            <option value="25" selected>25 km</option>
+            <option value="40">40 km</option>
+          </select>
+        </label>
+        <button id="bike-locate" type="button" class="ghost-btn">Usar mi ubicación</button>
+      </section>
+
+      <p id="bike-location" class="status-muted">Explorando rutas alrededor de Medellín.</p>
+      <p id="bike-status" class="status-muted" role="status" aria-live="polite"></p>
+      <section id="bike-results" class="bike-results" aria-label="Recorridos disponibles"></section>
+      <p class="bike-attribution">Fuentes: Alcaldía de Medellín y colaboradores de OpenStreetMap. Los recorridos pueden cambiar; comprueba el estado de la vía antes de salir.</p>
+    </main>
+
+    <dialog id="bike-dialog" class="bike-dialog" aria-label="Detalle del recorrido">
+      <div class="bike-dialog-head">
+        <h2 id="bike-dialog-title">Recorrido</h2>
+        <button id="bike-close" type="button" class="icon-ghost" aria-label="Cerrar">✕</button>
+      </div>
+      <div id="bike-map" aria-label="Mapa del recorrido"></div>
+      <p id="bike-dialog-meta"></p>
+      <div id="bike-stops"></div>
+    </dialog>
+
+    <aside class="ad-banner" aria-label="Publicidad">
+      <span class="ad-pill">Anuncio</span>
+      <p>Espacio para aliados de Parchar</p>
+      <button type="button" class="ad-cta">Pautar aquí</button>
+    </aside>
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    <script src="/ads.js?v=107"></script>
+    <script src="/update.js?v=93"></script>
+    <script src="/bike.js?v=110"></script>
+  </body>
+</html>

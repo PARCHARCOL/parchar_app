@@ -412,7 +412,8 @@ async function redirectWithSearch(query) {
     window.location.origin
   );
   if (isBikeSearch) {
-    url.searchParams.set("mode", "bike");
+    window.location.href = "/rutas-bici.html";
+    return;
   } else if (isBurgerMasterSearch) {
     if (!isBurgerMasterActive()) {
       showBurgerMasterInactiveStatus();
@@ -468,7 +469,7 @@ function handleCategory(route) {
   }
 
   if (route === "bici") {
-    window.location.href = "/sites.html?mode=bike";
+    window.location.href = "/rutas-bici.html";
     return;
   }
 

@@ -3225,6 +3225,44 @@ html[data-tone-contrast="light"] .tone-control img {
   background-image: url("/assets/ui/admin-glass.png");
 }
 
+.bike-body .bike-header-icon img { width: 28px; height: 28px; }
+.bike-body .bike-tabs { display: flex; gap: 6px; overflow-x: auto; margin: 14px 0; }
+.bike-body .bike-tab {
+  min-height: 44px; flex: 1 0 auto; border: 1px solid var(--line-soft);
+  border-radius: 8px; padding: 9px 11px; color: var(--text-main);
+  background: rgba(32, 8, 64, .8); font: inherit; font-weight: 700; cursor: pointer;
+}
+.bike-body .bike-tab.active { color: #20102f; background: var(--neon-gold); }
+.bike-body .bike-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; align-items: end; }
+.bike-body .bike-tools label { display: grid; gap: 4px; min-width: 0; font-size: .85rem; font-weight: 700; }
+.bike-body .bike-tools select { width: 100%; min-height: 44px; padding: 7px; color: #fff; background: #291048; border: 1px solid var(--line-soft); border-radius: 7px; font: inherit; }
+.bike-body #bike-locate { grid-column: 1 / -1; min-height: 44px; }
+.bike-body .bike-results { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 12px; margin-top: 14px; }
+.bike-body .bike-route { padding: 14px; border: 1px solid var(--line-soft); border-radius: 8px; background: rgba(33, 9, 68, .88); }
+.bike-body .bike-route h2 { margin: 10px 0; font-size: 1.18rem; overflow-wrap: anywhere; }
+.bike-body .bike-route-head, .bike-body .bike-route-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.bike-body .bike-route-head { color: var(--text-soft); font-size: .85rem; }
+.bike-body .bike-route-type { color: var(--neon-gold); font-weight: 800; }
+.bike-body .bike-facts { display: flex; flex-wrap: wrap; gap: 6px 12px; min-height: 44px; font-size: .9rem; }
+.bike-body .bike-route-foot { align-items: end; margin-top: 12px; }
+.bike-body .bike-route-foot small { max-width: 35%; color: var(--text-soft); }
+.bike-body .bike-route-foot div { display: flex; gap: 6px; }
+.bike-body .bike-route-foot button { min-height: 40px; padding: 7px 9px; border-radius: 7px; font-weight: 700; cursor: pointer; }
+.bike-body .primary-btn { border: 0; color: #211029; background: var(--neon-gold); }
+.bike-body .bike-empty { grid-column: 1 / -1; padding: 20px 0; color: var(--text-soft); }
+.bike-body .bike-attribution { margin-top: 20px; color: var(--text-soft); font-size: .8rem; }
+.bike-dialog { width: min(920px, calc(100vw - 20px)); max-height: calc(100dvh - 28px); padding: 14px; border: 1px solid var(--line-soft); border-radius: 8px; color: var(--text-main); background: #210b3b; }
+.bike-dialog::backdrop { background: rgba(0, 0, 0, .8); }
+.bike-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.bike-dialog-head h2 { margin: 0 0 10px; font-size: 1.2rem; overflow-wrap: anywhere; }
+.bike-dialog #bike-map { height: min(55dvh, 460px); min-height: 260px; width: 100%; background: #d8d8d8; }
+.bike-dialog #bike-stops ul { padding-left: 20px; line-height: 1.7; }
+@media (max-width: 540px) {
+  .bike-body .bike-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .bike-body .bike-route-foot { flex-wrap: wrap; }
+  .bike-body .bike-route-foot small { max-width: 100%; }
+}
+
 .home-body .app-shell {
   padding-bottom: calc(var(--ad-height) + 34px);
 }
