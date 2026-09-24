@@ -3006,6 +3006,10 @@ body > .ad-banner {
   --ad-height: 238px;
 }
 
+.install-cta[hidden] {
+  display: none !important;
+}
+
 .theme-body {
   background: linear-gradient(160deg,
     color-mix(in srgb, #29104e, white var(--tone-mix)),

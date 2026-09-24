@@ -655,10 +655,20 @@ async function loadAdBanner() {
     adBanner.querySelector(
       ".ad-cta"
     );
+  const hadCampaign = adBanner.dataset.adCampaignActive === "true";
 
-  adBanner.querySelector(
-    ".ad-media"
-  )?.setAttribute("hidden", "");
+  try {
+    const response = await fetch(
+      `/api/ads/banner?t=${Date.now()}`,
+      { cache: "no-store" }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "No se pudo cargar publicidad.");
+    }
+    if (requestSeq !== adRequestSeq) return;
+
+  adBanner.querySelector(".ad-media")?.setAttribute("hidden", "");
   adBanner.classList.remove(
     "is-clickable"
   );
@@ -695,23 +705,6 @@ async function loadAdBanner() {
     delete button.dataset.adCampaignId;
     delete button.dataset.adCampaignActive;
   }
-
-  try {
-    const response = await fetch(
-      `/api/ads/banner?t=${Date.now()}`,
-      {
-        cache: "no-store",
-      }
-    );
-    const data =
-      await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-          "No se pudo cargar publicidad."
-      );
-    }
 
     const banner =
       data.banner || {};
@@ -1121,6 +1114,10 @@ async function loadAdBanner() {
       scheduleAdRefresh(AD_REFRESH_MS);
     }
   } catch {
+    if (hadCampaign) {
+      scheduleAdRefresh(AD_REFRESH_MS);
+      return;
+    }
     if (pill) {
       pill.textContent = "Anuncio";
     }

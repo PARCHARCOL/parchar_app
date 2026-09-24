@@ -20,6 +20,9 @@ let kind = "cycleways";
 let centre = null;
 let routes = [];
 let map = null;
+let routeLayer = null;
+let joinLine = null;
+let joinMarker = null;
 let requestNumber = 0;
 let activeRoute = null;
 let locationWatch = null;
@@ -116,8 +119,8 @@ function openMap(route) {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
-  const line = L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 5 } }).addTo(map);
-  map.fitBounds(line.getBounds(), { padding: [18, 18], maxZoom: 15 });
+  routeLayer = L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 5 } }).addTo(map);
+  map.fitBounds(routeLayer.getBounds(), { padding: [18, 18], maxZoom: 15 });
   map.on("dragstart", () => { followingPosition = false; });
   setTimeout(() => map?.invalidateSize(), 50);
 }
@@ -134,8 +137,12 @@ function stopNavigation(message = "Seguimiento detenido.") {
   locationWatch = null;
   if (positionMarker && map) map.removeLayer(positionMarker);
   if (accuracyCircle && map) map.removeLayer(accuracyCircle);
+  if (joinLine && map) map.removeLayer(joinLine);
+  if (joinMarker && map) map.removeLayer(joinMarker);
   positionMarker = null;
   accuracyCircle = null;
+  joinLine = null;
+  joinMarker = null;
   lastPosition = null;
   navigationRemaining.hidden = true;
   navigationStatus.textContent = message;
@@ -166,7 +173,22 @@ function updateNavigation(position) {
     accuracyCircle.setLatLng([point.lat, point.lng]);
   }
   accuracyCircle.setRadius(Number.isFinite(accuracy) ? Math.max(1, accuracy) : 1);
-  if (followingPosition) map.setView([point.lat, point.lng], Math.max(15, map.getZoom()), { animate: false });
+  const snapped = [progress.snapped.lat, progress.snapped.lng];
+  if (!joinLine) {
+    joinLine = L.polyline([[point.lat, point.lng], snapped], {
+      color: "#49d9ff", weight: 3, dashArray: "6 7", opacity: 0.9,
+    }).addTo(map);
+    joinMarker = L.circleMarker(snapped, {
+      radius: 7, color: "#fff", weight: 2, fillColor: "#49d9ff", fillOpacity: 1,
+    }).addTo(map).bindTooltip("Punto de incorporación al trazado");
+  } else {
+    joinLine.setLatLngs([[point.lat, point.lng], snapped]);
+    joinMarker.setLatLng(snapped);
+  }
+  if (followingPosition && routeLayer) {
+    const bounds = routeLayer.getBounds().extend([point.lat, point.lng]);
+    map.fitBounds(bounds, { padding: [28, 28], maxZoom: 15, animate: false });
+  }
 
   if (!Number.isFinite(accuracy) || accuracy > 100) {
     navigationRemaining.hidden = true;
@@ -176,7 +198,7 @@ function updateNavigation(position) {
   navigationRemaining.hidden = false;
   navigationRemaining.textContent = `${Math.round(progress.remainingMeters)} m hasta el extremo del tramo`;
   if (progress.crossTrackMeters > Math.max(75, accuracy * 1.5)) {
-    navigationStatus.textContent = `Estás a ${Math.round(progress.crossTrackMeters)} m del trazado. Detente y revisa un regreso seguro.`;
+    navigationStatus.textContent = `El punto celeste marca dónde unirte al trazado, a ${Math.round(progress.crossTrackMeters)} m en línea recta. Busca una vía segura para llegar; la línea punteada no es una calle.`;
   } else if (progress.remainingMeters <= 30 && accuracy <= 50) {
     navigationStatus.textContent = "Llegaste al extremo de este tramo.";
   } else {
@@ -299,10 +321,7 @@ reverseNavigationButton.addEventListener("click", () => {
 });
 centerNavigationButton.addEventListener("click", () => {
   followingPosition = true;
-  if (lastPosition && map) map.setView(
-    [lastPosition.coords.latitude, lastPosition.coords.longitude],
-    Math.max(15, map.getZoom())
-  );
+  if (lastPosition) updateNavigation(lastPosition);
 });
 stopNavigationButton.addEventListener("click", () => stopNavigation());
 dialog.addEventListener("close", () => {
@@ -310,6 +329,7 @@ dialog.addEventListener("close", () => {
   activeRoute = null;
   if (map) map.remove();
   map = null;
+  routeLayer = null;
 });
 window.addEventListener("pagehide", () => stopNavigation());
 document.addEventListener("visibilitychange", () => {

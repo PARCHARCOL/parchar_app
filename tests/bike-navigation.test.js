@@ -23,6 +23,13 @@ test("remaining distance decreases toward the selected end", () => {
   assert.ok(end.remainingMeters < 1);
 });
 
+test("projects an off-route rider onto the selected line", () => {
+  const progress = nearestOnRoute(line, { lat: 6.201, lng: -75.595 });
+  assert.ok(progress.crossTrackMeters > 100 && progress.crossTrackMeters < 120);
+  assert.ok(Math.abs(progress.snapped.lat - 6.2) < 0.00001);
+  assert.ok(Math.abs(progress.snapped.lng + 75.595) < 0.00001);
+});
+
 test("chooses a direction from the nearest endpoint", () => {
   assert.equal(nearestEndDirection(line, { lat: 6.2, lng: -75.599 }), 1);
   assert.equal(nearestEndDirection(line, { lat: 6.2, lng: -75.581 }), -1);

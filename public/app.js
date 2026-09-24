@@ -55,6 +55,7 @@ const SITE_SEARCH_KEYWORDS = [
 ];
 
 const installButton = document.querySelector("#install-app-btn");
+const installCta = document.querySelector(".install-cta");
 const installHelpButton = document.querySelector("#install-help-btn");
 const installHint = document.querySelector("#install-hint");
 const installGuide = document.querySelector("#install-guide");
@@ -62,6 +63,7 @@ const installGuideText = document.querySelector("#install-guide-text");
 const installGuideClose = document.querySelector("#install-guide-close");
 
 let deferredInstallPrompt = null;
+let knownInstalled = false;
 let burgerMasterPromotion = {
   active: false,
 };
@@ -642,6 +644,9 @@ function hideInstallGuide() {
 }
 
 function setInstalledState() {
+  knownInstalled = true;
+  if (installCta) installCta.hidden = true;
+  hideInstallGuide();
   if (installButton) {
     installButton.textContent = "App instalada";
     installButton.disabled = true;
@@ -695,7 +700,7 @@ function setManualInstallState() {
 }
 
 async function triggerInstallPrompt() {
-  if (isStandaloneMode()) {
+  if (knownInstalled || isStandaloneMode()) {
     setInstalledState();
     return;
   }
@@ -754,8 +759,18 @@ function setupInstallFlow() {
     setManualInstallState();
   }
 
+  if (!knownInstalled && typeof navigator.getInstalledRelatedApps === "function") {
+    navigator.getInstalledRelatedApps().then((apps) => {
+      if (apps.some((app) => app.platform === "webapp" &&
+        (app.id === `${window.location.origin}/` || app.url === `${window.location.origin}/manifest.webmanifest`))) {
+        setInstalledState();
+      }
+    }).catch(() => {});
+  }
+
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
+    if (knownInstalled) return;
     deferredInstallPrompt = event;
     setPromptInstallState();
   });

@@ -16,6 +16,13 @@
     "lifestyle"
   ],
   "prefer_related_applications": false,
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://parchar-app.onrender.com/manifest.webmanifest",
+      "id": "https://parchar-app.onrender.com/"
+    }
+  ],
   "icons": [
     {
       "src": "/assets/icons/icon-192.png",
