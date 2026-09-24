@@ -3256,11 +3256,19 @@ html[data-tone-contrast="light"] .tone-control img {
 .bike-dialog-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .bike-dialog-head h2 { margin: 0 0 10px; font-size: 1.2rem; overflow-wrap: anywhere; }
 .bike-dialog #bike-map { height: min(55dvh, 460px); min-height: 260px; width: 100%; background: #d8d8d8; }
+.bike-dialog [hidden] { display: none !important; }
+.bike-dialog .bike-navigation { padding: 12px 0; border-bottom: 1px solid var(--line-soft); }
+.bike-dialog .bike-navigation-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.bike-dialog .bike-navigation-actions button { min-height: 44px; padding: 9px 12px; border-radius: 7px; font: inherit; font-weight: 700; cursor: pointer; }
+.bike-dialog .bike-navigation-actions .primary-btn { color: #211029; background: var(--neon-gold); border: 0; }
+.bike-dialog #bike-navigation-status { margin: 10px 0 4px; line-height: 1.4; }
+.bike-dialog #bike-navigation-remaining { display: block; font-size: 1.12rem; color: var(--neon-gold); }
 .bike-dialog #bike-stops ul { padding-left: 20px; line-height: 1.7; }
 @media (max-width: 540px) {
   .bike-body .bike-tools { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bike-body .bike-route-foot { flex-wrap: wrap; }
   .bike-body .bike-route-foot small { max-width: 100%; }
+  .bike-dialog .bike-navigation-actions button { flex: 1 1 calc(50% - 8px); }
 }
 
 .home-body .app-shell {
