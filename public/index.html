@@ -10,8 +10,8 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=120" />
-    <script src="/theme.js?v=108" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=121" />
+    <script src="/theme.js?v=109" defer></script>
   </head>
   <body class="theme-body home-body">
     <div class="ambient-glow"></div>
@@ -28,7 +28,26 @@
         >
           <img src="/assets/ui/menu.svg" alt="" />
         </button>
-        <img class="brand-logo" data-brand-logo src="/assets/parchar-logo.png" alt="Parchar" />
+        <div class="brand-size-row">
+          <img class="brand-logo" data-brand-logo src="/assets/parchar-logo.png" alt="Parchar" />
+          <div class="reading-scale-widget" role="group" aria-label="Ajustar el tamaño general de texto y controles">
+            <span class="reading-scale-endpoint" aria-hidden="true">A+</span>
+            <div class="reading-scale-rail">
+              <input
+                id="reading-scale-input"
+                type="range"
+                min="100"
+                max="150"
+                step="5"
+                value="100"
+                aria-label="Tamaño general de texto y controles"
+                aria-describedby="reading-scale-value"
+              />
+            </div>
+            <output id="reading-scale-value" for="reading-scale-input">100%</output>
+            <span class="reading-scale-endpoint" aria-hidden="true">A−</span>
+          </div>
+        </div>
         <button
           id="home-alerts-btn"
           class="icon-ghost"
@@ -86,24 +105,6 @@
         <input id="background-tone" type="range" min="0" max="100" value="0" aria-label="Claridad del fondo" />
         <img src="/assets/ui/sun.svg" alt="" />
       </div>
-
-      <section class="reading-size-control" aria-labelledby="reading-size-title">
-        <h2 id="reading-size-title">Tamaño de texto y botones</h2>
-        <div class="reading-size-options" role="group" aria-label="Tamaño de texto y botones">
-          <button type="button" data-reading-size="normal" aria-pressed="true">
-            <span class="reading-size-sample" aria-hidden="true">A</span>
-            <span>Normal</span>
-          </button>
-          <button type="button" data-reading-size="large" aria-pressed="false">
-            <span class="reading-size-sample" aria-hidden="true">A</span>
-            <span>Grande</span>
-          </button>
-          <button type="button" data-reading-size="larger" aria-pressed="false">
-            <span class="reading-size-sample" aria-hidden="true">A</span>
-            <span>Muy grande</span>
-          </button>
-        </div>
-      </section>
 
       <section class="button-grid">
         <button class="action-btn btn-restaurante" data-route="restaurante">

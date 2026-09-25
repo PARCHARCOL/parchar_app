@@ -1,6 +1,9 @@
 const toneStorageKey = "parchar-background-tone";
-const readingSizeStorageKey = "parchar-reading-size";
-const readingSizes = new Set(["normal", "large", "larger"]);
+const readingScaleStorageKey = "parchar-reading-scale-v1";
+
+function clampReadingScale(value) {
+  return Math.min(150, Math.max(100, Math.round(Number(value) / 5) * 5));
+}
 
 function applyBackgroundTone(value) {
   const tone = Math.min(100, Math.max(0, Number(value) || 0));
@@ -17,35 +20,43 @@ try {
 }
 applyBackgroundTone(savedTone);
 
-let savedReadingSize = "normal";
+let savedReadingScale = 100;
 try {
-  const storedSize = localStorage.getItem(readingSizeStorageKey);
-  if (readingSizes.has(storedSize)) savedReadingSize = storedSize;
+  const storedScale = Number(localStorage.getItem(readingScaleStorageKey));
+  if (Number.isFinite(storedScale) && storedScale >= 100 && storedScale <= 150) {
+    savedReadingScale = Math.round(storedScale / 5) * 5;
+  } else {
+    const previousSize = localStorage.getItem("parchar-reading-size");
+    if (previousSize === "large") savedReadingScale = 125;
+    if (previousSize === "larger") savedReadingScale = 150;
+  }
 } catch {
   // Keep the default size when storage is unavailable.
 }
 
-function applyReadingSize(value) {
-  const size = readingSizes.has(value) ? value : "normal";
-  document.documentElement.dataset.readingSize = size;
-  document.querySelectorAll("[data-reading-size]").forEach((button) => {
-    button.setAttribute("aria-pressed", String(button.dataset.readingSize === size));
-  });
-  return size;
+function applyReadingScale(value) {
+  const scale = clampReadingScale(value);
+  document.documentElement.style.fontSize = `${scale}%`;
+  document.documentElement.dataset.uiExpanded = String(scale >= 120);
+  const slider = document.querySelector("#reading-scale-input");
+  const output = document.querySelector("#reading-scale-value");
+  if (slider && slider.value !== String(scale)) slider.value = String(scale);
+  if (output) output.value = `${scale}%`;
+  return scale;
 }
 
-applyReadingSize(savedReadingSize);
+applyReadingScale(savedReadingScale);
 
 document.addEventListener("DOMContentLoaded", () => {
-  document.querySelectorAll("[data-reading-size]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const size = applyReadingSize(button.dataset.readingSize);
-      try {
-        localStorage.setItem(readingSizeStorageKey, size);
-      } catch {
-        // Keep the selected size until this page is closed.
-      }
-    });
+  const scaleSlider = document.querySelector("#reading-scale-input");
+  scaleSlider?.addEventListener("input", () => {
+    const scale = clampReadingScale(scaleSlider.value);
+    applyReadingScale(scale);
+    try {
+      localStorage.setItem(readingScaleStorageKey, String(scale));
+    } catch {
+      // Keep the selected size until this page is closed.
+    }
   });
 
   const slider = document.querySelector("#background-tone");
@@ -60,5 +71,4 @@ document.addEventListener("DOMContentLoaded", () => {
       // Keep the selected tone until the page is closed.
     }
   });
-
 });
