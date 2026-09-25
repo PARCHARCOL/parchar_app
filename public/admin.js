@@ -87,6 +87,20 @@ const refreshBrandButton =
   document.querySelector(
     "#refresh-admin-brand"
   );
+const seasonalDesignForm = document.querySelector("#seasonal-design-form");
+const seasonalDesignMode = document.querySelector("#seasonal-design-mode");
+const seasonalManualTheme = document.querySelector("#seasonal-manual-theme");
+const seasonalManualThemeField = document.querySelector("#seasonal-manual-theme-field");
+const seasonalMonthSettings = document.querySelector("#seasonal-month-settings");
+const seasonalMonthList = document.querySelector("#seasonal-month-list");
+const seasonalDesignMessage = document.querySelector("#seasonal-design-message");
+const seasonalDesignReset = document.querySelector("#seasonal-design-reset");
+const seasonalPreview = document.querySelector("#seasonal-design-preview");
+const seasonalPreviewTitle = document.querySelector("#seasonal-design-preview-title");
+const seasonalPreviewNote = document.querySelector("#seasonal-design-preview-note");
+const seasonalPreviewStatus = document.querySelector("#seasonal-design-preview-status");
+let seasonalDesignThemes = [];
+let seasonalMonthNames = [];
 
 const tabs = document.querySelectorAll(
   ".admin-tab"
@@ -838,7 +852,7 @@ function showAdminSection(
     String(section || "").trim() ||
     "businesses";
   const sectionToOpen =
-    ["staff", "brand"].includes(
+    ["staff", "brand", "seasonal-design"].includes(
       requestedSection
     ) && !isAdmin()
       ? "businesses"
@@ -1037,6 +1051,164 @@ async function loadBrandSettings() {
       true
     );
   }
+}
+
+function seasonalThemeById(themeId) {
+  return seasonalDesignThemes.find((theme) => theme.id === themeId) || null;
+}
+
+function setSeasonalPreview(theme, status = "") {
+  const palette = theme || {
+    accent: "#e5c77a",
+    surface: "#392074",
+    deep: "#1c0a39",
+    border: "#bb7aff",
+  };
+  const safeColor = (value, fallback) => /^#[0-9a-f]{6}$/i.test(value || "") ? value : fallback;
+  seasonalPreview?.style.setProperty("--seasonal-preview-accent", safeColor(palette.accent, "#e5c77a"));
+  seasonalPreview?.style.setProperty("--seasonal-preview-surface", safeColor(palette.surface, "#392074"));
+  seasonalPreview?.style.setProperty("--seasonal-preview-deep", safeColor(palette.deep, "#1c0a39"));
+  seasonalPreview?.style.setProperty("--seasonal-preview-border", safeColor(palette.border, "#bb7aff"));
+  if (seasonalPreviewTitle) seasonalPreviewTitle.textContent = theme?.name || "Diseño normal de Parchar";
+  if (seasonalPreviewNote) seasonalPreviewNote.textContent = theme?.note || "Se conserva la apariencia habitual de la app.";
+  if (seasonalPreviewStatus) seasonalPreviewStatus.textContent = status;
+}
+
+function updateSeasonalDesignControls(event) {
+  if (!seasonalDesignMode) return;
+  const mode = seasonalDesignMode.value;
+  if (seasonalManualThemeField) seasonalManualThemeField.classList.toggle("is-hidden", mode !== "manual");
+  if (seasonalMonthSettings) seasonalMonthSettings.hidden = mode !== "automatic";
+
+  let theme = null;
+  let status = "Tema apagado";
+  if (mode === "manual") {
+    theme = seasonalThemeById(seasonalManualTheme?.value);
+    status = "Fijo hasta que lo cambies";
+  } else if (mode === "automatic") {
+    const currentMonth = Number(new Intl.DateTimeFormat("en-US", {
+      timeZone: "America/Bogota",
+      month: "numeric",
+    }).format(new Date()));
+    const previewRow = event?.target?.closest?.("[data-seasonal-month]");
+    const row = previewRow || seasonalMonthList?.querySelector(`[data-seasonal-month="${currentMonth}"]`);
+    const enabled = row?.querySelector("[data-seasonal-month-enabled]")?.checked;
+    const themeId = row?.querySelector("[data-seasonal-month-theme]")?.value;
+    theme = enabled ? seasonalThemeById(themeId) : null;
+    const month = Number(row?.dataset.seasonalMonth || currentMonth);
+    status = previewRow
+      ? enabled ? `Vista previa de ${seasonalMonthNames[month - 1]}` : "Ese mes usará el diseño normal"
+      : enabled ? `Automático en ${seasonalMonthNames[month - 1] || "el mes actual"}` : "Mes actual desactivado";
+  }
+
+  setSeasonalPreview(theme, status);
+}
+
+function renderSeasonalMonthSettings(settings) {
+  if (!seasonalMonthList) return;
+  seasonalMonthList.innerHTML = seasonalMonthNames.map((month, index) => {
+    const monthNumber = index + 1;
+    const value = settings.monthThemes[String(monthNumber)] || { enabled: true, themeId: seasonalDesignThemes[index]?.id };
+    const options = seasonalDesignThemes.map((theme) => `
+      <option value="${escapeHtml(theme.id)}" ${theme.id === value.themeId ? "selected" : ""}>
+        ${escapeHtml(theme.name)}
+      </option>
+    `).join("");
+    return `
+      <div class="seasonal-month-row" data-seasonal-month="${monthNumber}">
+        <label>
+          <input type="checkbox" data-seasonal-month-enabled ${value.enabled ? "checked" : ""} />
+          <strong>${escapeHtml(month)}</strong>
+        </label>
+        <select data-seasonal-month-theme aria-label="Tema para ${escapeHtml(month)}">${options}</select>
+      </div>
+    `;
+  }).join("");
+}
+
+function setSeasonalDesignForm(settings) {
+  if (!seasonalDesignForm || !seasonalDesignMode) return;
+  seasonalDesignMode.value = settings.mode;
+  if (seasonalManualTheme) seasonalManualTheme.value = settings.manualThemeId;
+  renderSeasonalMonthSettings(settings);
+  updateSeasonalDesignControls();
+}
+
+async function loadSeasonalDesignSettings() {
+  if (!isAdmin() || !seasonalDesignForm) return;
+  try {
+    const response = await staffFetch("/api/admin/seasonal-design");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "No se pudo cargar el diseño de temporada.");
+
+    seasonalDesignThemes = data.themes || [];
+    seasonalMonthNames = data.months || [];
+    if (seasonalManualTheme) {
+      seasonalManualTheme.innerHTML = seasonalDesignThemes.map((theme) =>
+        `<option value="${escapeHtml(theme.id)}">${escapeHtml(theme.name)}</option>`
+      ).join("");
+    }
+    setSeasonalDesignForm(data.settings);
+    if (data.activeTheme) {
+      const activeLabel = data.activeTheme.month
+        ? `Activo en ${seasonalMonthNames[data.activeTheme.month - 1] || "Parchar"}`
+        : "Tema fijo activo";
+      setSeasonalPreview(data.activeTheme, activeLabel);
+    }
+    setFeedback(seasonalDesignMessage, "Configuración cargada.");
+  } catch (error) {
+    setFeedback(seasonalDesignMessage, error.message, true);
+  }
+}
+
+async function saveSeasonalDesignSettings() {
+  if (!seasonalDesignForm || !isAdmin()) return;
+  const monthThemes = {};
+  seasonalMonthList?.querySelectorAll("[data-seasonal-month]").forEach((row) => {
+    const month = row.dataset.seasonalMonth;
+    monthThemes[month] = {
+      enabled: row.querySelector("[data-seasonal-month-enabled]").checked,
+      themeId: row.querySelector("[data-seasonal-month-theme]").value,
+    };
+  });
+  const settings = {
+    mode: seasonalDesignMode.value,
+    enabled: seasonalDesignMode.value !== "off",
+    manualThemeId: seasonalManualTheme?.value || "navidad",
+    monthThemes,
+  };
+
+  setFeedback(seasonalDesignMessage, "Guardando calendario de diseño...");
+  try {
+    const response = await staffFetch("/api/admin/seasonal-design", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ settings }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "No se pudo guardar el diseño de temporada.");
+    setSeasonalDesignForm(data.settings);
+    setSeasonalPreview(data.activeTheme, data.activeTheme ? "Guardado y activo" : "Guardado; se usa el diseno normal");
+    setFeedback(seasonalDesignMessage, "Diseño de temporada guardado.");
+  } catch (error) {
+    setFeedback(seasonalDesignMessage, error.message, true);
+  }
+}
+
+function restoreInitialSeasonalDesign() {
+  if (!seasonalDesignForm || !seasonalDesignThemes.length) return;
+  const monthThemes = Object.fromEntries(seasonalMonthNames.map((_, index) => [String(index + 1), {
+    enabled: true,
+    themeId: seasonalDesignThemes[index]?.id || seasonalDesignThemes[0].id,
+  }]));
+  const defaults = {
+    enabled: true,
+    mode: "automatic",
+    manualThemeId: seasonalDesignThemes.at(-1)?.id || "navidad",
+    monthThemes,
+  };
+  setSeasonalDesignForm(defaults);
+  saveSeasonalDesignSettings();
 }
 
 async function saveBrandSettings(event) {
@@ -4299,6 +4471,9 @@ async function loadDashboardData({
     tasks.push(
       loadBrandSettings()
     );
+    tasks.push(
+      loadSeasonalDesignSettings()
+    );
   }
 
   await Promise.all(tasks);
@@ -4462,6 +4637,15 @@ refreshBrandButton?.addEventListener(
   "click",
   loadBrandSettings
 );
+
+seasonalDesignForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveSeasonalDesignSettings();
+});
+
+seasonalDesignForm?.addEventListener("input", updateSeasonalDesignControls);
+seasonalDesignForm?.addEventListener("change", updateSeasonalDesignControls);
+seasonalDesignReset?.addEventListener("click", restoreInitialSeasonalDesign);
 
 refreshStaffUsersButton?.addEventListener(
   "click",

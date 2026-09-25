@@ -1,5 +1,64 @@
 const toneStorageKey = "parchar-background-tone";
 const readingScaleStorageKey = "parchar-reading-scale-v1";
+const seasonalThemeStorageKey = "parchar-seasonal-theme-v1";
+const defaultSeasonalPalette = {
+  id: "default",
+  accent: "#e5c77a",
+  surface: "#392074",
+  deep: "#1c0a39",
+  border: "#bb7aff",
+};
+
+function applySeasonalTheme(theme) {
+  const safeTheme = theme && ["accent", "surface", "deep", "border"].every((key) => /^#[0-9a-f]{6}$/i.test(theme[key] || ""))
+    ? theme
+    : defaultSeasonalPalette;
+  const root = document.documentElement;
+  root.dataset.seasonalTheme = safeTheme.id || "default";
+  root.style.setProperty("--season-accent", safeTheme.accent);
+  root.style.setProperty("--season-surface", safeTheme.surface);
+  root.style.setProperty("--season-deep", safeTheme.deep);
+  root.style.setProperty("--season-border", safeTheme.border);
+}
+
+try {
+  const cachedTheme = localStorage.getItem(seasonalThemeStorageKey);
+  if (cachedTheme) applySeasonalTheme(JSON.parse(cachedTheme));
+} catch {
+  // The normal Parchar palette remains available if local storage is blocked.
+}
+
+async function refreshSeasonalTheme() {
+  try {
+    const response = await fetch("/api/design/seasonal", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    applySeasonalTheme(data.theme);
+    if (data.theme) localStorage.setItem(seasonalThemeStorageKey, JSON.stringify(data.theme));
+    else localStorage.removeItem(seasonalThemeStorageKey);
+  } catch {
+    // Keep the last downloaded palette or fall back to Parchar's normal colors.
+  }
+}
+
+refreshSeasonalTheme();
+window.addEventListener("focus", refreshSeasonalTheme);
+
+function scheduleSeasonalMonthRefresh() {
+  const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Bogota",
+    year: "numeric",
+    month: "numeric",
+  }).formatToParts(new Date()).map((part) => [part.type, part.value]));
+  const nextMonthStart = Date.UTC(Number(parts.year), Number(parts.month), 1, 5);
+  const delay = Math.max(1000, nextMonthStart - Date.now() + 1000);
+  window.setTimeout(async () => {
+    await refreshSeasonalTheme();
+    scheduleSeasonalMonthRefresh();
+  }, delay);
+}
+
+scheduleSeasonalMonthRefresh();
 
 function clampReadingScale(value) {
   return Math.min(150, Math.max(100, Math.round(Number(value) / 5) * 5));

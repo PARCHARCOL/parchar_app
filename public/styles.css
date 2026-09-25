@@ -15,6 +15,10 @@
   --neon-blue: #67d9ff;
   --success: #6df7b4;
   --error: #ff8a96;
+  --season-accent: #e5c77a;
+  --season-surface: #392a4e;
+  --season-deep: #1c0a39;
+  --season-border: #bb7aff;
   --nav-height: 72px;
   --ad-height: 82px;
   --radius-lg: 26px;
@@ -1576,6 +1580,127 @@ textarea {
   display: none;
 }
 
+.seasonal-design-preview {
+  display: grid;
+  grid-template-columns: 3rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 74px;
+  margin: 16px 0;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--seasonal-preview-border, var(--line-soft)) 50%, transparent);
+  border-radius: 12px;
+  background: linear-gradient(110deg,
+    color-mix(in srgb, var(--seasonal-preview-surface, #392074) 26%, transparent),
+    color-mix(in srgb, var(--seasonal-preview-deep, #1c0a39) 52%, transparent));
+}
+
+.seasonal-design-preview-swatch {
+  width: 3rem;
+  aspect-ratio: 1;
+  border: 1px solid var(--seasonal-preview-border, var(--line-soft));
+  border-radius: 10px;
+  background: linear-gradient(145deg,
+    var(--seasonal-preview-accent, var(--neon-gold)),
+    var(--seasonal-preview-surface, #392074) 72%);
+}
+
+.seasonal-design-preview > div {
+  min-width: 0;
+}
+
+.seasonal-design-preview strong,
+.seasonal-design-preview > div > span {
+  display: block;
+}
+
+.seasonal-design-preview > div > span {
+  margin-top: 3px;
+  color: var(--text-soft);
+  font-size: 0.85rem;
+}
+
+.seasonal-design-status {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  text-align: right;
+}
+
+.seasonal-month-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.seasonal-month-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--line-soft);
+  border-radius: 10px;
+  background: rgba(18, 8, 34, 0.36);
+}
+
+.seasonal-month-row > label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: var(--text-main);
+}
+
+.seasonal-month-row input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0;
+  accent-color: var(--season-accent);
+}
+
+.seasonal-month-row select {
+  min-width: 0;
+  width: 100%;
+  margin: 0;
+}
+
+.seasonal-design-form > label.is-hidden {
+  display: none;
+}
+
+.admin-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-form-actions > button {
+  width: auto;
+}
+
+@media (max-width: 620px) {
+  .seasonal-design-preview {
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .seasonal-design-preview-swatch {
+    width: 2.5rem;
+  }
+
+  .seasonal-design-status {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .seasonal-month-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .ghost-btn.is-muted {
   opacity: 0.72;
 }
@@ -3100,6 +3225,23 @@ body > .ad-banner {
   background: linear-gradient(178deg,
     color-mix(in srgb, #392074, white var(--tone-mix)),
     color-mix(in srgb, #1c0a39, white var(--tone-mix)) 65%);
+}
+
+html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, color-mix(in srgb, #29104e 90%, var(--season-deep)), white var(--tone-mix)),
+    color-mix(in srgb, color-mix(in srgb, #10071d 94%, var(--season-accent)), white var(--tone-mix)));
+}
+
+html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body .app-shell {
+  background: linear-gradient(178deg,
+    color-mix(in srgb, color-mix(in srgb, #392074 91%, var(--season-surface)), white var(--tone-mix)),
+    color-mix(in srgb, color-mix(in srgb, #1c0a39 94%, var(--season-deep)), white var(--tone-mix)) 65%);
+  border-color: color-mix(in srgb, var(--season-border) 30%, var(--line-soft));
+}
+
+html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body .app-shell :is(.home-recommendation-card, .glass-card, .form-block) {
+  border-color: color-mix(in srgb, var(--season-border) 24%, var(--line-soft));
 }
 
 html[data-tone-contrast="light"] .theme-body {

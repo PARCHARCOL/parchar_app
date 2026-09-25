@@ -29,6 +29,13 @@ const { Pool } = require(
 );
 const bikeRoutes = require("./bike-routes");
 const { rankTrendingRecommendations } = require("./recommendation-ranking");
+const {
+  DEFAULT_SEASONAL_SETTINGS,
+  MONTHS: SEASONAL_MONTHS,
+  SEASONAL_THEMES,
+  normalizeSeasonalSettings,
+  publicSeasonalDesign,
+} = require("./lib/seasonal-design");
 
 const PORT = Number(
   process.env.PORT || 8080
@@ -920,6 +927,38 @@ async function getBrandSettings() {
   return normalizeBrandSettings(
     result.rows[0]
   );
+}
+
+async function getSeasonalDesignSettings() {
+  const result = await pool.query(`
+    SELECT settings_json
+    FROM seasonal_design_settings
+    WHERE id = 1
+    LIMIT 1
+  `);
+  const raw = result.rows[0]?.settings_json;
+  let settings = DEFAULT_SEASONAL_SETTINGS;
+
+  if (raw) {
+    try {
+      settings = JSON.parse(raw);
+    } catch {
+      settings = DEFAULT_SEASONAL_SETTINGS;
+    }
+  }
+
+  return normalizeSeasonalSettings(settings);
+}
+
+async function saveSeasonalDesignSettings(settings) {
+  const serialized = JSON.stringify(settings);
+  await pool.query(`
+    INSERT INTO seasonal_design_settings (id, settings_json, updated_at)
+    VALUES (1, $1, CURRENT_TIMESTAMP)
+    ON CONFLICT (id) DO UPDATE SET
+      settings_json = EXCLUDED.settings_json,
+      updated_at = CURRENT_TIMESTAMP
+  `, [serialized]);
 }
 
 function parseDateOnly(value) {
@@ -5203,6 +5242,14 @@ async function initializeSqliteDatabase() {
   `);
 
   await pool.exec(`
+    CREATE TABLE IF NOT EXISTS seasonal_design_settings (
+      id INTEGER PRIMARY KEY,
+      settings_json TEXT NOT NULL,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
     CREATE TABLE IF NOT EXISTS ad_campaigns (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       advertiser_name TEXT NOT NULL,
@@ -5640,6 +5687,14 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS seasonal_design_settings (
+      id INTEGER PRIMARY KEY,
+      settings_json TEXT NOT NULL,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS ad_campaigns (
       id SERIAL PRIMARY KEY,
       advertiser_name TEXT NOT NULL,
@@ -5987,6 +6042,17 @@ const server =
           sendJson(res, 200, {
             brand:
               await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/design/seasonal" &&
+          req.method === "GET"
+        ) {
+          const settings = await getSeasonalDesignSettings();
+          sendJson(res, 200, {
+            theme: publicSeasonalDesign(settings).theme,
           });
           return;
         }
@@ -9632,6 +9698,37 @@ const server =
           sendJson(res, 200, {
             brand:
               await getBrandSettings(),
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/admin/seasonal-design" &&
+          req.method === "GET"
+        ) {
+          if (!requireStaffRole(staffAuth, res, ["admin"])) return;
+          const settings = await getSeasonalDesignSettings();
+          sendJson(res, 200, {
+            settings,
+            months: SEASONAL_MONTHS,
+            themes: SEASONAL_THEMES,
+            activeTheme: publicSeasonalDesign(settings).theme,
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/admin/seasonal-design" &&
+          req.method === "POST"
+        ) {
+          if (!requireStaffRole(staffAuth, res, ["admin"])) return;
+          const body = await parseJsonBody(req);
+          const settings = normalizeSeasonalSettings(body.settings);
+          await saveSeasonalDesignSettings(settings);
+          sendJson(res, 200, {
+            ok: true,
+            settings,
+            activeTheme: publicSeasonalDesign(settings).theme,
           });
           return;
         }
