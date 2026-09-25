@@ -17,6 +17,9 @@ const startNavigationButton = document.querySelector("#bike-start-navigation");
 const centerNavigationButton = document.querySelector("#bike-center-navigation");
 const fitRouteButton = document.querySelector("#bike-fit-route");
 const stopNavigationButton = document.querySelector("#bike-stop-navigation");
+const cityNetworkToggle = document.querySelector("#bike-city-network-toggle");
+const cityNetworkStatus = document.querySelector("#bike-city-network-status");
+const CITY_NETWORK_URL = "https://www.medellin.gov.co/servidormapas/rest/services/transporte/VM_Movilidad_Humana/MapServer/0/query";
 let kind = "cycleways";
 let centre = null;
 let routes = [];
@@ -33,6 +36,11 @@ let cyclingDistance = 0;
 let selectedDirection = 1;
 let routeEntryProgressMeters = 0;
 let lastRouteRequestAt = 0;
+let cityNetworkLayer = null;
+let cityNetworkPromise = null;
+try {
+  cityNetworkToggle.checked = localStorage.getItem("parchar-bike-official-network") !== "off";
+} catch {}
 
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (char) => ({
@@ -120,13 +128,79 @@ function openMap(route) {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(map);
-  activeRoute = route;
-  routeLayer = L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 6, opacity: 1 } }).addTo(map);
+  activeRoute = route || null;
+  routeLayer = route?.geometry
+    ? L.geoJSON(route.geometry, { style: { color: "#ffb947", weight: 6, opacity: 1 } }).addTo(map)
+    : null;
+  cityNetworkLayer = null;
   streetRouteLayer = null;
   riderMarker = null;
   riderAccuracy = null;
-  map.fitBounds(routeLayer.getBounds(), { padding: [18, 18], maxZoom: 15 });
+  if (routeLayer) map.fitBounds(routeLayer.getBounds(), { padding: [18, 18], maxZoom: 15 });
+  else map.setView([6.2442, -75.5812], 12);
   setTimeout(() => map?.invalidateSize(), 50);
+  if (cityNetworkToggle.checked) loadCityNetwork();
+  else cityNetworkStatus.textContent = "Red ciclista de la Alcaldía oculta.";
+}
+
+async function loadCityNetwork() {
+  if (!map || !cityNetworkToggle.checked || cityNetworkLayer) return;
+  cityNetworkStatus.textContent = "Cargando tramos construidos de la Alcaldía...";
+  if (!cityNetworkPromise) {
+    const params = new URLSearchParams({
+      where: "estado = 'Construida'",
+      outFields: "objectid,corredor,municipio,comuna,nom_comuna,estado,anio_construido,tipo,nombre_ciclorruta,tipologia_redciclista,longitud",
+      returnGeometry: "true",
+      outSR: "4326",
+      resultRecordCount: "2000",
+      f: "geojson",
+    });
+    cityNetworkPromise = fetch(`${CITY_NETWORK_URL}?${params}`, {
+      headers: { Accept: "application/geo+json, application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(20000),
+    }).then(async (response) => {
+      const data = await response.json();
+      if (!response.ok || data.error || !Array.isArray(data.features)) {
+        throw new Error(data.error?.message || "La Alcaldía no entregó la capa de red ciclista.");
+      }
+      return data;
+    }).catch((error) => {
+      cityNetworkPromise = null;
+      throw error;
+    });
+  }
+  try {
+    const data = await cityNetworkPromise;
+    if (!map || !cityNetworkToggle.checked) return;
+    if (cityNetworkLayer) return;
+    cityNetworkLayer = L.geoJSON(data, {
+      style: { color: "#29d3b3", weight: 4, opacity: .9 },
+      attribution: 'Red ciclista construida: <a href="https://www.medellin.gov.co/servidormapas/rest/services/transporte/VM_Movilidad_Humana/MapServer/0" target="_blank" rel="noopener noreferrer">Alcaldía de Medellín</a>',
+      onEachFeature(feature, layer) {
+        const properties = feature.properties || {};
+        const details = [
+          properties.tipo || properties.tipologia_redciclista,
+          properties.nom_comuna ? `Comuna: ${properties.nom_comuna}` : "",
+          properties.anio_construido ? `Construida: ${properties.anio_construido}` : "",
+          properties.longitud != null && properties.longitud !== "" && Number.isFinite(Number(properties.longitud))
+            ? `${(Number(properties.longitud) / 1000).toLocaleString("es-CO", { maximumFractionDigits: 1 })} km` : "",
+        ].filter(Boolean).map(escapeHtml).join(" · ");
+        const name = escapeHtml(properties.nombre_ciclorruta || properties.corredor || "Tramo de red ciclista");
+        layer.bindPopup(`<strong>${name}</strong>${details ? `<br>${details}` : ""}<br>Estado reportado: ${escapeHtml(properties.estado || "Construida")}`);
+        layer.on({
+          mouseover: (event) => event.target.setStyle({ weight: 7, opacity: 1 }),
+          mouseout: (event) => cityNetworkLayer?.resetStyle(event.target),
+        });
+      },
+    }).addTo(map);
+    if (!activeRoute && cityNetworkLayer.getBounds().isValid()) {
+      map.fitBounds(cityNetworkLayer.getBounds(), { padding: [20, 20], maxZoom: 14 });
+    }
+    cityNetworkStatus.textContent = `${data.features.length} tramos reportados como construidos por la Alcaldía.`;
+  } catch (error) {
+    cityNetworkStatus.textContent = "No se pudo cargar la red oficial ahora. Puedes volver a intentarlo con el interruptor.";
+  }
 }
 
 function formatDistance(meters) {
@@ -309,10 +383,11 @@ async function showDetail(id, showStops) {
     dialogTitle.textContent = route.name;
     dialogMeta.textContent = `${route.distance_km} km · ${route.attribution}`;
     openMap(route);
+    fitRouteButton.hidden = false;
     navigationEl.hidden = !BikeNavigation.isRoutableGeometry(route.geometry);
     setNavigationMessage(navigationEl.hidden
       ? "Este recorrido no tiene una línea continua para guiar."
-      : "El recorrido original se conserva en dorado; la llegada por calles se calcula al activar la guía.");
+      : "El trazado original queda en dorado; activa la guía para calcular el recorrido completo por calles ciclables.");
     if (showStops) {
       stopsEl.innerHTML = "<h3>Paradas cercanas</h3><p>Buscando lugares...</p>";
       const stopsResponse = await fetch(`/api/bike/route/${encodeURIComponent(id)}/stops`);
@@ -330,6 +405,20 @@ async function showDetail(id, showStops) {
     dialogMeta.textContent = error.message;
     stopsEl.replaceChildren();
   }
+}
+
+function showCityNetworkMap() {
+  dialogTitle.textContent = "Red ciclista oficial de Medellín";
+  dialogMeta.textContent = "Tramos reportados como construidos por la Alcaldía. Selecciona una línea para ver sus datos.";
+  stopsEl.replaceChildren();
+  navigationEl.hidden = true;
+  fitRouteButton.hidden = true;
+  cityNetworkToggle.checked = true;
+  try {
+    localStorage.setItem("parchar-bike-official-network", "on");
+  } catch {}
+  dialog.showModal();
+  openMap(null);
 }
 
 tabs.forEach((button) => button.addEventListener("click", () => {
@@ -378,6 +467,19 @@ results.addEventListener("click", (event) => {
   if (button) showDetail(button.dataset.route || button.dataset.stops, Boolean(button.dataset.stops));
 });
 document.querySelector("#bike-close").addEventListener("click", () => dialog.close());
+document.querySelector("#bike-open-city-map").addEventListener("click", showCityNetworkMap);
+cityNetworkToggle.addEventListener("change", () => {
+  try {
+    localStorage.setItem("parchar-bike-official-network", cityNetworkToggle.checked ? "on" : "off");
+  } catch {}
+  if (cityNetworkToggle.checked) {
+    loadCityNetwork();
+  } else {
+    cityNetworkLayer?.remove();
+    cityNetworkLayer = null;
+    cityNetworkStatus.textContent = "Red ciclista de la Alcaldía oculta.";
+  }
+});
 startNavigationButton.addEventListener("click", beginNavigation);
 centerNavigationButton.addEventListener("click", () => {
   if (map && riderMarker) map.panTo(riderMarker.getLatLng());
@@ -393,5 +495,6 @@ dialog.addEventListener("close", () => {
   activeRoute = null;
   routeLayer = null;
   streetRouteLayer = null;
+  cityNetworkLayer = null;
 });
 loadRoutes();

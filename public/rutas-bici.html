@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Rutas en bici | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=118" />
+    <link rel="stylesheet" href="/styles.css?v=120" />
     <link rel="stylesheet" href="/vendor/leaflet/leaflet.css" />
     <script src="/theme.js?v=106" defer></script>
   </head>
@@ -51,6 +51,7 @@
       </section>
 
       <p id="bike-location" class="status-muted">Explorando rutas alrededor de Medellín.</p>
+      <button id="bike-open-city-map" type="button" class="ghost-btn bike-open-city-map">Ver red ciclista oficial en el mapa</button>
       <p id="bike-status" class="status-muted" role="status" aria-live="polite"></p>
       <section id="bike-results" class="bike-results" aria-label="Recorridos disponibles"></section>
       <p class="bike-attribution">Fuentes: Alcaldía de Medellín y colaboradores de OpenStreetMap. Los recorridos pueden cambiar; comprueba el estado de la vía antes de salir.</p>
@@ -61,14 +62,18 @@
         <h2 id="bike-dialog-title">Recorrido</h2>
         <button id="bike-close" type="button" class="icon-ghost" aria-label="Cerrar">✕</button>
       </div>
+      <div class="bike-map-toolbar">
+        <label><input id="bike-city-network-toggle" type="checkbox" checked /> Red ciclista construida de Medellín</label>
+        <span id="bike-city-network-status" role="status" aria-live="polite">Cargando red oficial de la Alcaldía...</span>
+      </div>
       <div id="bike-map" aria-label="Mapa del recorrido"></div>
       <section id="bike-navigation" class="bike-navigation" hidden aria-live="polite">
         <div class="bike-navigation-copy">
           <strong id="bike-navigation-status">Ruta publicada en dorado</strong>
-          <p class="bike-map-legend"><span><i class="bike-legend-published"></i> Trazado publicado</span><span><i class="bike-legend-guidance"></i> Ruta calculada por calles ciclables</span></p>
+          <p class="bike-map-legend"><span><i class="bike-legend-published"></i> Trazado publicado</span><span><i class="bike-legend-guidance"></i> Ruta calculada por calles ciclables</span><span><i class="bike-legend-official"></i> Red construida de la Alcaldía</span></p>
           <p id="bike-navigation-step" hidden></p>
           <p id="bike-navigation-remaining" hidden></p>
-          <small>La ruta completa se calcula con FOSSGIS Routing y datos de OpenStreetMap. Se envían tu ubicación y puntos del recorrido publicado; las consultas quedan registradas. Verifica señales y condiciones de la vía. <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">Privacidad y atribución</a></small>
+          <small>La red oficial indica infraestructura reportada como construida; confirma cierres y condiciones en la vía. La guía completa se calcula con FOSSGIS Routing y OpenStreetMap. <a href="https://www.medellin.gov.co/servidormapas/rest/services/transporte/VM_Movilidad_Humana/MapServer/0" target="_blank" rel="noopener noreferrer">Fuente: Alcaldía de Medellín</a>. Al guiarte se envían tu ubicación y puntos de la ruta al enrutador, que registra las consultas. <a href="https://routing.openstreetmap.de/about.html" target="_blank" rel="noopener noreferrer">Privacidad del enrutador</a></small>
         </div>
         <div class="bike-navigation-controls">
           <button id="bike-start-navigation" type="button" class="primary-btn">Guiarme por toda la ruta</button>
@@ -90,6 +95,6 @@
     <script src="/ads.js?v=116"></script>
     <script src="/update.js?v=93"></script>
     <script src="/bike-navigation.js?v=2"></script>
-    <script src="/bike.js?v=118"></script>
+    <script src="/bike.js?v=120"></script>
   </body>
 </html>
