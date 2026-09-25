@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=117" />
+    <link rel="stylesheet" href="/styles.css?v=118" />
     <script src="/theme.js?v=106" defer></script>
   </head>
   <body class="theme-body home-body">
@@ -147,7 +147,10 @@
       <section class="home-recommendations" aria-labelledby="home-recommendations-title">
         <div class="home-recommendations-head">
           <h2 id="home-recommendations-title">Recomendados para parchar</h2>
-          <a href="/sites.html">Ver todos</a>
+          <nav class="home-recommendation-links" aria-label="Explorar recomendaciones">
+            <a href="/sites.html">Sitios</a>
+            <a href="/places.html">Locales</a>
+          </nav>
         </div>
         <div id="home-recommendation-list" class="home-recommendation-list" aria-live="polite">
           <p class="home-recommendation-state">Cargando recomendaciones...</p>
@@ -192,6 +195,6 @@
     <script src="/brand.js?v=93"></script>
     <script src="/ads.js?v=116"></script>
     <script src="/update.js?v=93"></script>
-    <script src="/app.js?v=115"></script>
+    <script src="/app.js?v=116"></script>
   </body>
 </html>

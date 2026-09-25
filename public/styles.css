@@ -3538,6 +3538,12 @@ html[data-tone-contrast="light"] .tone-control img {
   font-weight: 700;
 }
 
+.home-recommendation-links {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 12px;
+}
+
 .home-recommendation-list {
   display: grid;
   grid-auto-columns: minmax(220px, 270px);
@@ -3580,6 +3586,13 @@ html[data-tone-contrast="light"] .tone-control img {
 
 .home-recommendation-details h3 a {
   text-decoration: none;
+}
+
+.home-recommendation-category {
+  margin: 0 0 6px;
+  color: var(--neon-gold);
+  font-size: 0.76rem;
+  font-weight: 800;
 }
 
 .home-recommendation-location,

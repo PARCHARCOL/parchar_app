@@ -101,15 +101,54 @@ function safeMediaUrl(value) {
   }
 }
 
-function renderHomeRecommendations(sites) {
+function getHomeVideoPoster(mediaUrl) {
+  try {
+    const url = new URL(mediaUrl);
+    if (url.hostname !== "res.cloudinary.com" || !url.pathname.includes("/video/upload/")) {
+      return "";
+    }
+    if (!/\.(mp4|mov|webm)$/i.test(url.pathname)) return "";
+    url.pathname = url.pathname
+      .replace("/video/upload/", "/video/upload/so_1/")
+      .replace(/\.(mp4|mov|webm)$/i, ".jpg");
+    return url.href;
+  } catch {
+    return "";
+  }
+}
+
+function diversifyHomeRecommendations(items, limit = 4) {
+  const uniqueCategories = new Set();
+  const selected = [];
+
+  for (const item of items) {
+    if (selected.length >= limit) break;
+    if (uniqueCategories.has(item.category)) continue;
+    uniqueCategories.add(item.category);
+    selected.push(item);
+  }
+
+  if (selected.length < limit) {
+    for (const item of items) {
+      if (selected.length >= limit) break;
+      if (!selected.includes(item)) selected.push(item);
+    }
+  }
+
+  return selected;
+}
+
+function renderHomeRecommendations(items) {
   if (!homeRecommendationList) return;
   homeRecommendationList.replaceChildren();
 
-  const recentSites = sites
-    .filter((site) => site && site.name)
-    .slice(0, 4);
+  const recommendations = diversifyHomeRecommendations(
+    items
+      .filter((item) => item && item.name)
+      .sort((a, b) => Date.parse(b.createdAt || "") - Date.parse(a.createdAt || ""))
+  );
 
-  if (!recentSites.length) {
+  if (!recommendations.length) {
     const empty = document.createElement("p");
     empty.className = "home-recommendation-state";
     empty.textContent = "Aun no hay sitios activos para recomendar.";
@@ -117,7 +156,7 @@ function renderHomeRecommendations(sites) {
     return;
   }
 
-  for (const site of recentSites) {
+  for (const site of recommendations) {
     const card = document.createElement("article");
     card.className = "home-recommendation-card";
 
@@ -128,6 +167,7 @@ function renderHomeRecommendations(sites) {
       video.controls = true;
       video.preload = "none";
       video.playsInline = true;
+      video.poster = getHomeVideoPoster(mediaUrl);
       video.setAttribute("aria-label", `Video de ${site.name}`);
       card.append(video);
     } else if (mediaUrl && String(site.mediaType || "").startsWith("image/")) {
@@ -140,9 +180,15 @@ function renderHomeRecommendations(sites) {
 
     const details = document.createElement("div");
     details.className = "home-recommendation-details";
+    const category = document.createElement("p");
+    category.className = "home-recommendation-category";
+    category.textContent = site.categoryLabel;
+    details.append(category);
     const title = document.createElement("h3");
     const link = document.createElement("a");
-    link.href = `/sites.html?q=${encodeURIComponent(site.name)}`;
+    link.href = site.kind === "business"
+      ? `/places.html?category=${encodeURIComponent(site.category)}&q=${encodeURIComponent(site.name)}`
+      : `/sites.html?type=${encodeURIComponent(site.category)}&q=${encodeURIComponent(site.name)}`;
     link.textContent = site.name;
     title.append(link);
     details.append(title);
@@ -170,10 +216,55 @@ function renderHomeRecommendations(sites) {
 async function loadHomeRecommendations() {
   if (!homeRecommendationList) return;
   try {
-    const response = await fetch("/api/sites/active", { cache: "no-store" });
-    if (!response.ok) throw new Error("No se pudieron cargar los sitios.");
-    const data = await response.json();
-    renderHomeRecommendations(Array.isArray(data.items) ? data.items : []);
+    const [sitesResult, businessesResult] = await Promise.all([
+      fetch("/api/sites/active", { cache: "no-store" }),
+      fetch("/api/businesses/approved", { cache: "no-store" }),
+    ]);
+    const sitesData = sitesResult.ok ? await sitesResult.json() : { items: [] };
+    const businessesData = businessesResult.ok ? await businessesResult.json() : { items: [] };
+    const businessCategoryLabels = {
+      restaurante: "Restaurante",
+      bar: "Bar",
+      bbb: "BBB",
+      moto: "Moto",
+      carro: "Carro",
+      romantico: "Romantico",
+    };
+    const siteCategoryLabels = {
+      charco: "Charcos",
+      cicloruta: "Ciclorutas",
+      mirador: "Miradores",
+      parada_ciclista: "Paradas para ciclistas",
+      parque: "Parques",
+      pueblo: "Pueblos",
+      burgermaster: "BurgerMaster",
+      naturaleza: "Naturaleza",
+      ruta_pueblo: "Rutas de pueblo",
+      ruta_moto: "Rutas en moto",
+      ruta_bici: "Rutas en bici",
+    };
+    const sites = (Array.isArray(sitesData.items) ? sitesData.items : []).map((site) => ({
+      ...site,
+      kind: "site",
+      category: site.siteType || "sitio",
+      categoryLabel: siteCategoryLabels[site.siteType] || "Sitio",
+    }));
+    const businesses = (Array.isArray(businessesData.items) ? businessesData.items : [])
+      .filter((business) => business.status === "activo" && business.business_name)
+      .map((business) => ({
+        id: `business-${business.id}`,
+        kind: "business",
+        name: business.business_name,
+        category: business.category || "local",
+        categoryLabel: businessCategoryLabels[business.category] || "Local",
+        description: business.description || business.products || "",
+        city: business.city || "",
+        address: business.address || "",
+        mediaPath: business.video_path || "",
+        mediaType: "video/mp4",
+        createdAt: business.created_at || null,
+      }));
+    renderHomeRecommendations([...sites, ...businesses]);
   } catch {
     const message = document.createElement("p");
     message.className = "home-recommendation-state";
