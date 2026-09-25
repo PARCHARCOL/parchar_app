@@ -1400,6 +1400,13 @@ async function parcharBusiness(
       "parchado"
     );
     button.disabled = false;
+    if (!data.already) {
+      window.ParcharTrends?.track(
+        "business",
+        businessId,
+        "parchar"
+      );
+    }
 
     const wantsReview =
       confirm(
@@ -1472,7 +1479,11 @@ function renderCards(
           );
 
         return `
-          <article class="place-card">
+          <article
+            class="place-card"
+            data-trend-entity="business"
+            data-trend-id="${escapeHtml(item.id)}"
+          >
 
             <header>
 
@@ -1537,6 +1548,7 @@ function renderCards(
                     href="${escapeHtml(
                       routeUrl
                     )}"
+                      data-trend-event="route"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -1546,6 +1558,7 @@ function renderCards(
                     href="${escapeHtml(
                       wazeUrl
                     )}"
+                      data-trend-event="route"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
@@ -1655,6 +1668,7 @@ function renderCards(
   hydrateWeatherIcons(
     resultsEl
   );
+  window.ParcharTrends?.observeCards(resultsEl);
 
   resultsEl
     .querySelectorAll(

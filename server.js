@@ -28,10 +28,12 @@ const { Pool } = require(
   "pg"
 );
 const bikeRoutes = require("./bike-routes");
+const { rankTrendingRecommendations } = require("./recommendation-ranking");
 
 const PORT = Number(
   process.env.PORT || 8080
 );
+let lastRecommendationCleanupDay = "";
 const ROOT_DIR = __dirname;
 const PUBLIC_DIR = path.resolve(
   ROOT_DIR,
@@ -5300,6 +5302,19 @@ async function initializeSqliteDatabase() {
     );
   `);
 
+  await pool.exec(`
+    CREATE TABLE IF NOT EXISTS recommendation_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER NOT NULL,
+      event_type TEXT NOT NULL,
+      visitor_key TEXT NOT NULL,
+      event_day TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(entity_type, entity_id, event_type, visitor_key, event_day)
+    );
+  `);
+
   await ensureSqliteColumn(
     "clients",
     "phone_normalized",
@@ -5385,6 +5400,10 @@ async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE INDEX IF NOT EXISTS idx_open_sites_status_type
     ON open_sites (status, site_type, created_at);
+  `);
+  await pool.exec(`
+    CREATE INDEX IF NOT EXISTS idx_recommendation_events_day_entity
+    ON recommendation_events (event_day, entity_type, entity_id, event_type);
   `);
   await ensureSqliteColumn(
     "ad_banner_settings",
@@ -5721,6 +5740,19 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS recommendation_events (
+      id SERIAL PRIMARY KEY,
+      entity_type TEXT NOT NULL,
+      entity_id INTEGER NOT NULL,
+      event_type TEXT NOT NULL,
+      visitor_key TEXT NOT NULL,
+      event_day DATE NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(entity_type, entity_id, event_type, visitor_key, event_day)
+    );
+  `);
+
+  await pool.query(`
     ALTER TABLE clients
     ADD COLUMN IF NOT EXISTS phone_normalized TEXT;
   `);
@@ -5804,6 +5836,11 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS idx_open_sites_status_type
     ON open_sites (status, site_type, created_at);
+  `);
+
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_recommendation_events_day_entity
+    ON recommendation_events (event_day, entity_type, entity_id, event_type);
   `);
 
   await pool.query(`
@@ -10979,6 +11016,123 @@ const server =
             return;
           }
           sendJson(res, 404, { error: "Ruta no encontrada." });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/recommendations/track" &&
+          req.method === "POST"
+        ) {
+          const body = await parseJsonBody(req);
+          const entityType = cleanText(body.entityType).toLowerCase();
+          const entityId = Number(body.entityId);
+          const eventType = cleanText(body.eventType).toLowerCase();
+          const visitorKey = cleanText(body.visitorKey).toLowerCase();
+          const allowedEntityTypes = new Set(["site", "business"]);
+          const allowedEventTypes = new Set([
+            "view",
+            "route",
+            "call",
+            "save",
+            "open",
+            "parchar",
+          ]);
+
+          if (
+            !allowedEntityTypes.has(entityType) ||
+            !Number.isSafeInteger(entityId) ||
+            entityId <= 0 ||
+            !allowedEventTypes.has(eventType) ||
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(visitorKey) ||
+            (["call", "parchar"].includes(eventType) && entityType !== "business")
+          ) {
+            sendJson(res, 400, { error: "Evento de recomendacion invalido." });
+            return;
+          }
+
+          const activeEntity = entityType === "site"
+            ? await pool.query(
+                "SELECT id FROM open_sites WHERE id = $1 AND status = 'activo' LIMIT 1",
+                [entityId]
+              )
+            : await pool.query(
+                "SELECT id FROM businesses WHERE id = $1 AND status = 'activo' LIMIT 1",
+                [entityId]
+              );
+
+          if (!activeEntity.rows.length) {
+            sendJson(res, 404, { error: "El elemento no esta activo." });
+            return;
+          }
+
+          const eventDay = new Date().toISOString().slice(0, 10);
+          await pool.query(
+            `
+            INSERT INTO recommendation_events (
+              entity_type, entity_id, event_type, visitor_key, event_day
+            )
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (entity_type, entity_id, event_type, visitor_key, event_day) DO NOTHING
+            `,
+            [entityType, entityId, eventType, visitorKey, eventDay]
+          );
+
+          sendJson(res, 202, { ok: true });
+          return;
+        }
+
+        if (
+          pathname ===
+            "/api/recommendations/trending" &&
+          req.method === "GET"
+        ) {
+          const now = new Date();
+          const today = now.toISOString().slice(0, 10);
+          if (lastRecommendationCleanupDay !== today) {
+            const retentionDate = new Date(now);
+            retentionDate.setUTCDate(retentionDate.getUTCDate() - 90);
+            await pool.query(
+              "DELETE FROM recommendation_events WHERE event_day < $1",
+              [retentionDate.toISOString().slice(0, 10)]
+            );
+            lastRecommendationCleanupDay = today;
+          }
+
+          const cutoff = new Date(now);
+          cutoff.setUTCDate(cutoff.getUTCDate() - 29);
+          const [siteResult, businessResult, eventResult] = await Promise.all([
+            pool.query(`
+              SELECT *
+              FROM open_sites
+              WHERE status = 'activo'
+              ORDER BY created_at DESC
+            `),
+            pool.query(`
+              SELECT id, business_name, category, description, address, city, video_path, status, created_at
+              FROM businesses
+              WHERE status = 'activo'
+              ORDER BY created_at DESC
+              LIMIT 500
+            `),
+            pool.query(`
+              SELECT entity_type, entity_id, event_type, COUNT(*) AS event_count
+              FROM recommendation_events
+              WHERE event_day >= $1
+              GROUP BY entity_type, entity_id, event_type
+            `, [cutoff.toISOString().slice(0, 10)]),
+          ]);
+          const burgerMasterPromotion = getBurgerMasterPromotionStatus();
+          const sites = siteResult.rows.filter(
+            (site) => burgerMasterPromotion.active || site.site_type !== "burgermaster"
+          );
+          const result = rankTrendingRecommendations(
+            sites,
+            businessResult.rows,
+            eventResult.rows
+          );
+
+          sendJson(res, 200, result);
           return;
         }
 

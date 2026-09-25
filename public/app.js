@@ -7,6 +7,7 @@ const alertsPanel = document.querySelector("#home-alerts-panel");
 const searchForm = document.querySelector("#home-search-form");
 const searchInput = document.querySelector("#home-search");
 const homeRecommendationList = document.querySelector("#home-recommendation-list");
+const homeRecommendationsTitle = document.querySelector("#home-recommendations-title");
 const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
 const burgerMasterPromotionElements = document.querySelectorAll(
   '[data-promotion="burgermaster"]'
@@ -159,6 +160,8 @@ function renderHomeRecommendations(items) {
   for (const site of recommendations) {
     const card = document.createElement("article");
     card.className = "home-recommendation-card";
+    card.dataset.trendEntity = site.entityType;
+    card.dataset.trendId = String(site.id);
 
     const mediaUrl = safeMediaUrl(site.mediaPath);
     if (mediaUrl && String(site.mediaType || "").startsWith("video/")) {
@@ -186,7 +189,8 @@ function renderHomeRecommendations(items) {
     details.append(category);
     const title = document.createElement("h3");
     const link = document.createElement("a");
-    link.href = site.kind === "business"
+    link.dataset.trendEvent = "open";
+    link.href = site.entityType === "business"
       ? `/places.html?category=${encodeURIComponent(site.category)}&q=${encodeURIComponent(site.name)}`
       : `/sites.html?type=${encodeURIComponent(site.category)}&q=${encodeURIComponent(site.name)}`;
     link.textContent = site.name;
@@ -216,21 +220,10 @@ function renderHomeRecommendations(items) {
 async function loadHomeRecommendations() {
   if (!homeRecommendationList) return;
   try {
-    const [sitesResult, businessesResult] = await Promise.all([
-      fetch("/api/sites/active", { cache: "no-store" }),
-      fetch("/api/businesses/approved", { cache: "no-store" }),
-    ]);
-    const sitesData = sitesResult.ok ? await sitesResult.json() : { items: [] };
-    const businessesData = businessesResult.ok ? await businessesResult.json() : { items: [] };
-    const businessCategoryLabels = {
-      restaurante: "Restaurante",
-      bar: "Bar",
-      bbb: "BBB",
-      moto: "Moto",
-      carro: "Carro",
-      romantico: "Romantico",
-    };
-    const siteCategoryLabels = {
+    const response = await fetch("/api/recommendations/trending", { cache: "no-store" });
+    if (!response.ok) throw new Error("No se pudieron cargar las recomendaciones.");
+    const data = await response.json();
+    const categoryLabels = {
       charco: "Charcos",
       cicloruta: "Ciclorutas",
       mirador: "Miradores",
@@ -242,33 +235,27 @@ async function loadHomeRecommendations() {
       ruta_pueblo: "Rutas de pueblo",
       ruta_moto: "Rutas en moto",
       ruta_bici: "Rutas en bici",
+      restaurante: "Restaurante",
+      bar: "Bar",
+      bbb: "BBB",
+      moto: "Moto",
+      carro: "Carro",
+      romantico: "Romantico",
     };
-    const sites = (Array.isArray(sitesData.items) ? sitesData.items : []).map((site) => ({
+    const items = (Array.isArray(data.items) ? data.items : []).map((site) => ({
       ...site,
-      kind: "site",
-      category: site.siteType || "sitio",
-      categoryLabel: siteCategoryLabels[site.siteType] || "Sitio",
+      categoryLabel: categoryLabels[site.category] || "Sitio",
     }));
-    const businesses = (Array.isArray(businessesData.items) ? businessesData.items : [])
-      .filter((business) => business.status === "activo" && business.business_name)
-      .map((business) => ({
-        id: `business-${business.id}`,
-        kind: "business",
-        name: business.business_name,
-        category: business.category || "local",
-        categoryLabel: businessCategoryLabels[business.category] || "Local",
-        description: business.description || business.products || "",
-        city: business.city || "",
-        address: business.address || "",
-        mediaPath: business.video_path || "",
-        mediaType: "video/mp4",
-        createdAt: business.created_at || null,
-      }));
-    renderHomeRecommendations([...sites, ...businesses]);
+    if (homeRecommendationsTitle) {
+      homeRecommendationsTitle.textContent = data.hasTrendSignals
+        ? "Tendencias para parchar"
+        : "Novedades para parchar";
+    }
+    renderHomeRecommendations(items);
   } catch {
     const message = document.createElement("p");
     message.className = "home-recommendation-state";
-    message.textContent = "No fue posible cargar recomendaciones. Usa “Ver todos” para consultar los sitios.";
+    message.textContent = "No fue posible calcular tendencias en este momento.";
     homeRecommendationList.replaceChildren(message);
   }
 }

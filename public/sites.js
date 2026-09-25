@@ -1231,7 +1231,11 @@ function renderSiteCard(site) {
   const distanceKm = calculateDistanceKm(userCoords, site);
 
   return `
-    <article class="place-card site-card">
+    <article
+      class="place-card site-card"
+      data-trend-entity="site"
+      data-trend-id="${escapeHtml(site.id)}"
+    >
       ${renderSiteMedia(site)}
 
       <header>
@@ -1270,10 +1274,10 @@ function renderSiteCard(site) {
         <details class="route-menu">
           <summary class="route-btn">Ir</summary>
           <div class="route-options">
-            <a href="${escapeHtml(googleUrl)}" target="_blank" rel="noopener noreferrer">
+            <a href="${escapeHtml(googleUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">
               Google Maps
             </a>
-            <a href="${escapeHtml(wazeUrl)}" target="_blank" rel="noopener noreferrer">
+            <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">
               Waze
             </a>
           </div>
@@ -1374,6 +1378,7 @@ function renderSites() {
   hydrateWeatherIcons(
     siteResultsEl
   );
+  window.ParcharTrends?.observeCards(siteResultsEl);
 }
 
 async function loadSites() {
