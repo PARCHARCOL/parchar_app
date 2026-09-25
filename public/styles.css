@@ -3474,3 +3474,166 @@ html[data-tone-contrast="light"] .tone-control img {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Home layout trial: stable category tiles and a real, lightweight recommendation rail. */
+.home-body .button-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 136px);
+  grid-template-rows: repeat(2, minmax(146px, auto));
+  grid-auto-flow: row;
+  gap: 6px 4px;
+  width: 100%;
+  max-width: 100%;
+  margin: 6px 0 12px;
+  padding: 4px 6px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.home-body .action-btn {
+  width: 136px;
+  min-width: 136px;
+  min-height: 146px;
+  padding: 7px 5px;
+  scroll-snap-align: start;
+}
+
+.home-body .action-icon {
+  width: 96px;
+  height: 96px;
+  max-width: none;
+}
+
+.home-body .action-label {
+  max-width: 126px;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.home-recommendations {
+  width: 100%;
+  min-width: 0;
+  margin: 0 0 8px;
+}
+
+.home-recommendations-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 2px 10px;
+}
+
+.home-recommendations-head h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.home-recommendations-head a {
+  flex: 0 0 auto;
+  color: var(--neon-gold);
+  font-weight: 700;
+}
+
+.home-recommendation-list {
+  display: grid;
+  grid-auto-columns: minmax(220px, 270px);
+  grid-auto-flow: column;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 2px 2px 10px;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+}
+
+.home-recommendation-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-soft);
+  border-radius: 8px;
+  background: rgba(12, 4, 28, 0.42);
+  scroll-snap-align: start;
+}
+
+.home-recommendation-card > img,
+.home-recommendation-card > video {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: #10071d;
+}
+
+.home-recommendation-details {
+  padding: 10px 11px 12px;
+}
+
+.home-recommendation-details h3 {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.home-recommendation-details h3 a {
+  text-decoration: none;
+}
+
+.home-recommendation-location,
+.home-recommendation-description,
+.home-recommendation-state {
+  margin: 6px 0 0;
+  color: var(--text-soft);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.home-recommendation-description {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.home-recommendation-state {
+  grid-column: 1 / -1;
+  padding: 8px 2px;
+}
+
+@media (min-width: 1100px) {
+  .home-body .app-shell {
+    grid-template-areas:
+      "top"
+      "search"
+      "tone"
+      "buttons"
+      "recommend"
+      "install"
+      "guide"
+      "status";
+  }
+
+  .home-body .button-grid { grid-area: buttons; }
+  .home-body .home-recommendations { grid-area: recommend; }
+  .home-body .install-cta { grid-area: install; }
+  .home-body #install-guide { grid-area: guide; }
+  .home-body .button-grid { justify-self: stretch; }
+}
+
+@media (max-width: 540px) {
+  .home-body .action-btn {
+    min-height: 146px;
+  }
+
+  .home-body .action-icon {
+    width: 96px;
+  }
+
+  .home-recommendation-list {
+    grid-auto-columns: minmax(220px, 82vw);
+  }
+}

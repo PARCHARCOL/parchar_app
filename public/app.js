@@ -6,6 +6,7 @@ const menuPanel = document.querySelector("#home-menu-panel");
 const alertsPanel = document.querySelector("#home-alerts-panel");
 const searchForm = document.querySelector("#home-search-form");
 const searchInput = document.querySelector("#home-search");
+const homeRecommendationList = document.querySelector("#home-recommendation-list");
 const suggestionLinks = document.querySelectorAll("[data-suggestion-route]");
 const burgerMasterPromotionElements = document.querySelectorAll(
   '[data-promotion="burgermaster"]'
@@ -86,6 +87,99 @@ const monthNames = [
 function updateStatus(message) {
   if (!statusEl) return;
   statusEl.textContent = message;
+}
+
+function safeMediaUrl(value) {
+  if (!value) return "";
+  try {
+    const url = new URL(value, window.location.origin);
+    return url.protocol === "https:" || url.origin === window.location.origin
+      ? url.href
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+function renderHomeRecommendations(sites) {
+  if (!homeRecommendationList) return;
+  homeRecommendationList.replaceChildren();
+
+  const recentSites = sites
+    .filter((site) => site && site.name)
+    .slice(0, 4);
+
+  if (!recentSites.length) {
+    const empty = document.createElement("p");
+    empty.className = "home-recommendation-state";
+    empty.textContent = "Aun no hay sitios activos para recomendar.";
+    homeRecommendationList.append(empty);
+    return;
+  }
+
+  for (const site of recentSites) {
+    const card = document.createElement("article");
+    card.className = "home-recommendation-card";
+
+    const mediaUrl = safeMediaUrl(site.mediaPath);
+    if (mediaUrl && String(site.mediaType || "").startsWith("video/")) {
+      const video = document.createElement("video");
+      video.src = mediaUrl;
+      video.controls = true;
+      video.preload = "none";
+      video.playsInline = true;
+      video.setAttribute("aria-label", `Video de ${site.name}`);
+      card.append(video);
+    } else if (mediaUrl && String(site.mediaType || "").startsWith("image/")) {
+      const image = document.createElement("img");
+      image.src = mediaUrl;
+      image.alt = `Foto de ${site.name}`;
+      image.loading = "lazy";
+      card.append(image);
+    }
+
+    const details = document.createElement("div");
+    details.className = "home-recommendation-details";
+    const title = document.createElement("h3");
+    const link = document.createElement("a");
+    link.href = `/sites.html?q=${encodeURIComponent(site.name)}`;
+    link.textContent = site.name;
+    title.append(link);
+    details.append(title);
+
+    const location = [site.city, site.address].filter(Boolean).join(" · ");
+    if (location) {
+      const place = document.createElement("p");
+      place.className = "home-recommendation-location";
+      place.textContent = location;
+      details.append(place);
+    }
+
+    if (site.description) {
+      const description = document.createElement("p");
+      description.className = "home-recommendation-description";
+      description.textContent = site.description;
+      details.append(description);
+    }
+
+    card.append(details);
+    homeRecommendationList.append(card);
+  }
+}
+
+async function loadHomeRecommendations() {
+  if (!homeRecommendationList) return;
+  try {
+    const response = await fetch("/api/sites/active", { cache: "no-store" });
+    if (!response.ok) throw new Error("No se pudieron cargar los sitios.");
+    const data = await response.json();
+    renderHomeRecommendations(Array.isArray(data.items) ? data.items : []);
+  } catch {
+    const message = document.createElement("p");
+    message.className = "home-recommendation-state";
+    message.textContent = "No fue posible cargar recomendaciones. Usa “Ver todos” para consultar los sitios.";
+    homeRecommendationList.replaceChildren(message);
+  }
 }
 
 function isBurgerMasterActive() {
@@ -799,6 +893,7 @@ for (const link of suggestionLinks) {
 setupQuickPanels();
 setupSearch();
 setupInstallFlow();
+loadHomeRecommendations();
 loadBurgerMasterPromotion();
 loadCoverageZones();
 showHomeCoverageHintIfOutside();

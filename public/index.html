@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Parchar" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/api/brand/app-icon" />
-    <link rel="stylesheet" href="/styles.css?v=115" />
+    <link rel="stylesheet" href="/styles.css?v=117" />
     <script src="/theme.js?v=106" defer></script>
   </head>
   <body class="theme-body home-body">
@@ -87,31 +87,6 @@
         <img src="/assets/ui/sun.svg" alt="" />
       </div>
 
-      <section class="install-cta" aria-label="Descargar app Parchar">
-        <div>
-          <strong>Descargar app</strong>
-          <p id="install-hint">Instala Parchar en tu celular para abrirla como app.</p>
-        </div>
-        <div class="install-actions">
-          <button id="install-app-btn" type="button" class="submit-btn">
-            Descargar app
-          </button>
-          <button id="install-help-btn" type="button" class="ghost-btn">
-            Como instalar
-          </button>
-        </div>
-      </section>
-
-      <section id="install-guide" class="install-guide" hidden>
-        <h3>Instalar Parchar</h3>
-        <p id="install-guide-text">
-          Android: abre este link en Chrome y toca Descargar app. iPhone: abre en Safari, toca Compartir y luego "Agregar a pantalla de inicio".
-        </p>
-        <button id="install-guide-close" type="button" class="ghost-btn">
-          Cerrar
-        </button>
-      </section>
-
       <section class="button-grid">
         <button class="action-btn btn-restaurante" data-route="restaurante">
           <span class="action-icon" aria-hidden="true"></span>
@@ -169,6 +144,41 @@
         </a>
       </section>
 
+      <section class="home-recommendations" aria-labelledby="home-recommendations-title">
+        <div class="home-recommendations-head">
+          <h2 id="home-recommendations-title">Recomendados para parchar</h2>
+          <a href="/sites.html">Ver todos</a>
+        </div>
+        <div id="home-recommendation-list" class="home-recommendation-list" aria-live="polite">
+          <p class="home-recommendation-state">Cargando recomendaciones...</p>
+        </div>
+      </section>
+
+      <section class="install-cta" aria-label="Descargar app Parchar">
+        <div>
+          <strong>Descargar app</strong>
+          <p id="install-hint">Instala Parchar en tu celular para abrirla como app.</p>
+        </div>
+        <div class="install-actions">
+          <button id="install-app-btn" type="button" class="submit-btn">
+            Descargar app
+          </button>
+          <button id="install-help-btn" type="button" class="ghost-btn">
+            Como instalar
+          </button>
+        </div>
+      </section>
+
+      <section id="install-guide" class="install-guide" hidden>
+        <h3>Instalar Parchar</h3>
+        <p id="install-guide-text">
+          Android: abre este link en Chrome y toca Descargar app. iPhone: abre en Safari, toca Compartir y luego "Agregar a pantalla de inicio".
+        </p>
+        <button id="install-guide-close" type="button" class="ghost-btn">
+          Cerrar
+        </button>
+      </section>
+
       <p id="location-status" class="status-muted"></p>
 
     </main>
@@ -182,6 +192,6 @@
     <script src="/brand.js?v=93"></script>
     <script src="/ads.js?v=116"></script>
     <script src="/update.js?v=93"></script>
-    <script src="/app.js?v=113"></script>
+    <script src="/app.js?v=115"></script>
   </body>
 </html>
