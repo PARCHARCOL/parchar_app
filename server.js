@@ -947,7 +947,22 @@ async function getSeasonalDesignSettings() {
     }
   }
 
-  return normalizeSeasonalSettings(settings);
+  const normalized = normalizeSeasonalSettings(settings);
+  const colombiaMonth = Number(getColombiaDateOnly().slice(5, 7));
+  const monthSettings = normalized.monthThemes[String(colombiaMonth)];
+
+  // Upgrade a matching manual selection to the monthly calendar without
+  // overriding a genuinely different administrator-selected theme.
+  if (
+    normalized.mode === "manual" &&
+    monthSettings?.enabled &&
+    normalized.manualThemeId === monthSettings.themeId
+  ) {
+    normalized.mode = "automatic";
+    await saveSeasonalDesignSettings(normalized);
+  }
+
+  return normalized;
 }
 
 async function saveSeasonalDesignSettings(settings) {
