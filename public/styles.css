@@ -4180,18 +4180,20 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 .home-body .button-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: none;
-  grid-auto-rows: 248px;
+  grid-template-columns: repeat(6, 176px);
+  grid-template-rows: repeat(2, 248px);
   grid-auto-flow: row;
-  overflow-x: visible;
-  overflow-y: visible;
-  scroll-snap-type: none;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .home-body .action-btn {
-  width: 100%;
-  min-width: 0;
+  width: 176px;
+  min-width: 176px;
   height: 248px;
   min-height: 248px;
   box-sizing: border-box;
@@ -4201,6 +4203,7 @@ html[data-tone-contrast="light"] .tone-control img {
   justify-items: center;
   gap: 6px;
   padding: 6px;
+  scroll-snap-align: start;
 }
 
 .home-body .action-icon {
@@ -4210,7 +4213,7 @@ html[data-tone-contrast="light"] .tone-control img {
 
 .home-body .action-label {
   width: 100%;
-  max-width: none;
+  max-width: 164px;
   min-height: 0;
   display: flex;
   align-items: center;
@@ -4218,16 +4221,4 @@ html[data-tone-contrast="light"] .tone-control img {
   text-wrap: balance;
   overflow-wrap: anywhere;
   line-height: 1.15;
-}
-
-@media (min-width: 700px) {
-  .home-body .button-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
-@media (min-width: 1100px) {
-  .home-body .button-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
 }
