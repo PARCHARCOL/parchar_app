@@ -4180,32 +4180,37 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 .home-body .button-grid {
-  grid-template-columns: repeat(6, 136px);
-  grid-template-rows: repeat(2, 240px);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-rows: 248px;
+  grid-auto-flow: row;
+  overflow-x: visible;
+  overflow-y: visible;
+  scroll-snap-type: none;
 }
 
 .home-body .action-btn {
-  width: 136px;
-  min-width: 136px;
-  height: 240px;
-  min-height: 240px;
+  width: 100%;
+  min-width: 0;
+  height: 248px;
+  min-height: 248px;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: 96px 128px;
+  grid-template-rows: 120px 116px;
   align-content: start;
   justify-items: center;
   gap: 6px;
-  padding: 5px;
+  padding: 6px;
 }
 
 .home-body .action-icon {
-  width: 96px;
-  height: 96px;
+  width: 120px;
+  height: 120px;
 }
 
 .home-body .action-label {
   width: 100%;
-  max-width: 126px;
+  max-width: none;
   min-height: 0;
   display: flex;
   align-items: center;
@@ -4213,4 +4218,16 @@ html[data-tone-contrast="light"] .tone-control img {
   text-wrap: balance;
   overflow-wrap: anywhere;
   line-height: 1.15;
+}
+
+@media (min-width: 700px) {
+  .home-body .button-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  .home-body .button-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
