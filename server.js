@@ -11221,7 +11221,7 @@ const server =
               ORDER BY created_at DESC
             `),
             pool.query(`
-              SELECT id, business_name, category, description, address, city, video_path, status, created_at
+              SELECT id, business_name, category, description, address, city, latitude, longitude, video_path, status, created_at
               FROM businesses
               WHERE status = 'activo'
               ORDER BY created_at DESC

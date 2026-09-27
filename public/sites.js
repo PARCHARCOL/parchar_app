@@ -657,7 +657,7 @@ function applyWeatherIcon(element, weather) {
     weather.label ||
     "clima actual";
   element.textContent =
-    weather.icon;
+    `${weather.icon} ${label}`;
   element.classList.remove(
     "is-loading"
   );
@@ -1243,46 +1243,27 @@ function renderSiteCard(site) {
         <h3>${escapeHtml(site.name)}</h3>
       </header>
 
-      <p>
-        <strong>Zona:</strong>
-        ${escapeHtml(site.city)}
-      </p>
-
-      ${
-        publicAddress
-          ? `
-            <p>
-              <strong>Referencia:</strong>
-              ${escapeHtml(publicAddress)}
-            </p>
-          `
-          : ""
-      }
-
-      <p>${escapeHtml(publicDescription)}</p>
-
-      ${tags ? `<div class="site-tags">${tags}</div>` : ""}
-
-      <div class="distance-line site-route-line">
-        <span>
-          <strong>Distancia:</strong>
-          ${escapeHtml(estimateTravelText(distanceKm))}
-        </span>
-
+      <div class="site-highlight">
+        <span class="site-area">${escapeHtml(site.city || "Ubicacion por confirmar")}</span>
         ${renderWeatherIcon(site)}
-
         <details class="route-menu">
           <summary class="route-btn">Ir</summary>
           <div class="route-options">
-            <a href="${escapeHtml(googleUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">
-              Google Maps
-            </a>
-            <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">
-              Waze
-            </a>
+            <a href="${escapeHtml(googleUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Google Maps</a>
+            <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Waze</a>
           </div>
         </details>
       </div>
+      <p class="site-distance"><strong>Distancia:</strong> ${escapeHtml(estimateTravelText(distanceKm))}</p>
+
+      <details class="place-more">
+        <summary>Mas informacion</summary>
+        <div class="place-more-content">
+          ${publicAddress ? `<p><strong>Referencia:</strong> ${escapeHtml(publicAddress)}</p>` : ""}
+          <p>${escapeHtml(publicDescription)}</p>
+          ${tags ? `<div class="site-tags">${tags}</div>` : ""}
+        </div>
+      </details>
     </article>
   `;
 }

@@ -79,7 +79,7 @@ try {
 }
 applyBackgroundTone(savedTone);
 
-let savedReadingScale = 100;
+let savedReadingScale = 115;
 try {
   const storedScale = Number(localStorage.getItem(readingScaleStorageKey));
   if (Number.isFinite(storedScale) && storedScale >= 100 && storedScale <= 150) {
@@ -97,26 +97,37 @@ function applyReadingScale(value) {
   const scale = clampReadingScale(value);
   document.documentElement.style.fontSize = `${scale}%`;
   document.documentElement.dataset.uiExpanded = String(scale >= 120);
-  const slider = document.querySelector("#reading-scale-input");
   const output = document.querySelector("#reading-scale-value");
-  if (slider && slider.value !== String(scale)) slider.value = String(scale);
-  if (output) output.value = `${scale}%`;
+  if (output) output.textContent = `${scale}%`;
   return scale;
 }
 
 applyReadingScale(savedReadingScale);
 
 document.addEventListener("DOMContentLoaded", () => {
-  const scaleSlider = document.querySelector("#reading-scale-input");
-  scaleSlider?.addEventListener("input", () => {
-    const scale = clampReadingScale(scaleSlider.value);
-    applyReadingScale(scale);
-    try {
-      localStorage.setItem(readingScaleStorageKey, String(scale));
-    } catch {
-      // Keep the selected size until this page is closed.
-    }
-  });
+  const topStrip = document.querySelector(".top-strip");
+  if (topStrip && !document.querySelector(".reading-accessibility")) {
+    const controls = document.createElement("section");
+    controls.className = "reading-accessibility";
+    controls.setAttribute("aria-label", "Ajustar el tamaño del texto");
+    controls.innerHTML = `
+      <span class="reading-accessibility-label">Tamaño del texto</span>
+      <button type="button" data-reading-adjust="-10" aria-label="Disminuir el tamaño del texto">A−</button>
+      <output id="reading-scale-value" aria-live="polite">${savedReadingScale}%</output>
+      <button type="button" data-reading-adjust="10" aria-label="Aumentar el tamaño del texto">A+</button>
+    `;
+    topStrip.insertAdjacentElement("afterend", controls);
+    controls.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-reading-adjust]");
+      if (!button) return;
+      const scale = applyReadingScale(Number(document.documentElement.style.fontSize.replace("%", "")) + Number(button.dataset.readingAdjust));
+      try {
+        localStorage.setItem(readingScaleStorageKey, String(scale));
+      } catch {
+        // Keep the selected size until this page is closed.
+      }
+    });
+  }
 
   const slider = document.querySelector("#background-tone");
   if (!slider) return;

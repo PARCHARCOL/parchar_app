@@ -139,6 +139,26 @@ function diversifyHomeRecommendations(items, limit = 4) {
   return selected;
 }
 
+async function loadHomeRecommendationWeather(element, site) {
+  const latitude = Number(site.latitude);
+  const longitude = Number(site.longitude);
+  if (site.latitude == null || site.longitude == null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+    element.textContent = "Clima no disponible";
+    return;
+  }
+
+  try {
+    const params = new URLSearchParams({ lat: String(latitude), lng: String(longitude) });
+    const response = await fetch(`/api/weather/current?${params}`, { cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok || !data.weather) throw new Error("Clima no disponible");
+    element.textContent = `${data.weather.icon} ${data.weather.label}`;
+    element.setAttribute("aria-label", `Clima: ${data.weather.label}`);
+  } catch {
+    element.textContent = "Clima no disponible";
+  }
+}
+
 function renderHomeRecommendations(items) {
   if (!homeRecommendationList) return;
   homeRecommendationList.replaceChildren();
@@ -197,20 +217,57 @@ function renderHomeRecommendations(items) {
     title.append(link);
     details.append(title);
 
-    const location = [site.city, site.address].filter(Boolean).join(" · ");
-    if (location) {
+    const primary = document.createElement("div");
+    primary.className = "home-recommendation-primary";
+    const location = document.createElement("span");
+    location.className = "home-recommendation-location";
+    location.textContent = site.city || "Ubicacion por confirmar";
+    primary.append(location);
+
+    const weather = document.createElement("span");
+    weather.className = "home-recommendation-weather";
+    weather.textContent = "Consultando clima...";
+    primary.append(weather);
+    loadHomeRecommendationWeather(weather, site);
+
+    const hasCoordinates = site.latitude != null && site.longitude != null
+      && Number.isFinite(Number(site.latitude)) && Number.isFinite(Number(site.longitude));
+    const destination = hasCoordinates
+      ? `${site.latitude},${site.longitude}`
+      : [site.address, site.city].filter(Boolean).join(", ");
+    const route = document.createElement("a");
+    route.className = "home-recommendation-route";
+    route.href = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
+    route.target = "_blank";
+    route.rel = "noopener noreferrer";
+    route.dataset.trendEvent = "route";
+    route.textContent = "Ir";
+    route.setAttribute("aria-label", `Ir a ${site.name}`);
+    primary.append(route);
+    details.append(primary);
+
+    const more = document.createElement("details");
+    more.className = "home-recommendation-more";
+    const summary = document.createElement("summary");
+    summary.textContent = "Mas informacion";
+    more.append(summary);
+    const moreContent = document.createElement("div");
+    moreContent.className = "home-recommendation-more-content";
+    const address = [site.address, site.city].filter(Boolean).join(" · ");
+    if (address) {
       const place = document.createElement("p");
       place.className = "home-recommendation-location";
-      place.textContent = location;
-      details.append(place);
+      place.textContent = address;
+      moreContent.append(place);
     }
-
     if (site.description) {
       const description = document.createElement("p");
       description.className = "home-recommendation-description";
       description.textContent = site.description;
-      details.append(description);
+      moreContent.append(description);
     }
+    more.append(moreContent);
+    details.append(more);
 
     card.append(details);
     homeRecommendationList.append(card);

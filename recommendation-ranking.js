@@ -44,6 +44,8 @@ function rankTrendingRecommendations(sites, businesses, events, limit = 4) {
         city: site.city || "",
         mediaPath: site.media_path || "",
         mediaType: site.media_type || "",
+        latitude: site.latitude,
+        longitude: site.longitude,
         createdAt: site.created_at || null,
       })),
     ...businesses
@@ -58,6 +60,8 @@ function rankTrendingRecommendations(sites, businesses, events, limit = 4) {
         city: business.city || "",
         mediaPath: business.video_path || "",
         mediaType: business.video_path ? "video/mp4" : "",
+        latitude: business.latitude,
+        longitude: business.longitude,
         createdAt: business.created_at || null,
       })),
   ]

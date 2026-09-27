@@ -779,7 +779,7 @@ function applyWeatherIcon(element, weather) {
     weather.label ||
     "clima actual";
   element.textContent =
-    weather.icon;
+    `${weather.icon} ${label}`;
   element.classList.remove(
     "is-loading"
   );
@@ -1480,10 +1480,25 @@ function renderCards(
 
         return `
           <article
-            class="place-card"
+            class="place-card business-card"
             data-trend-entity="business"
             data-trend-id="${escapeHtml(item.id)}"
           >
+
+            ${
+              item.video_path
+                ? `
+                  <video
+                    controls
+                    preload="metadata"
+                    playsinline
+                    class="place-video"
+                    aria-label="Video de ${escapeHtml(item.business_name)}"
+                    src="${escapeHtml(item.video_path)}"
+                  ></video>
+                `
+                : `<div class="video-missing">Video del local no disponible</div>`
+            }
 
             <header>
 
@@ -1504,22 +1519,12 @@ function renderCards(
 
             </header>
 
-            <p>
-              <strong>Ubicacion:</strong>
-
-              ${escapeHtml(
-                item.address
-              )},
-
-              ${escapeHtml(
-                item.city
-              )}
-            </p>
+            <p class="place-area">${escapeHtml(item.city || "Ubicacion por confirmar")}</p>
 
             <div class="distance-line">
-              <span>
-                <strong>Distancia:</strong>
-
+              <span class="place-distance">
+                <strong>Distancia</strong>
+                <span>
                 ${
                   item.distanceKm !== null &&
                   item.distanceKm !==
@@ -1533,6 +1538,7 @@ function renderCards(
                       ? "No disponible para este local"
                       : "Permite ubicacion para calcularla"
                 }
+                </span>
               </span>
 
               ${renderWeatherIcon(
@@ -1568,40 +1574,13 @@ function renderCards(
               </details>
             </div>
 
-            <p>
-              <strong>Oferta:</strong>
-
-              ${escapeHtml(
-                item.products
-              )}
-            </p>
-
-            <p>
-              ${escapeHtml(
-                item.description
-              )}
-            </p>
-
-            ${
-              item.video_path
-                ? `
-              <video
-                controls
-                preload="metadata"
-                class="place-video"
-                src="${escapeHtml(
-                  item.video_path
-                )}"
-              ></video>
-            `
-                : `
-              <div class="video-missing">
-                Video no disponible
-              </div>
-            `
-            }
-
-            <div class="parchar-panel">
+            <details class="place-more">
+              <summary>Mas informacion</summary>
+              <div class="place-more-content">
+                <p><strong>Direccion:</strong> ${escapeHtml(item.address || "No registrada")}, ${escapeHtml(item.city || "")}</p>
+                <p><strong>Oferta:</strong> ${escapeHtml(item.products || "Consulta directamente con el local")}</p>
+                <p>${escapeHtml(item.description || "")}</p>
+                <div class="parchar-panel">
               <button
                 type="button"
                 class="parchar-btn"
@@ -1619,7 +1598,7 @@ function renderCards(
               <span>
                 Cuenta como apoyo al local. La resena en video dura 15 dias.
               </span>
-            </div>
+                </div>
 
             ${
               item.active_reviews
@@ -1643,9 +1622,8 @@ function renderCards(
               </div>
             `
                 : ""
-            }
-
-            <p class="tiny">
+                }
+                <p class="tiny">
 
               ❤️ Contacto:
 
@@ -1657,7 +1635,9 @@ function renderCards(
                 item.owner_name
               )})
 
-            </p>
+                </p>
+              </div>
+            </details>
 
           </article>
         `;
