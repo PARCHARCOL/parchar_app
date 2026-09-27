@@ -96,7 +96,6 @@ try {
 function applyReadingScale(value) {
   const scale = clampReadingScale(value);
   document.documentElement.style.fontSize = `${scale}%`;
-  document.documentElement.dataset.uiExpanded = String(scale >= 120);
   const output = document.querySelector("#reading-scale-value");
   if (output) output.textContent = `${scale}%`;
   return scale;
