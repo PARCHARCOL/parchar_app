@@ -1500,17 +1500,7 @@ function renderCards(
                 : `<div class="video-missing">Video del local no disponible</div>`
             }
 
-            <header>
-
-              <p class="chip">
-                ${escapeHtml(
-                  categoryChip[
-                    item.category
-                  ] ||
-                    item.category
-                )}
-              </p>
-
+            <header class="place-card-heading">
               <h3>
                 ${escapeHtml(
                   item.business_name
@@ -1519,64 +1509,33 @@ function renderCards(
 
             </header>
 
-            <p class="place-area">${escapeHtml(item.city || "Ubicacion por confirmar")}</p>
-
-            <div class="distance-line">
-              <span class="place-distance">
-                <strong>Distancia</strong>
-                <span>
-                ${
-                  item.distanceKm !== null &&
-                  item.distanceKm !==
-                    undefined
-                    ? `A ${escapeHtml(
-                        formatDistance(
-                          item.distanceKm
-                        )
-                      )} de ti`
-                    : hasUserCoords
-                      ? "No disponible para este local"
-                      : "Permite ubicacion para calcularla"
-                }
-                </span>
-              </span>
-
-              ${renderWeatherIcon(
-                item
-              )}
-
-              <details class="route-menu">
-                <summary class="route-btn">
-                  Ir
-                </summary>
-                <div class="route-options">
-                  <a
-                    href="${escapeHtml(
-                      routeUrl
-                    )}"
-                      data-trend-event="route"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Google Maps
-                  </a>
-                  <a
-                    href="${escapeHtml(
-                      wazeUrl
-                    )}"
-                      data-trend-event="route"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Waze
-                  </a>
-                </div>
-              </details>
-            </div>
-
             <details class="place-more">
-              <summary>Mas informacion</summary>
+              <summary>Ver informacion</summary>
               <div class="place-more-content">
+                <p class="chip">${escapeHtml(categoryChip[item.category] || item.category)}</p>
+                <p class="place-area">${escapeHtml(item.city || "Ubicacion por confirmar")}</p>
+                <div class="distance-line">
+                  <span class="place-distance">
+                    <strong>Distancia</strong>
+                    <span>
+                    ${
+                      item.distanceKm !== null && item.distanceKm !== undefined
+                        ? `A ${escapeHtml(formatDistance(item.distanceKm))} de ti`
+                        : hasUserCoords
+                          ? "No disponible para este local"
+                          : "Permite ubicacion para calcularla"
+                    }
+                    </span>
+                  </span>
+                  ${renderWeatherIcon(item)}
+                  <details class="route-menu">
+                    <summary class="route-btn">Ir</summary>
+                    <div class="route-options">
+                      <a href="${escapeHtml(routeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Google Maps</a>
+                      <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Waze</a>
+                    </div>
+                  </details>
+                </div>
                 <p><strong>Direccion:</strong> ${escapeHtml(item.address || "No registrada")}, ${escapeHtml(item.city || "")}</p>
                 <p><strong>Oferta:</strong> ${escapeHtml(item.products || "Consulta directamente con el local")}</p>
                 <p>${escapeHtml(item.description || "")}</p>

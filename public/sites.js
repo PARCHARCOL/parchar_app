@@ -1239,26 +1239,25 @@ function renderSiteCard(site) {
       ${renderSiteMedia(site)}
 
       <header>
-        <p class="chip">${escapeHtml(siteTypeLabels[site.siteType] || site.siteType)}</p>
         <h3>${escapeHtml(site.name)}</h3>
       </header>
 
-      <div class="site-highlight">
-        <span class="site-area">${escapeHtml(site.city || "Ubicacion por confirmar")}</span>
-        ${renderWeatherIcon(site)}
-        <details class="route-menu">
-          <summary class="route-btn">Ir</summary>
-          <div class="route-options">
-            <a href="${escapeHtml(googleUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Google Maps</a>
-            <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Waze</a>
-          </div>
-        </details>
-      </div>
-      <p class="site-distance"><strong>Distancia:</strong> ${escapeHtml(estimateTravelText(distanceKm))}</p>
-
       <details class="place-more">
-        <summary>Mas informacion</summary>
+        <summary>Ver informacion</summary>
         <div class="place-more-content">
+          <p class="chip">${escapeHtml(siteTypeLabels[site.siteType] || site.siteType)}</p>
+          <div class="site-highlight">
+            <span class="site-area">${escapeHtml(site.city || "Ubicacion por confirmar")}</span>
+            ${renderWeatherIcon(site)}
+            <details class="route-menu">
+              <summary class="route-btn">Ir</summary>
+              <div class="route-options">
+                <a href="${escapeHtml(googleUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Google Maps</a>
+                <a href="${escapeHtml(wazeUrl)}" data-trend-event="route" target="_blank" rel="noopener noreferrer">Waze</a>
+              </div>
+            </details>
+          </div>
+          <p class="site-distance"><strong>Distancia:</strong> ${escapeHtml(estimateTravelText(distanceKm))}</p>
           ${publicAddress ? `<p><strong>Referencia:</strong> ${escapeHtml(publicAddress)}</p>` : ""}
           <p>${escapeHtml(publicDescription)}</p>
           ${tags ? `<div class="site-tags">${tags}</div>` : ""}

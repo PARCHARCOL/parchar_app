@@ -206,7 +206,6 @@ function renderHomeRecommendations(items) {
     const category = document.createElement("p");
     category.className = "home-recommendation-category";
     category.textContent = site.categoryLabel;
-    details.append(category);
     const title = document.createElement("h3");
     const link = document.createElement("a");
     link.dataset.trendEvent = "open";
@@ -216,6 +215,15 @@ function renderHomeRecommendations(items) {
     link.textContent = site.name;
     title.append(link);
     details.append(title);
+
+    const more = document.createElement("details");
+    more.className = "home-recommendation-more";
+    const summary = document.createElement("summary");
+    summary.textContent = "Ver informacion";
+    more.append(summary);
+    const moreContent = document.createElement("div");
+    moreContent.className = "home-recommendation-more-content";
+    moreContent.append(category);
 
     const primary = document.createElement("div");
     primary.className = "home-recommendation-primary";
@@ -244,15 +252,8 @@ function renderHomeRecommendations(items) {
     route.textContent = "Ir";
     route.setAttribute("aria-label", `Ir a ${site.name}`);
     primary.append(route);
-    details.append(primary);
+    moreContent.append(primary);
 
-    const more = document.createElement("details");
-    more.className = "home-recommendation-more";
-    const summary = document.createElement("summary");
-    summary.textContent = "Mas informacion";
-    more.append(summary);
-    const moreContent = document.createElement("div");
-    moreContent.className = "home-recommendation-more-content";
     const address = [site.address, site.city].filter(Boolean).join(" · ");
     if (address) {
       const place = document.createElement("p");
