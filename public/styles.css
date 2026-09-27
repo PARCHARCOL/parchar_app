@@ -4181,17 +4181,17 @@ html[data-tone-contrast="light"] .tone-control img {
 
 .home-body .button-grid {
   grid-template-columns: repeat(6, 136px);
-  grid-template-rows: repeat(2, 202px);
+  grid-template-rows: repeat(2, 240px);
 }
 
 .home-body .action-btn {
   width: 136px;
   min-width: 136px;
-  height: 202px;
-  min-height: 202px;
+  height: 240px;
+  min-height: 240px;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: 96px 88px;
+  grid-template-rows: 96px 128px;
   align-content: start;
   justify-items: center;
   gap: 6px;

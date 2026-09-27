@@ -61,7 +61,7 @@ function scheduleSeasonalMonthRefresh() {
 scheduleSeasonalMonthRefresh();
 
 function clampReadingScale(value) {
-  return Math.min(150, Math.max(100, Math.round(Number(value) / 5) * 5));
+  return Math.min(200, Math.max(100, Math.round(Number(value) / 5) * 5));
 }
 
 function applyBackgroundTone(value) {
@@ -82,7 +82,7 @@ applyBackgroundTone(savedTone);
 let savedReadingScale = 115;
 try {
   const storedScale = Number(localStorage.getItem(readingScaleStorageKey));
-  if (Number.isFinite(storedScale) && storedScale >= 100 && storedScale <= 150) {
+  if (Number.isFinite(storedScale) && storedScale >= 100 && storedScale <= 200) {
     savedReadingScale = Math.round(storedScale / 5) * 5;
   } else {
     const previousSize = localStorage.getItem("parchar-reading-size");
@@ -111,9 +111,9 @@ document.addEventListener("DOMContentLoaded", () => {
     controls.setAttribute("aria-label", "Ajustar el tamaño del texto");
     controls.innerHTML = `
       <span class="reading-accessibility-label">Tamaño del texto</span>
-      <button type="button" data-reading-adjust="-10" aria-label="Disminuir el tamaño del texto">A−</button>
+      <button type="button" data-reading-adjust="-20" aria-label="Disminuir el tamaño del texto">A−</button>
       <output id="reading-scale-value" aria-live="polite">${savedReadingScale}%</output>
-      <button type="button" data-reading-adjust="10" aria-label="Aumentar el tamaño del texto">A+</button>
+      <button type="button" data-reading-adjust="20" aria-label="Aumentar el tamaño del texto">A+</button>
     `;
     topStrip.insertAdjacentElement("afterend", controls);
     controls.addEventListener("click", (event) => {
