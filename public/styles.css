@@ -4198,7 +4198,7 @@ html[data-tone-contrast="light"] .tone-control img {
   min-height: 248px;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: 120px 116px;
+  grid-template-rows: 120px auto;
   align-content: start;
   justify-items: center;
   gap: 6px;
@@ -4215,17 +4215,18 @@ html[data-tone-contrast="light"] .tone-control img {
   width: 100%;
   max-width: 164px;
   min-height: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: block;
+  align-self: start;
+  padding-top: 2px;
+  text-align: center;
   text-wrap: balance;
   overflow-wrap: anywhere;
-  line-height: 1.15;
+  line-height: 1.12;
 }
 
 /* Keep controls legible without letting the reading scale resize their frames. */
 .home-body .action-label {
-  font-size: clamp(15px, 1rem, 24px);
+  font-size: clamp(18px, 1.15rem, 25px);
 }
 
 .bottom-nav {
