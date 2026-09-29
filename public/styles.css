@@ -3764,7 +3764,7 @@ html[data-tone-contrast="light"] .tone-control img {
 .home-body .btn-clientes { --icon-x: 95.5%; --icon-y: 95.5%; }
 .home-body .btn-pautar .action-icon,
 .home-body .btn-admin .action-icon {
-  background-size: contain;
+  background-size: 104% 104%;
   background-position: center;
 }
 .home-body .btn-pautar .action-icon {
