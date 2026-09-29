@@ -778,8 +778,7 @@ function applyWeatherIcon(element, weather) {
   const label =
     weather.label ||
     "clima actual";
-  element.textContent =
-    `${weather.icon} ${label}`;
+  element.textContent = weather.icon;
   element.classList.remove(
     "is-loading"
   );
@@ -1516,7 +1515,6 @@ function renderCards(
                 <p class="place-area">${escapeHtml(item.city || "Ubicacion por confirmar")}</p>
                 <div class="distance-line">
                   <span class="place-distance">
-                    <strong>Distancia</strong>
                     <span>
                     ${
                       item.distanceKm !== null && item.distanceKm !== undefined

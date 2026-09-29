@@ -143,7 +143,7 @@ async function loadHomeRecommendationWeather(element, site) {
   const latitude = Number(site.latitude);
   const longitude = Number(site.longitude);
   if (site.latitude == null || site.longitude == null || !Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-    element.textContent = "Clima no disponible";
+    element.hidden = true;
     return;
   }
 
@@ -152,10 +152,10 @@ async function loadHomeRecommendationWeather(element, site) {
     const response = await fetch(`/api/weather/current?${params}`, { cache: "no-store" });
     const data = await response.json();
     if (!response.ok || !data.weather) throw new Error("Clima no disponible");
-    element.textContent = `${data.weather.icon} ${data.weather.label}`;
+    element.textContent = data.weather.icon;
     element.setAttribute("aria-label", `Clima: ${data.weather.label}`);
   } catch {
-    element.textContent = "Clima no disponible";
+    element.hidden = true;
   }
 }
 

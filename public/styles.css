@@ -4222,3 +4222,106 @@ html[data-tone-contrast="light"] .tone-control img {
   overflow-wrap: anywhere;
   line-height: 1.15;
 }
+
+/* Keep controls legible without letting the reading scale resize their frames. */
+.home-body .action-label {
+  font-size: clamp(15px, 1rem, 24px);
+}
+
+.bottom-nav {
+  height: var(--nav-height);
+  box-sizing: border-box;
+}
+
+.nav-item {
+  min-height: 0;
+  height: 100%;
+  grid-template-rows: 24px minmax(0, 1fr);
+  gap: 2px;
+}
+
+.nav-item strong {
+  max-width: 100%;
+  font-size: clamp(11px, 0.68rem, 14px);
+  line-height: 1.05;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.distance-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.distance-line .place-distance {
+  min-width: 0;
+  flex: initial;
+  font-size: clamp(14px, 0.96rem, 20px);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.distance-line .weather-icon,
+.site-highlight .weather-icon {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  flex: 0 0 38px;
+  padding: 0;
+  font-size: 21px;
+}
+
+.weather-icon.is-loading {
+  opacity: 0.65;
+}
+
+.weather-icon.is-loading::before {
+  content: "⛅";
+}
+
+.home-recommendation-weather {
+  display: grid;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  place-items: center;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.home-recommendation-route {
+  width: 66px;
+  height: 46px;
+  box-sizing: border-box;
+  font-size: clamp(14px, 1.05rem, 20px);
+}
+
+.place-more > summary,
+.home-recommendation-more > summary {
+  height: 48px;
+  min-height: 48px;
+  box-sizing: border-box;
+  font-size: clamp(15px, 1rem, 21px);
+  line-height: 1;
+}
+
+html.reading-scale-large body.list-body .cards-grid {
+  grid-template-columns: minmax(0, 1fr);
+  max-width: min(100%, 760px);
+  margin-inline: auto;
+}
+
+@media (max-width: 540px) {
+  .distance-line {
+    grid-template-columns: minmax(0, 1fr) 38px auto;
+    align-items: center;
+  }
+
+  .distance-line .place-distance {
+    flex: initial;
+  }
+}
