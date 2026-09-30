@@ -3464,6 +3464,7 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 .home-body .brand-size-row.has-video-logo {
   height: min(15rem, calc(65vw - 2rem));
   min-height: min(15rem, calc(65vw - 2rem));
+  overflow: hidden;
 }
 
 .reading-scale-widget {
@@ -3637,8 +3638,9 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   width: min(100%, 22rem);
   height: 100%;
   object-fit: cover;
-  object-position: center 30%;
+  object-position: center top;
   justify-self: center;
+  transform: translateY(-5rem);
   margin-top: 0;
   border: 0;
   background: transparent;
