@@ -89,6 +89,15 @@ function renderBrandLogo(
       "aria-label",
       "Parchar"
     );
+    video.addEventListener(
+      "loadedmetadata",
+      () => {
+        if (video.duration > 5) {
+          video.currentTime = 5;
+        }
+      },
+      { once: true }
+    );
     video
       .play()
       .catch(() => {});
