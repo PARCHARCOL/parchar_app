@@ -3613,13 +3613,13 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 
 .home-body .brand-size-row img.brand-logo[src="/assets/parchar-logo.png"] {
   object-fit: cover;
-  object-position: center 37%;
+  object-position: center 42%;
   mix-blend-mode: lighten;
 }
 
 .home-body video.brand-logo {
   object-fit: cover;
-  object-position: center 37%;
+  object-position: center 42%;
   margin-top: 0;
   border: 0;
   background: transparent;
