@@ -59,6 +59,9 @@ const staffZoneSelect =
   document.querySelector(
     "#staff-zone-select"
   );
+const staffZoneField = document.querySelector(
+  "#staff-zone-field"
+);
 const staffUserList =
   document.querySelector(
     "#staff-user-list"
@@ -484,6 +487,14 @@ function getAdminAlertSnapshot() {
     getPendingBusinesses();
   const openAdRequests =
     getOpenAdRequests();
+  const publicistRequests =
+    openAdRequests.filter(
+      (item) =>
+        item.needs_publicist === true ||
+        item.needs_publicist === 1 ||
+        item.needs_publicist === "1" ||
+        item.needs_publicist === "true"
+    );
   const activeReviews =
     getActiveReviews();
   const sitesForReview =
@@ -504,6 +515,8 @@ function getAdminAlertSnapshot() {
         pendingBusinesses.length,
       adRequests:
         openAdRequests.length,
+      publicistRequests:
+        publicistRequests.length,
       reviews:
         activeReviews.length,
       sites:
@@ -518,6 +531,10 @@ function getAdminAlertSnapshot() {
       adRequests:
         getMaxNumericId(
           openAdRequests
+        ),
+      publicistRequests:
+        getMaxNumericId(
+          publicistRequests
         ),
       reviews:
         getMaxNumericId(
@@ -637,6 +654,8 @@ function updateAdminAlertCenter({
 } = {}) {
   const nextSnapshot =
     getAdminAlertSnapshot();
+  const previousSnapshot =
+    adminAlertSnapshot;
   const shouldNotify =
     notify &&
     hasNewAdminAlert(
@@ -660,14 +679,21 @@ function updateAdminAlertCenter({
     );
 
   setAdminAlertStatus(
-    total > 0
+    notify && shouldNotify &&
+      nextSnapshot.counts.publicistRequests >
+        (previousSnapshot?.counts?.publicistRequests || 0)
+      ? "Nueva solicitud: el cliente pide servicio de publicista."
+      : total > 0
       ? "Hay novedades pendientes por revisar."
       : "Sin novedades pendientes."
   );
 
   if (shouldNotify) {
     setAdminAlertStatus(
-      "Nueva solicitud recibida. Revisa los avisos marcados."
+      nextSnapshot.counts.publicistRequests >
+        (previousSnapshot?.counts?.publicistRequests || 0)
+        ? "Nueva solicitud: el cliente pide servicio de publicista."
+        : "Nueva solicitud recibida. Revisa los avisos marcados."
     );
     playAdminNotificationSound();
   }
@@ -844,6 +870,28 @@ function isAdmin() {
   return currentStaff?.role === "admin";
 }
 
+function canManageAds() {
+  return ["admin", "publicidad"].includes(
+    currentStaff?.role
+  );
+}
+
+function roleCanAccess(element, role = currentStaff?.role) {
+  if (element?.classList?.contains("admin-only") && role !== "admin") {
+    return false;
+  }
+  if (
+    element?.classList?.contains("marketing-only") &&
+    !["admin", "publicidad"].includes(role)
+  ) {
+    return false;
+  }
+  const allowed = String(
+    element?.dataset?.roleAccess || ""
+  ).split(",").map((value) => value.trim());
+  return !allowed[0] || allowed.includes(role);
+}
+
 function showAdminSection(
   section,
   { scroll = false } = {}
@@ -852,10 +900,17 @@ function showAdminSection(
     String(section || "").trim() ||
     "businesses";
   const sectionToOpen =
-    ["staff", "brand", "seasonal-design"].includes(
-      requestedSection
-    ) && !isAdmin()
+    requestedSection === "staff" && !isAdmin()
       ? "businesses"
+      : !roleCanAccess(
+          Array.from(adminSectionPanels).find(
+            (panel) =>
+              panel.dataset.adminSectionPanel === requestedSection
+          )
+        )
+      ? currentStaff?.role === "publicidad"
+        ? "ads"
+        : "businesses"
       : requestedSection;
   const panelExists =
     Array.from(
@@ -875,6 +930,7 @@ function showAdminSection(
 
   adminSectionTabs.forEach(
     (tab) => {
+      tab.hidden = !roleCanAccess(tab);
       const isActive =
         tab.dataset
           .adminSectionTab ===
@@ -892,6 +948,7 @@ function showAdminSection(
 
   adminSectionPanels.forEach(
     (panel) => {
+      panel.hidden = !roleCanAccess(panel);
       panel.classList.toggle(
         "is-hidden",
         panel.dataset
@@ -953,8 +1010,13 @@ function showAdminDashboard() {
   }
 
   if (staffSessionRole) {
+    const roleLabels = {
+      admin: "Administrador",
+      asesor: "Asesor",
+      publicidad: "Publicidad",
+    };
     staffSessionRole.textContent =
-      currentStaff?.role || "";
+      roleLabels[currentStaff?.role] || currentStaff?.role || "";
     staffSessionRole.className =
       `status-pill staff-role-${currentStaff?.role || ""}`;
   }
@@ -965,12 +1027,34 @@ function showAdminDashboard() {
       element.hidden = !isAdmin();
     });
 
+  document
+    .querySelectorAll(".marketing-only")
+    .forEach((element) => {
+      element.hidden = !canManageAds();
+    });
+
+  document
+    .querySelectorAll("[data-role-access]")
+    .forEach((element) => {
+      element.hidden = !roleCanAccess(element);
+    });
+
+
   showAdminSection(
     currentAdminSection
   );
+  syncStaffRoleFields();
   updateAdminSoundButton();
   setDefaultCampaignDates();
   syncAdCreativeFields();
+}
+
+function syncStaffRoleFields() {
+  if (!staffZoneField || !staffCreateForm) {
+    return;
+  }
+  staffZoneField.hidden =
+    staffCreateForm.elements.role?.value !== "asesor";
 }
 
 async function staffFetch(
@@ -3261,7 +3345,7 @@ function renderAdCampaigns(items) {
 async function loadAdCampaigns() {
   if (
     !adCampaignList ||
-    !isAdmin()
+    !canManageAds()
   ) {
     return;
   }
@@ -3682,6 +3766,12 @@ function renderAdRequests(items) {
                 )}</span>
               </div>
 
+              ${item.needs_publicist === true || item.needs_publicist === 1 || item.needs_publicist === "1" || item.needs_publicist === "true" ? `
+                <p class="status-pill status-activo publicist-service-request">
+                  Solicita servicio externo de publicista
+                </p>
+              ` : ""}
+
               <p><strong>Contacto:</strong> ${escapeHtml(
                 item.full_name
               )}</p>
@@ -3744,7 +3834,7 @@ function renderAdRequests(items) {
                     `
                 }
                 ${
-                  isAdmin()
+                  canManageAds()
                     ? `
                       <button class="ghost-btn" onclick="prepareAdFromRequest(${item.id})">
                         Preparar publicidad
@@ -3761,7 +3851,7 @@ function renderAdRequests(items) {
 }
 
 function prepareAdFromRequest(id) {
-  if (!isAdmin() || !adForm) {
+  if (!canManageAds() || !adForm) {
     return;
   }
 
@@ -3811,7 +3901,7 @@ async function loadAdRequests({
   notify = true,
   updateAlerts = true,
 } = {}) {
-  if (!adRequestList) {
+  if (!adRequestList || !canManageAds()) {
     return;
   }
 
@@ -4077,25 +4167,26 @@ function renderStaffUsers(items) {
 
   currentStaffUsers = items || [];
 
-  const advisors =
+  const internalUsers =
     currentStaffUsers.filter(
-      (item) => item.role === "asesor"
+      (item) => ["asesor", "publicidad"].includes(item.role)
     );
 
-  if (!advisors.length) {
+  if (!internalUsers.length) {
     staffUserList.innerHTML = `
       <div class="glass-card">
-        <h3>No hay asesores creados</h3>
+        <h3>No hay usuarios internos creados</h3>
       </div>
     `;
     return;
   }
 
   staffUserList.innerHTML =
-    advisors
+    internalUsers
       .map((item) => {
         const active =
           Boolean(item.active);
+        const isAdvisor = item.role === "asesor";
         const stats =
           item.stats || {};
         return `
@@ -4116,10 +4207,8 @@ function renderStaffUsers(items) {
             <p><strong>Usuario:</strong> ${escapeHtml(
               item.username
             )}</p>
-            <p><strong>Zona:</strong> ${escapeHtml(
-              item.zoneLabel ||
-                "Sin zona fija"
-            )}</p>
+            <p><strong>Perfil:</strong> ${isAdvisor ? "Asesor" : "Publicidad"}</p>
+            ${isAdvisor ? `<p><strong>Zona:</strong> ${escapeHtml(item.zoneLabel || "Sin zona fija")}</p>` : ""}
             <p class="tiny">
               Creado: ${escapeHtml(
                 formatDateTime(
@@ -4128,7 +4217,7 @@ function renderStaffUsers(items) {
               )}
             </p>
 
-            <div class="advisor-stats">
+            ${isAdvisor ? `<div class="advisor-stats">
               <div>
                 <span>Semana</span>
                 <strong>${escapeHtml(
@@ -4160,9 +4249,19 @@ function renderStaffUsers(items) {
                   stats.adRequests || 0
                 )}</strong>
               </div>
-            </div>
+            </div>` : ""}
 
             <div class="request-actions">
+              <label>
+                Cambiar perfil
+                <select data-staff-role="${Number(item.id)}">
+                  <option value="asesor" ${isAdvisor ? "selected" : ""}>Asesor</option>
+                  <option value="publicidad" ${!isAdvisor ? "selected" : ""}>Publicidad</option>
+                </select>
+              </label>
+              <button type="button" class="ghost-btn" onclick="setStaffUserRole(${Number(item.id)})">
+                Guardar perfil
+              </button>
               <button
                 type="button"
                 class="${
@@ -4193,7 +4292,7 @@ async function loadStaffUsers() {
 
   staffUserList.innerHTML = `
     <p class="loading">
-      Cargando asesores...
+      Cargando usuarios internos...
     </p>
   `;
 
@@ -4207,7 +4306,7 @@ async function loadStaffUsers() {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "Error cargando asesores"
+          "Error cargando usuarios"
       );
     }
 
@@ -4233,9 +4332,13 @@ async function createStaffUser(event) {
     return;
   }
 
+  const selectedRole =
+    staffCreateForm.elements.role?.value || "asesor";
   setFeedback(
     staffCreateMessage,
-    "Creando asesor..."
+    selectedRole === "publicidad"
+      ? "Creando usuario de Publicidad..."
+      : "Creando asesor..."
   );
 
   const payload = Object.fromEntries(
@@ -4264,14 +4367,16 @@ async function createStaffUser(event) {
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "No se pudo crear el asesor"
+          "No se pudo crear el usuario interno"
       );
     }
 
     staffCreateForm.reset();
     setFeedback(
       staffCreateMessage,
-      "Asesor creado. Entregale su usuario y clave temporal."
+      payload.role === "publicidad"
+        ? "Usuario de Publicidad creado. Entregale su usuario y clave temporal."
+        : "Asesor creado. Entregale su usuario y clave temporal."
     );
     await loadStaffUsers();
   } catch (error) {
@@ -4280,6 +4385,45 @@ async function createStaffUser(event) {
       error.message,
       true
     );
+  }
+}
+
+async function setStaffUserRole(id) {
+  if (!isAdmin()) {
+    return;
+  }
+  const roleSelect = staffUserList?.querySelector(
+    `[data-staff-role="${Number(id)}"]`
+  );
+  const role = roleSelect?.value;
+  if (!["asesor", "publicidad"].includes(role)) {
+    return;
+  }
+  const currentUser = currentStaffUsers.find(
+    (item) => Number(item.id) === Number(id)
+  );
+  if (currentUser?.role === role) {
+    return;
+  }
+  if (!window.confirm("Al cambiar el perfil se cerraran las sesiones de ese usuario. ¿Quieres continuar?")) {
+    return;
+  }
+  try {
+    const response = await staffFetch(
+      `/api/admin/staff-users/${Number(id)}/role`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "No se pudo cambiar el perfil.");
+    }
+    await loadStaffUsers();
+  } catch (error) {
+    alert(error.message);
   }
 }
 
@@ -4297,7 +4441,7 @@ async function setStaffUserStatus(
 
   if (
     !window.confirm(
-      `Quieres ${actionText} este asesor?`
+      `Quieres ${actionText} este usuario?`
     )
   ) {
     return;
@@ -4323,7 +4467,7 @@ async function setStaffUserStatus(
     if (!response.ok) {
       throw new Error(
         data.error ||
-          "No se pudo actualizar el asesor"
+          "No se pudo actualizar el usuario"
       );
     }
 
@@ -4442,26 +4586,27 @@ async function loadDashboardData({
 } = {}) {
   showAdminDashboard();
 
-  const tasks = [
-    loadAdRequests({
-      notify: false,
-      updateAlerts: false,
-    }),
-    loadBusinesses({
-      notify: false,
-      updateAlerts: false,
-    }),
-    loadReviewModeration({
-      notify: false,
-      updateAlerts: false,
-    }),
-    loadSites({
-      notify: false,
-      updateAlerts: false,
-    }),
-  ];
+  const tasks = [];
 
   if (isAdmin()) {
+    tasks.push(
+      loadAdRequests({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadBusinesses({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadReviewModeration({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadSites({
+        notify: false,
+        updateAlerts: false,
+      })
+    );
     tasks.push(
       loadAdCampaigns()
     );
@@ -4473,6 +4618,29 @@ async function loadDashboardData({
     );
     tasks.push(
       loadSeasonalDesignSettings()
+    );
+  } else if (currentStaff?.role === "publicidad") {
+    tasks.push(
+      loadAdRequests({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadAdCampaigns()
+    );
+  } else {
+    tasks.push(
+      loadBusinesses({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadReviewModeration({
+        notify: false,
+        updateAlerts: false,
+      }),
+      loadSites({
+        notify: false,
+        updateAlerts: false,
+      })
     );
   }
 
@@ -4626,6 +4794,11 @@ staffPasswordForm?.addEventListener(
 staffCreateForm?.addEventListener(
   "submit",
   createStaffUser
+);
+
+staffCreateForm?.elements.role?.addEventListener(
+  "change",
+  syncStaffRoleFields
 );
 
 brandForm?.addEventListener(

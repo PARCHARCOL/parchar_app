@@ -57,7 +57,7 @@
         </h2>
 
         <p>
-          Acceso exclusivo para administradores y asesores de Parchar.
+          Acceso para el equipo interno de Parchar.
         </p>
 
         <form
@@ -145,6 +145,7 @@
               href="#admin-business-section"
               class="admin-alert-card"
               data-admin-alert-card="businesses"
+              data-role-access="admin,asesor"
               data-admin-open-section="businesses"
             >
               <span>Locales pendientes</span>
@@ -155,6 +156,7 @@
               href="#admin-ads-section"
               class="admin-alert-card"
               data-admin-alert-card="adRequests"
+              data-role-access="admin,publicidad"
               data-admin-open-section="ads"
             >
               <span>Solicitudes de pauta</span>
@@ -162,9 +164,21 @@
             </a>
 
             <a
+              href="#admin-ads-section"
+              class="admin-alert-card"
+              data-admin-alert-card="publicistRequests"
+              data-role-access="admin,publicidad"
+              data-admin-open-section="ads"
+            >
+              <span>Solicitan servicio de publicista</span>
+              <strong data-admin-alert-count="publicistRequests">0</strong>
+            </a>
+
+            <a
               href="#admin-sites-section"
               class="admin-alert-card"
               data-admin-alert-card="sites"
+              data-role-access="admin,asesor"
               data-admin-open-section="sites"
             >
               <span>Sitios por revisar</span>
@@ -175,6 +189,7 @@
               href="#admin-review-section"
               class="admin-alert-card"
               data-admin-alert-card="reviews"
+              data-role-access="admin,asesor"
               data-admin-open-section="reviews"
             >
               <span>Resenas activas</span>
@@ -185,6 +200,7 @@
               href="#admin-review-section"
               class="admin-alert-card"
               data-admin-alert-card="reports"
+              data-role-access="admin,asesor"
               data-admin-open-section="reviews"
             >
               <span>Reportes pendientes</span>
@@ -201,6 +217,7 @@
             type="button"
             class="admin-section-tab active"
             data-admin-section-tab="businesses"
+            data-role-access="admin,asesor"
           >
             Locales
             <span
@@ -213,6 +230,7 @@
             type="button"
             class="admin-section-tab"
             data-admin-section-tab="ads"
+            data-role-access="admin,publicidad"
           >
             Publicidad
             <span
@@ -225,6 +243,7 @@
             type="button"
             class="admin-section-tab"
             data-admin-section-tab="sites"
+            data-role-access="admin,asesor"
           >
             Sitios
             <span
@@ -237,6 +256,7 @@
             type="button"
             class="admin-section-tab"
             data-admin-section-tab="reviews"
+            data-role-access="admin,asesor"
           >
             Resenas
             <span
@@ -266,7 +286,7 @@
             class="admin-section-tab admin-only"
             data-admin-section-tab="staff"
           >
-            Asesores
+            Usuarios
           </button>
 
           <button
@@ -487,6 +507,7 @@
         id="staff-users-section"
         class="form-block glass-card admin-section-panel is-hidden admin-only"
         data-admin-section-panel="staff"
+        data-role-access="admin"
       >
 
         <h2>
@@ -494,7 +515,7 @@
         </h2>
 
         <p>
-          Crea asesores con usuario propio para aprobar locales y atender solicitudes.
+          Crea usuarios internos y asigna el perfil Asesor o Publicidad.
         </p>
 
         <form
@@ -515,7 +536,7 @@
           </label>
 
           <label>
-            Nombre del asesor
+            Nombre visible
             <input
               name="displayName"
               maxlength="120"
@@ -525,6 +546,14 @@
           </label>
 
           <label>
+            Perfil de usuario
+            <select name="role" required>
+              <option value="asesor">Asesor</option>
+              <option value="publicidad">Publicidad</option>
+            </select>
+          </label>
+
+          <label id="staff-zone-field">
             Zona asignada
             <select
               id="staff-zone-select"
@@ -535,7 +564,7 @@
               </option>
             </select>
             <span class="field-hint">
-              Sirve para sugerirle solicitudes por municipio o sector.
+              Para perfiles de asesor, sugiere solicitudes por municipio o sector.
             </span>
           </label>
 
@@ -554,7 +583,7 @@
             type="submit"
             class="submit-btn"
           >
-            Crear asesor
+              Crear usuario
           </button>
 
         </form>
@@ -566,7 +595,7 @@
 
         <div class="my-businesses-head staff-users-head">
           <h3>
-            Asesores
+            Usuarios internos
           </h3>
 
           <button
@@ -584,7 +613,7 @@
         >
 
           <p class="loading">
-            Cargando asesores...
+            Cargando usuarios...
           </p>
 
         </div>
@@ -595,6 +624,7 @@
         id="admin-business-section"
         class="form-block glass-card admin-section-panel"
         data-admin-section-panel="businesses"
+        data-role-access="admin,asesor"
       >
 
         <h2>
@@ -671,6 +701,7 @@
         id="admin-sites-section"
         class="form-block glass-card admin-section-panel is-hidden"
         data-admin-section-panel="sites"
+        data-role-access="admin,asesor"
       >
 
         <h2>
@@ -926,6 +957,7 @@
         id="admin-ads-section"
         class="form-block glass-card admin-section-panel is-hidden"
         data-admin-section-panel="ads"
+        data-role-access="admin,publicidad"
       >
 
         <h2>
@@ -936,7 +968,7 @@
           Crea campanas con fechas, prioridad y rotacion automatica en el banner.
         </p>
 
-        <div class="admin-only">
+        <div class="marketing-only">
           <div class="ad-admin-guide">
             <strong>
               Recomendacion de pauta
@@ -1178,7 +1210,7 @@
           </div>
         </div>
 
-        <div class="my-businesses-head ad-requests-head">
+        <div class="my-businesses-head ad-requests-head marketing-only">
           <h3>
             Solicitudes de pauta
             <span
@@ -1198,7 +1230,7 @@
 
         <div
           id="admin-ad-request-list"
-          class="admin-list"
+          class="admin-list marketing-only"
         >
 
           <p class="loading">
@@ -1213,6 +1245,7 @@
         id="admin-review-section"
         class="form-block glass-card admin-section-panel is-hidden"
         data-admin-section-panel="reviews"
+        data-role-access="admin,asesor"
       >
 
         <div class="my-businesses-head">
@@ -1299,7 +1332,7 @@
     </main>
 
     <script src="/update.js?v=93"></script>
-    <script src="/admin.js?v=94"></script>
+    <script src="/admin.js?v=95"></script>
 
   </body>
 </html>

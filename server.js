@@ -377,6 +377,7 @@ const AD_CAMPAIGN_STATUSES =
 const STAFF_ROLES = new Set([
   "admin",
   "asesor",
+  "publicidad",
 ]);
 const ANTIOQUIA_BOUNDS = {
   minLatitude: 5.35,
@@ -1653,7 +1654,10 @@ async function logAdvisorActivity({
   zoneLabel = "",
   notes = "",
 }) {
-  if (!staffAuth?.staff) {
+  if (
+    !staffAuth?.staff ||
+    staffAuth.staff.role !== "asesor"
+  ) {
     return;
   }
 
@@ -5300,6 +5304,7 @@ async function initializeSqliteDatabase() {
       email TEXT,
       message TEXT NOT NULL,
       source_page TEXT,
+      needs_publicist INTEGER NOT NULL DEFAULT 0,
       status TEXT DEFAULT 'pendiente',
       contacted_by TEXT,
       contacted_at TEXT,
@@ -5542,6 +5547,11 @@ async function initializeSqliteDatabase() {
     "contacted_at",
     "TEXT"
   );
+  await ensureSqliteColumn(
+    "ad_requests",
+    "needs_publicist",
+    "INTEGER NOT NULL DEFAULT 0"
+  );
 
   await migrateLegacyUsersToClients();
   await normalizeSqliteClientPhones();
@@ -5745,6 +5755,7 @@ async function initializeDatabase() {
       email TEXT,
       message TEXT NOT NULL,
       source_page TEXT,
+      needs_publicist BOOLEAN NOT NULL DEFAULT false,
       status TEXT DEFAULT 'pendiente',
       contacted_by TEXT,
       contacted_at TIMESTAMP,
@@ -5874,7 +5885,8 @@ async function initializeDatabase() {
   await pool.query(`
     ALTER TABLE ad_requests
     ADD COLUMN IF NOT EXISTS contacted_by TEXT,
-    ADD COLUMN IF NOT EXISTS contacted_at TIMESTAMP;
+    ADD COLUMN IF NOT EXISTS contacted_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS needs_publicist BOOLEAN NOT NULL DEFAULT false;
   `);
 
   await pool.query(`
@@ -6569,6 +6581,10 @@ const server =
               body.sourcePage,
               200
             );
+          const needsPublicist =
+            parseBooleanFlag(
+              body.wantsPublicist
+            );
           const message =
             cleanLimitedText(
               body.message ||
@@ -6610,9 +6626,10 @@ const server =
               email,
               message,
               source_page,
+              needs_publicist,
               status
             )
-            VALUES ($1,$2,$3,$4,$5,$6,$7)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
             `,
             [
               fullName,
@@ -6621,6 +6638,7 @@ const server =
               email,
               message,
               sourcePage,
+              needsPublicist,
               "pendiente",
             ]
           );
@@ -6628,7 +6646,9 @@ const server =
           sendJson(res, 201, {
             ok: true,
             message:
-              "Solicitud enviada. El equipo de Parchar te contactara.",
+              needsPublicist
+                ? "Solicitud enviada. Parchar te contactara para confirmar el servicio externo de publicista y sus condiciones."
+                : "Solicitud enviada. El equipo de Parchar te contactara.",
           });
           return;
         }
@@ -8756,10 +8776,14 @@ const server =
               body.displayName,
               120
             ) || username;
+          const role =
+            cleanText(body.role || "asesor");
           const zone =
-            getCoverageZoneBySlug(
-              body.zoneSlug
-            );
+            role === "asesor"
+              ? getCoverageZoneBySlug(
+                  body.zoneSlug
+                )
+              : null;
           const password = cleanText(
             body.password
           );
@@ -8781,6 +8805,14 @@ const server =
             sendJson(res, 400, {
               error:
                 "La clave debe tener minimo 8 caracteres.",
+            });
+            return;
+          }
+
+          if (!["asesor", "publicidad"].includes(role)) {
+            sendJson(res, 400, {
+              error:
+                "El perfil debe ser Asesor o Publicidad.",
             });
             return;
           }
@@ -8823,7 +8855,7 @@ const server =
               username,
               hashPassword(password),
               displayName,
-              "asesor",
+              role,
               zone?.slug || "",
               zone?.label || "",
               true,
@@ -8856,6 +8888,70 @@ const server =
                 created.rows[0]
               ),
           });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/staff-users\/\d+\/role$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id = pathname.split("/")[4];
+          if (Number(id) === Number(staffAuth.staff.id)) {
+            sendJson(res, 400, {
+              error: "No puedes cambiar tu propio perfil desde este panel.",
+            });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          const role = cleanText(body.role);
+          if (!["asesor", "publicidad"].includes(role)) {
+            sendJson(res, 400, {
+              error: "El perfil debe ser Asesor o Publicidad.",
+            });
+            return;
+          }
+
+          const existing = await pool.query(
+            `SELECT id FROM staff_users WHERE id = $1 LIMIT 1`,
+            [id]
+          );
+          if (!existing.rows.length) {
+            sendJson(res, 404, {
+              error: "Usuario interno no encontrado.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `
+            UPDATE staff_users
+            SET
+              role = $1,
+              zone_slug = CASE WHEN $1 = 'asesor' THEN zone_slug ELSE '' END,
+              zone_label = CASE WHEN $1 = 'asesor' THEN zone_label ELSE '' END
+            WHERE id = $2
+            `,
+            [role, id]
+          );
+
+          await pool.query(
+            `DELETE FROM staff_sessions WHERE staff_user_id = $1`,
+            [id]
+          );
+          sendJson(res, 200, { ok: true });
           return;
         }
 
@@ -8921,12 +9017,10 @@ const server =
             return;
           }
 
-          if (
-            staffRow.role !== "asesor"
-          ) {
+          if (!["asesor", "publicidad"].includes(staffRow.role)) {
             sendJson(res, 400, {
               error:
-                "Desde este panel solo se activan o desactivan asesores.",
+                "Desde este panel solo se activan o desactivan asesores y usuarios de Publicidad.",
             });
             return;
           }
@@ -8965,7 +9059,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -8995,7 +9089,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -9345,7 +9439,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -9439,7 +9533,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -9514,7 +9608,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -9670,7 +9764,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "publicidad"]
             )
           ) {
             return;
@@ -10167,6 +10261,16 @@ const server =
             "/api/admin/ad-requests" &&
           req.method === "GET"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "publicidad"]
+            )
+          ) {
+            return;
+          }
+
           const result =
             await pool.query(`
               SELECT *
@@ -10187,6 +10291,16 @@ const server =
           ) &&
           req.method === "POST"
         ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin", "publicidad"]
+            )
+          ) {
+            return;
+          }
+
           const id =
             pathname.split(
               "/"

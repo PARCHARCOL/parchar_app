@@ -2845,6 +2845,36 @@ body > .ad-banner {
   color: var(--text-soft);
 }
 
+.ad-publicist-choice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 12px;
+  border: 1px solid rgba(255, 190, 106, 0.38);
+  border-radius: 13px;
+  background: rgba(255, 142, 45, 0.1);
+}
+
+.ad-publicist-choice input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  margin: 3px 0 0;
+  accent-color: #ffad4d;
+}
+
+.ad-publicist-choice span {
+  display: grid;
+  gap: 5px;
+}
+
+.ad-publicist-choice small {
+  color: var(--text-soft);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
 .ad-spec-card {
   border-radius: 13px;
   border: 1px solid rgba(255, 190, 106, 0.38);

@@ -449,6 +449,14 @@ function ensureAdModal() {
       </section>
 
       <form id="ad-request-form" class="form-grid">
+        <label class="full-row legal-check ad-publicist-choice">
+          <input name="wantsPublicist" type="checkbox" value="true" />
+          <span>
+            Quiero que me contacten para contratar el servicio externo de un publicista y preparar mi pauta.
+            <small>Es opcional. El equipo confirmara disponibilidad y costo antes de contratar.</small>
+          </span>
+        </label>
+
         <label>
           Nombre
           <input name="fullName" required />
