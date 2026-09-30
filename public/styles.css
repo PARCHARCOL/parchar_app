@@ -3612,15 +3612,15 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 .home-body #home-alerts-btn { grid-column: 3; }
 
 .home-body .brand-size-row img.brand-logo[src="/assets/parchar-logo.png"] {
-  object-fit: cover;
-  object-position: center 42%;
+  object-fit: contain;
+  object-position: center center;
   mix-blend-mode: lighten;
 }
 
 .home-body video.brand-logo {
-  object-fit: cover;
-  object-position: center 42%;
-  margin-top: 0;
+  object-fit: contain;
+  object-position: center center;
+  margin-top: 12px;
   border: 0;
   background: transparent;
   mix-blend-mode: lighten;

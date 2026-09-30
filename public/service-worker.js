@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v144";
+const CACHE_NAME = "parchar-shell-v145";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
