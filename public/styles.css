@@ -3442,7 +3442,7 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   grid-row: 1;
   justify-self: stretch;
   width: 100%;
-  height: 20rem;
+  height: auto;
   min-width: 0;
   max-height: none;
   border-radius: 0;
@@ -3457,7 +3457,7 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   grid-template-columns: minmax(0, 1fr);
   align-items: center;
   width: min(calc(100% - 3.5rem), 36.25rem);
-  min-height: 20rem;
+  min-height: 0;
   margin: 0 auto;
 }
 
@@ -3622,14 +3622,14 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 .home-body #home-alerts-btn { grid-column: 3; }
 
 .home-body .brand-size-row img.brand-logo[src="/assets/parchar-logo.png"] {
-  object-fit: cover;
-  object-position: center 30%;
+  object-fit: contain;
+  object-position: center center;
   mix-blend-mode: lighten;
 }
 
 .home-body video.brand-logo {
-  object-fit: cover;
-  object-position: center 30%;
+  object-fit: contain;
+  object-position: center center;
   margin-top: 12px;
   border: 0;
   background: transparent;
