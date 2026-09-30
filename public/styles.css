@@ -3601,6 +3601,16 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   gap: 0;
 }
 
+.home-body .reading-accessibility {
+  margin-top: 12px;
+  border-radius: 0;
+}
+
+.home-body .search-bar {
+  margin-top: 12px;
+  border-radius: 0;
+}
+
 .home-body #home-menu-btn,
 .home-body #home-alerts-btn {
   grid-row: 1;
