@@ -3462,8 +3462,8 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 }
 
 .home-body .brand-size-row.has-video-logo {
-  height: min(18rem, calc(75vw - 2rem));
-  min-height: min(18rem, calc(75vw - 2rem));
+  height: min(18.75rem, calc(75vw - 2rem));
+  min-height: min(18.75rem, calc(75vw - 2rem));
   overflow: hidden;
 }
 
@@ -3635,12 +3635,12 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 
 .home-body video.brand-logo {
   display: block;
-  width: min(100%, 28rem);
+  width: min(100%, 22rem);
   height: 100%;
   object-fit: cover;
   object-position: center top;
   justify-self: center;
-  transform: translateY(-5rem);
+  transform: translateY(-4.25rem);
   margin-top: 0;
   border: 0;
   background: transparent;
@@ -4377,5 +4377,6 @@ html.reading-scale-large body.list-body .cards-grid {
   right: 0;
   width: auto;
   min-height: var(--ad-height);
+  height: var(--ad-height);
   box-sizing: border-box;
 }
