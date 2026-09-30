@@ -3840,6 +3840,11 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 .home-body .app-shell {
+  width: 100%;
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
   padding-bottom: calc(var(--ad-height) + 34px);
 }
 
