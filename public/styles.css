@@ -3840,8 +3840,11 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 .home-body .app-shell {
-  width: 100%;
+  width: 100vw;
   max-width: none;
+  justify-self: stretch;
+  margin-inline: calc(50% - 50vw);
+  padding-inline: 0;
   border: 0;
   border-radius: 0;
   box-shadow: none;
