@@ -3637,7 +3637,7 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   width: min(100%, 22rem);
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center 30%;
   justify-self: center;
   margin-top: 0;
   border: 0;
