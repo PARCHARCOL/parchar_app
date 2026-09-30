@@ -53,6 +53,13 @@ function renderBrandLogo(
     path || PARCHAR_DEFAULT_LOGO;
   const needsVideo =
     isBrandVideo(source, type);
+  const logoContainer = element.closest(
+    ".brand-size-row"
+  );
+  logoContainer?.classList.toggle(
+    "has-video-logo",
+    needsVideo
+  );
   const currentIsVideo =
     element.tagName.toLowerCase() ===
     "video";

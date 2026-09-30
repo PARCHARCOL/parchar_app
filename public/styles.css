@@ -3461,6 +3461,12 @@ html[data-tone-contrast="light"] .home-body .top-strip {
   margin: 0 auto;
 }
 
+.home-body .brand-size-row.has-video-logo {
+  height: 22rem;
+  min-height: 22rem;
+  overflow: hidden;
+}
+
 .reading-scale-widget {
   display: grid;
   grid-template-rows: auto 11rem auto auto;
@@ -3628,9 +3634,12 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 }
 
 .home-body video.brand-logo {
-  object-fit: contain;
-  object-position: center center;
-  margin-top: 12px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  margin-top: 0;
   border: 0;
   background: transparent;
   mix-blend-mode: lighten;
