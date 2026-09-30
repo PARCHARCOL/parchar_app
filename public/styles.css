@@ -3462,9 +3462,8 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 }
 
 .home-body .brand-size-row.has-video-logo {
-  height: min(24rem, calc(65vw - 2rem));
-  min-height: min(24rem, calc(65vw - 2rem));
-  overflow: hidden;
+  height: min(16rem, calc(65vw - 2rem));
+  min-height: min(16rem, calc(65vw - 2rem));
 }
 
 .reading-scale-widget {
@@ -3635,10 +3634,11 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 
 .home-body video.brand-logo {
   display: block;
-  width: 100%;
+  width: min(100%, 30rem);
   height: 100%;
   object-fit: cover;
-  object-position: center top;
+  object-position: center 10%;
+  justify-self: center;
   margin-top: 0;
   border: 0;
   background: transparent;
