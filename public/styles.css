@@ -3612,14 +3612,14 @@ html[data-tone-contrast="light"] .home-body .top-strip {
 .home-body #home-alerts-btn { grid-column: 3; }
 
 .home-body .brand-size-row img.brand-logo[src="/assets/parchar-logo.png"] {
-  object-fit: contain;
-  object-position: center center;
+  object-fit: cover;
+  object-position: center 30%;
   mix-blend-mode: lighten;
 }
 
 .home-body video.brand-logo {
-  object-fit: contain;
-  object-position: center center;
+  object-fit: cover;
+  object-position: center 30%;
   margin-top: 12px;
   border: 0;
   background: transparent;
