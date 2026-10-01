@@ -4747,3 +4747,68 @@ html.reading-scale-large body.list-body .cards-grid {
   height: var(--ad-height);
   box-sizing: border-box;
 }
+
+/* Keep the home screen viewport-sized and let category buttons use the available width. */
+.home-body {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.home-body .app-shell {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  margin-inline: 0;
+}
+
+.home-body .button-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: none;
+  grid-auto-rows: minmax(160px, auto);
+  gap: 12px;
+  width: 100%;
+  max-width: 100%;
+  overflow: visible;
+}
+
+.home-body .action-btn {
+  width: 100%;
+  min-width: 0;
+  height: auto;
+  min-height: 160px;
+}
+
+.home-body .action-icon {
+  width: min(120px, 100%);
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .home-body .button-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .home-body .button-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: minmax(152px, auto);
+    gap: 10px 8px;
+    overflow: visible;
+  }
+
+  .home-body .action-btn {
+    min-height: 152px;
+    padding: 8px 5px;
+  }
+
+  .home-body .action-icon {
+    width: min(112px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+  }
+}
