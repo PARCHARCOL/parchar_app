@@ -62,19 +62,37 @@ function ensureUpdateBanner() {
 
     const waitingWorker = updateRegistration?.waiting;
     if (waitingWorker) {
+      const reloadWhenActivated = () => {
+        if (waitingWorker.state === "activated") {
+          reloadForUpdate();
+        }
+      };
+
+      waitingWorker.addEventListener(
+        "statechange",
+        reloadWhenActivated
+      );
       waitingWorker.postMessage({
         type: "SKIP_WAITING",
       });
+
+      // Si ya termino de activarse antes de registrar el listener, recarga
+      // enseguida. En moviles, controllerchange puede llegar con retraso.
+      reloadWhenActivated();
+    } else {
+      // El aviso puede quedar obsoleto si el navegador activo la version
+      // mientras el usuario lo tenia abierto.
+      reloadForUpdate();
+      return;
     }
 
-    // Oculta el aviso al aceptar y vuelve a solicitar la pagina al servidor.
-    // Esto evita que el banner quede bloqueado si el WebView movil no dispara
-    // controllerchange al activar el service worker.
+    // Mantiene el aviso oculto mientras se activa el worker. La recarga se
+    // dispara al activarse; el limite evita dejar el boton bloqueado si falla.
     banner.hidden = true;
     window.clearTimeout(updateFallbackTimer);
     updateFallbackTimer = window.setTimeout(
       reloadForUpdate,
-      900
+      15000
     );
   };
 
