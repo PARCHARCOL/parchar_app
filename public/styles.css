@@ -3909,185 +3909,160 @@ html[data-tone-contrast="light"] .tone-control img {
   background-image: url("/assets/ui/pautar-glass.png");
 }
 
-/* Standard designs change each real category button's layout and icon treatment.
-   The actual design bypasses this block; the logo always sits on a dark header. */
-html[data-standard-design]:not([data-standard-design="actual"]) {
-  --text-main: var(--standard-text);
-  --text-soft: var(--standard-soft-text);
-  --line-soft: color-mix(in srgb, var(--standard-line) 56%, transparent);
-  --neon-gold: var(--standard-accent);
-  --season-accent: var(--standard-accent);
-  --season-border: var(--standard-line);
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .theme-body {
-  background: linear-gradient(160deg,
-    color-mix(in srgb, var(--standard-page-start), white var(--tone-mix)),
-    color-mix(in srgb, var(--standard-page-end), white var(--tone-mix)));
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .theme-body .app-shell {
-  color: var(--standard-text);
-  background: linear-gradient(178deg,
-    color-mix(in srgb, var(--standard-shell-start), white var(--tone-mix)),
-    color-mix(in srgb, var(--standard-shell-end), white var(--tone-mix)) 72%);
-  border-color: color-mix(in srgb, var(--standard-line) 58%, transparent);
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .top-strip {
-  color: #fff;
-  background: linear-gradient(115deg, #351551, #24103e 72%);
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .top-strip .icon-ghost {
-  color: #fff;
-  background: #512478;
-  border-color: rgba(255,255,255,.34);
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .search-bar {
-  border-color: color-mix(in srgb, var(--standard-line) 78%, transparent);
-  background: linear-gradient(115deg, #32164f, #24113a);
-  color: #fff;
-}
-
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .search-bar input,
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .search-bar input::placeholder {
-  color: #fff;
-}
-
+/* These presets restyle only the existing category buttons. */
 html[data-standard-design]:not([data-standard-design="actual"]) .home-body .button-grid {
-  grid-auto-flow: row;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr));
   grid-template-rows: none;
   grid-auto-rows: auto;
-  gap: 10px;
+  grid-auto-flow: row;
+  gap: 12px;
   width: 100%;
   max-width: 100%;
   padding: 6px 4px 12px;
-  overflow-x: visible;
-  overflow-y: visible;
+  overflow: visible;
   scroll-snap-type: none;
 }
 
 html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-btn {
   box-sizing: border-box;
-  width: auto;
+  width: 100%;
   min-width: 0;
   height: auto;
-  min-height: 178px;
-  padding: 9px 7px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  border: 0;
-  border-radius: 14px;
-  background: transparent;
-  box-shadow: none;
+  min-height: 166px;
+  padding: 12px 8px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: center;
+  justify-items: center;
+  gap: 8px;
+  border: 2px solid transparent;
+  border-radius: 24px;
+  color: #fff;
+  background: var(--category-surface, linear-gradient(145deg, #655e70, #262332));
+  box-shadow: 0 8px 18px #0905145c, inset 0 2px 8px #ffffff2b;
   scroll-snap-align: none;
 }
 
 html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-icon {
   flex: 0 0 auto;
-  width: 124px;
-  height: 124px;
+  width: 86px;
+  height: 86px;
   max-width: 100%;
-  border-radius: 0;
   background-color: transparent;
-  background-image: url("/assets/ui/category-glass-atlas.png");
-  background-size: 310% 310%;
-  background-position: var(--icon-x) var(--icon-y);
+  background-image: linear-gradient(135deg, #fff, #fff);
+  background-position: center;
   background-repeat: no-repeat;
-  mask: none;
-  -webkit-mask: none;
-  filter: saturate(1.15) brightness(1.08)
-    drop-shadow(0 4px 9px color-mix(in srgb, var(--standard-accent) 38%, transparent));
-}
-
-/* Keep the classic glass artwork as the single button face, with no extra tile around it. */
-html[data-standard-design="clasico-luminoso"] .home-body .action-icon {
-  background-image: url("/assets/ui/category-glass-atlas.png");
-  background-size: 310% 310%;
-  background-position: var(--icon-x) var(--icon-y);
-  background-repeat: no-repeat;
-  -webkit-mask: none;
-  mask: none;
-  filter: saturate(1.18) brightness(1.08) drop-shadow(0 5px 11px #db8dff66);
+  background-size: 100% 100%;
+  border-radius: 0;
+  -webkit-mask: var(--category-glyph) center / contain no-repeat;
+  mask: var(--category-glyph) center / contain no-repeat;
+  filter: drop-shadow(0 2px 3px #0008);
 }
 
 html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-label {
+  width: 100%;
   max-width: 100%;
-  color: var(--standard-text);
-  font-size: 1.05rem;
-  font-weight: 800;
-  line-height: 1.16;
+  min-height: 0;
+  color: #fff;
+  font-size: clamp(14px, 1rem, 19px);
+  font-weight: 900;
+  line-height: 1.12;
   text-align: center;
   text-wrap: balance;
+  text-shadow: 0 1px 3px #0009;
 }
 
-/* The real button is the only button surface; flat glyphs never become nested tiles. */
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-icon {
-  background-image: linear-gradient(135deg, #fff, #fff);
-  background-size: 100% 100%;
-  background-position: center;
-  -webkit-mask-image: var(--category-glyph);
-  mask-image: var(--category-glyph);
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-size: contain;
-  mask-size: contain;
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-restaurante { --category-glyph: url("/assets/ui/utensils.svg"); --category-surface: linear-gradient(145deg, #ffb33f, #dc461d); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-bar { --category-glyph: url("/assets/ui/wine.svg"); --category-surface: linear-gradient(145deg, #ff70cd, #a71e8b); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-walking { --category-glyph: url("/assets/ui/footprints.svg"); --category-surface: linear-gradient(145deg, #86ff79, #12813b); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-bike { --category-glyph: url("/assets/ui/bike.svg"); --category-surface: linear-gradient(145deg, #54e3ff, #0873bf); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-puebliar { --category-glyph: url("/assets/ui/map-pinned.svg"); --category-surface: linear-gradient(145deg, #ffe86c, #d88b08); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-charcos { --category-glyph: url("/assets/ui/waves.svg"); --category-surface: linear-gradient(145deg, #59f6f4, #0875a6); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-miradores { --category-glyph: url("/assets/ui/mountain.svg"); --category-surface: linear-gradient(145deg, #c19aff, #5c36c4); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-burgermaster { --category-glyph: url("/assets/ui/sandwich.svg"); --category-surface: linear-gradient(145deg, #ff9f50, #bc3512); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-clientes { --category-glyph: url("/assets/ui/store.svg"); --category-surface: linear-gradient(145deg, #54cfff, #0755b6); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-pautar { --category-glyph: url("/assets/ui/megaphone.svg"); --category-surface: linear-gradient(145deg, #ffc44b, #c84a14); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-admin { --category-glyph: url("/assets/ui/shield.svg"); --category-surface: linear-gradient(145deg, #a594ff, #3e33b7); }
+
+/* 1. Glossy square app buttons. The clickable button itself is the colored tile. */
+html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn {
+  aspect-ratio: 1;
+  min-height: 0;
+  border-color: #ffffffa6;
+  border-radius: 25px;
+  box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 8px 14px #09051465;
 }
+html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-icon { width: 82px; height: 82px; }
 
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-restaurante { --category-glyph: url("/assets/ui/utensils.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-bar { --category-glyph: url("/assets/ui/wine.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-walking { --category-glyph: url("/assets/ui/footprints.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-bike { --category-glyph: url("/assets/ui/bike.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-puebliar { --category-glyph: url("/assets/ui/map-pinned.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-miradores { --category-glyph: url("/assets/ui/mountain.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-burgermaster { --category-glyph: url("/assets/ui/sandwich.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-clientes { --category-glyph: url("/assets/ui/store.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-charcos { --category-glyph: url("/assets/ui/waves.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-pautar { --category-glyph: url("/assets/ui/megaphone.svg"); }
-html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-admin { --category-glyph: url("/assets/ui/shield.svg"); }
-
-html[data-standard-design="violeta"] .home-body .button-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-html[data-standard-design="violeta"] .home-body .action-btn { min-height: 192px; }
-html[data-standard-design="violeta"] .home-body .action-icon { width: 112px; height: 112px; background-image: linear-gradient(140deg, #ff8ddd, #a54cff 56%, #6ff4ff) !important; filter: drop-shadow(0 5px 14px #d44ffb88); }
-
-/* Noche: two-column feature cards, with one large glyph directly on each button. */
-html[data-standard-design="noche"] .home-body .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-html[data-standard-design="noche"] .home-body .action-btn { min-height: 144px; flex-direction: row; justify-content: flex-start; gap: 13px; padding: 14px; border: 1px solid #78ddff9c; border-radius: 23px; background: linear-gradient(145deg, #303884, #171b52); box-shadow: inset 0 2px 15px #ffffff22, 0 8px 16px #050b3d77; }
-html[data-standard-design="noche"] .home-body .action-icon { width: 108px; height: 108px; flex: 0 0 108px; background-image: linear-gradient(135deg, #9af8ff, #36cfff 48%, #9181ff) !important; filter: drop-shadow(0 0 10px #4cd8ffbb); }
-html[data-standard-design="noche"] .home-body .action-label { text-align: left; }
-
-/* Natural: full-width rows; no enclosing tile and no mini icon button. */
-html[data-standard-design="natural"] .home-body .button-grid { grid-template-columns: minmax(0, 1fr); gap: 0; }
-html[data-standard-design="natural"] .home-body .action-btn { min-height: 102px; flex-direction: row; justify-content: flex-start; gap: 17px; padding: 12px 8px; border-bottom: 1px solid #61e2b07a; border-radius: 0; }
-html[data-standard-design="natural"] .home-body .action-icon { width: 100px; height: 100px; flex: 0 0 100px; background-image: linear-gradient(135deg, #c9ff74, #5ff2bc 56%, #21b8b0) !important; filter: drop-shadow(0 4px 10px #3cf0b877); }
-html[data-standard-design="natural"] .home-body .action-label { text-align: left; }
-
-/* Claro lavanda: bright two-column buttons; logo/header stay on a dark brand strip. */
-html[data-standard-design="claro"] .home-body .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 13px; }
-html[data-standard-design="claro"] .home-body .action-btn { min-height: 208px; border: 1px solid #b88be7; border-radius: 23px; background: linear-gradient(150deg, #fff, #f5eaff); box-shadow: inset 0 2px 9px #ffffff, 0 7px 15px #7a45a52c; }
-html[data-standard-design="claro"] .home-body .action-icon { width: 118px; height: 118px; background-image: linear-gradient(140deg, #ff66b5, #a349ed 47%, #32cce9) !important; filter: drop-shadow(0 5px 12px #9d59ca66); }
-html[data-standard-design="claro"] .home-body .action-label { color: #28153c; }
-
-/* Coral urbano: broad pill buttons with large inline glyphs. */
-html[data-standard-design="coral"] .home-body .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-html[data-standard-design="coral"] .home-body .action-btn { min-height: 142px; flex-direction: row; justify-content: flex-start; gap: 11px; padding: 12px 13px; border: 1px solid #ffb0d4; border-radius: 44px; background: linear-gradient(125deg, #bd327e, #6d236f 52%, #40205c); box-shadow: inset 0 2px 14px #ffffff27, 0 6px 17px #f14f9c50; }
-html[data-standard-design="coral"] .home-body .action-icon { width: 104px; height: 104px; flex: 0 0 104px; background-image: linear-gradient(135deg, #ffe36d, #ff9c68 47%, #ff6ac4) !important; filter: drop-shadow(0 5px 10px #ff6ac488); }
-html[data-standard-design="coral"] .home-body .action-label { text-align: left; }
-
-@media (max-width: 540px) {
-  html[data-standard-design="violeta"] .home-body .button-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  html[data-standard-design="noche"] .home-body .button-grid,
-  html[data-standard-design="coral"] .home-body .button-grid { grid-template-columns: minmax(0, 1fr); }
-  html[data-standard-design="noche"] .home-body .action-btn,
-  html[data-standard-design="coral"] .home-body .action-btn { min-height: 132px; gap: 12px; padding: 12px 16px; }
+/* 2. Soft graphite buttons. */
+html[data-standard-design="violeta"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr)); }
+html[data-standard-design="violeta"][data-standard-design] .home-body .action-btn {
+  aspect-ratio: 1;
+  min-height: 0;
+  border: 2px solid #797981;
+  border-radius: 30px;
+  background: linear-gradient(145deg, #5e5d64, #25242a 72%);
+  box-shadow: inset 0 2px 5px #ffffff48, inset 0 -5px 9px #0008, 0 7px 15px #0008;
 }
+html[data-standard-design="violeta"][data-standard-design] .home-body .action-icon { width: 78px; height: 78px; background-image: linear-gradient(145deg, #fff, #d6d6de); }
+
+/* 3. Multicolor chrome circles. */
+html[data-standard-design="noche"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); }
+html[data-standard-design="noche"][data-standard-design] .home-body .action-btn {
+  width: min(100%, 156px);
+  aspect-ratio: 1;
+  min-height: 0;
+  justify-self: center;
+  border: 3px solid #c8d7e8;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 23%, #ffffffb8 0 4%, transparent 19%), var(--category-surface);
+  box-shadow: inset 0 3px 8px #ffffffa6, inset 0 -5px 9px #0006, 0 6px 12px #0007;
+}
+html[data-standard-design="noche"][data-standard-design] .home-body .action-icon { width: 68px; height: 68px; }
+html[data-standard-design="noche"][data-standard-design] .home-body .action-label { font-size: 13px; }
+
+/* 4. Aqua bubble circles. */
+html[data-standard-design="natural"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr)); }
+html[data-standard-design="natural"][data-standard-design] .home-body .action-btn {
+  width: min(100%, 156px);
+  aspect-ratio: 1;
+  min-height: 0;
+  justify-self: center;
+  border: 3px solid #8dfaff;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 22%, #ffffffd9 0 4%, #76f8ff 11%, transparent 32%), linear-gradient(145deg, #32ddf3, #0092c1 64%, #07579b);
+  box-shadow: inset 0 3px 9px #ffffffc9, inset 0 -5px 9px #00517f80, 0 6px 13px #001e4477;
+}
+html[data-standard-design="natural"][data-standard-design] .home-body .action-icon { width: 68px; height: 68px; }
+html[data-standard-design="natural"][data-standard-design] .home-body .action-label { font-size: 13px; }
+
+/* 5. Neon outline buttons. */
+html[data-standard-design="claro"][data-standard-design] .home-body .action-btn {
+  aspect-ratio: 1;
+  min-height: 0;
+  border: 2px solid transparent;
+  border-radius: 25px;
+  background: linear-gradient(#24113a, #24113a) padding-box, linear-gradient(135deg, #ff67d6, #35e6ff, #ffd553) border-box;
+  box-shadow: 0 0 18px #a240ff70, inset 0 0 16px #a240ff25;
+}
+html[data-standard-design="claro"][data-standard-design] .home-body .action-icon { width: 82px; height: 82px; background-image: linear-gradient(135deg, #ff77d9, #60e7ff 52%, #ffdc5d); filter: drop-shadow(0 0 9px #db58ffb0); }
+
+/* 6. Wide glossy pills. */
+html[data-standard-design="coral"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 226px), 1fr)); }
+html[data-standard-design="coral"][data-standard-design] .home-body .action-btn {
+  min-height: 88px;
+  aspect-ratio: auto;
+  grid-template-columns: 62px minmax(0, 1fr);
+  grid-template-rows: 1fr;
+  justify-items: stretch;
+  padding: 10px 18px;
+  gap: 12px;
+  border: 2px solid #ffffffa8;
+  border-radius: 999px;
+  box-shadow: inset 0 3px 8px #ffffff90, inset 0 -5px 10px #0004, 0 7px 14px #09051465;
+}
+html[data-standard-design="coral"][data-standard-design] .home-body .action-icon { width: 58px; height: 58px; }
+html[data-standard-design="coral"][data-standard-design] .home-body .action-label { text-align: left; }
 
 .standard-design-help { margin: 0 0 14px; color: var(--text-soft); }
 .standard-design-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -4123,41 +4098,36 @@ html[data-standard-design="coral"] .home-body .action-label { text-align: left; 
 .standard-preview-screen .standard-thumb-label { font-size: 10px; }
 @media (min-width: 700px) { .standard-design-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-/* Previews reflect the selected button composition instead of recoloring one sample grid. */
-.standard-design-thumb[data-design-id="actual"] .standard-thumb-label,
-.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-label { width: 22px; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--thumb-text) 78%, transparent); font-size: 0; }
-.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile { border: 0; background: transparent; }
+/* Every preview keeps the existing Parchar screen and changes only its category buttons. */
+.standard-design-thumb[data-design-id="actual"] .standard-thumb-tile { border: 0; background: transparent; }
+.standard-design-thumb[data-design-id="actual"] .standard-thumb-label { width: 22px; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--thumb-text) 78%, transparent); font-size: 0; }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-icon { background-color: transparent; background-image: linear-gradient(135deg, #fff, #fff); }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-tile:nth-child(1) .standard-thumb-icon { mask-image: url("/assets/ui/utensils.svg"); }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile { min-height: 38px; border: 1px solid #ffffffb0; border-radius: 7px; background: linear-gradient(145deg, #4ee777, #0c7e4d); box-shadow: inset 0 2px 5px #fff9, 0 2px 3px #0005; }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile:nth-child(2) { background: linear-gradient(145deg, #ff70cd, #a71e8b); }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile:nth-child(3) { background: linear-gradient(145deg, #54e3ff, #0873bf); }
 .standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-icon { width: 20px; height: 20px; }
-.standard-design-thumb[data-design-id="violeta"] .standard-thumb-grid { gap: 2px; }
-.standard-design-thumb[data-design-id="violeta"] .standard-thumb-tile { min-height: 30px; border: 0; background: transparent; }
-.standard-design-thumb[data-design-id="violeta"] .standard-thumb-icon { width: 19px; height: 19px; border-radius: 0; background-image: linear-gradient(135deg, #ff8ddd, #a54cff 56%, #6ff4ff); mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
-.standard-design-thumb[data-design-id="violeta"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
-.standard-design-thumb[data-design-id="violeta"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
-.standard-design-thumb[data-design-id="noche"] .standard-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile { display: flex; min-height: 30px; flex-direction: row; justify-content: flex-start; padding: 3px; border-radius: 9px; background: #29377f; }
-.standard-design-thumb[data-design-id="noche"] .standard-thumb-icon { width: 16px; height: 16px; flex: 0 0 16px; border-radius: 0; background-image: linear-gradient(135deg, #9af8ff, #36cfff 48%, #9181ff); mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
-.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
-.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-grid { grid-template-columns: 1fr; gap: 1px; }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-tile { display: flex; min-height: 16px; flex-direction: row; justify-content: flex-start; gap: 4px; border: 0; border-bottom: 1px solid #65d8b266; border-radius: 0; background: transparent; }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-icon { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 0; background-image: linear-gradient(135deg, #c9ff74, #5ff2bc 56%, #21b8b0); mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
-.standard-design-thumb[data-design-id="natural"] .standard-thumb-label { font-size: 6px; }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-tile { min-height: 36px; background: linear-gradient(145deg,#fff,#f0e7ff); }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-tile:nth-child(3) { grid-column: 1 / -1; }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-icon { width: 19px; height: 19px; border-radius: 0; background-image: linear-gradient(140deg,#ff66b5,#a349ed 47%,#32cce9); mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
-.standard-design-thumb[data-design-id="claro"] .standard-thumb-label { color: var(--thumb-text); }
-.standard-design-thumb[data-design-id="coral"] .standard-thumb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile { display: flex; min-height: 27px; flex-direction: row; justify-content: flex-start; padding: 3px 5px; border-radius: 20px; background: linear-gradient(125deg,#bd327e,#6d236f 52%,#40205c); }
-.standard-design-thumb[data-design-id="coral"] .standard-thumb-icon { width: 15px; height: 15px; flex: 0 0 15px; border-radius: 0; background-image: linear-gradient(135deg,#ffe36d,#ff9c68 47%,#ff6ac4); mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
-.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/wine.svg"); }
-.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/footprints.svg"); }
+.standard-design-thumb[data-design-id="violeta"] .standard-thumb-tile { min-height: 38px; border: 1px solid #85858c; border-radius: 9px; background: linear-gradient(145deg, #5e5d64, #25242a); }
+.standard-design-thumb[data-design-id="violeta"] .standard-thumb-icon { width: 18px; height: 18px; background-image: linear-gradient(145deg, #fff, #d6d6de); }
+.standard-design-thumb[data-design-id="noche"] .standard-thumb-grid,
+.standard-design-thumb[data-design-id="natural"] .standard-thumb-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile,
+.standard-design-thumb[data-design-id="natural"] .standard-thumb-tile { min-height: 38px; border: 2px solid #c8d7e8; border-radius: 50%; background: radial-gradient(circle at 32% 23%, #ffffffc9 0 5%, transparent 24%), linear-gradient(145deg, #ffaf45, #db431b); }
+.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile:nth-child(2) { background: radial-gradient(circle at 32% 23%, #ffffffc9 0 5%, transparent 24%), linear-gradient(145deg, #ff70cd, #a71e8b); }
+.standard-design-thumb[data-design-id="noche"] .standard-thumb-tile:nth-child(3) { background: radial-gradient(circle at 32% 23%, #ffffffc9 0 5%, transparent 24%), linear-gradient(145deg, #54e3ff, #0873bf); }
+.standard-design-thumb[data-design-id="noche"] .standard-thumb-icon { width: 17px; height: 17px; }
+.standard-design-thumb[data-design-id="natural"] .standard-thumb-tile { border-color: #8dfaff; background: radial-gradient(circle at 32% 23%, #ffffffd9 0 5%, transparent 25%), linear-gradient(145deg, #32ddf3, #07579b); }
+.standard-design-thumb[data-design-id="natural"] .standard-thumb-icon { width: 17px; height: 17px; }
+.standard-design-thumb[data-design-id="claro"] .standard-thumb-tile { min-height: 38px; border: 1px solid transparent; border-radius: 7px; background: linear-gradient(#24113a, #24113a) padding-box, linear-gradient(135deg, #ff67d6, #35e6ff, #ffd553) border-box; box-shadow: 0 0 5px #b14cff99; }
+.standard-design-thumb[data-design-id="claro"] .standard-thumb-icon { width: 19px; height: 19px; background-image: linear-gradient(135deg, #ff77d9, #60e7ff 52%, #ffdc5d); }
+.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile { display: flex; min-height: 31px; flex-direction: row; justify-content: flex-start; padding: 3px 5px; border: 1px solid #ffffffb0; border-radius: 20px; background: linear-gradient(145deg, #ff70cd, #a71e8b); }
+.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile:nth-child(2) { background: linear-gradient(145deg, #54e3ff, #0873bf); }
+.standard-design-thumb[data-design-id="coral"] .standard-thumb-tile:nth-child(3) { background: linear-gradient(145deg, #ffc44b, #c84a14); }
+.standard-design-thumb[data-design-id="coral"] .standard-thumb-icon { width: 13px; height: 13px; flex: 0 0 13px; }
 .standard-design-thumb[data-design-id="coral"] .standard-thumb-label { font-size: 5px; color: #fff; }
-.standard-preview-screen .standard-design-thumb[data-design-id="natural"] .standard-thumb-label { font-size: 10px; }
+.standard-preview-screen .standard-design-thumb[data-design-id="natural"] .standard-thumb-icon { width: 22px; height: 22px; }
 .home-body .btn-admin .action-icon {
   background-image: url("/assets/ui/admin-glass.png");
 }

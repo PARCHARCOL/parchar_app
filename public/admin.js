@@ -1314,7 +1314,8 @@ function standardDesignById(designId) {
 function standardDesignStyle(design) {
   const keys = ["pageStart", "pageEnd", "shellStart", "shellEnd", "accent", "text", "softText", "line"];
   const styleKeys = ["--thumb-page-start", "--thumb-page-end", "--thumb-shell-start", "--thumb-shell-end", "--thumb-accent", "--thumb-text", "--thumb-soft-text", "--thumb-line"];
-  return keys.map((key, index) => `${styleKeys[index]}:${/^#[0-9a-f]{6}$/i.test(design?.[key] || "") ? design[key] : "#392074"}`).join(";");
+  const unchangedPage = standardDesigns.find((item) => item.id === "actual") || design;
+  return keys.map((key, index) => `${styleKeys[index]}:${/^#[0-9a-f]{6}$/i.test(unchangedPage?.[key] || "") ? unchangedPage[key] : "#392074"}`).join(";");
 }
 
 function standardDesignThumbMarkup(design) {
