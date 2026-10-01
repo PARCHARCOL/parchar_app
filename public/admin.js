@@ -1319,7 +1319,7 @@ function standardDesignStyle(design) {
 
 function standardDesignThumbMarkup(design) {
   return `
-    <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" data-design-id="${escapeHtml(design.id)}" style="${standardDesignStyle(design)}">
+    <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" data-layout="${escapeHtml(design.layout || "glass-grid")}" data-design-id="${escapeHtml(design.id)}" style="${standardDesignStyle(design)}">
       <span class="standard-thumb-shell">
         <span class="standard-thumb-head"><span>Parchar</span><span>⌕</span></span>
         <span class="standard-thumb-search"></span>
