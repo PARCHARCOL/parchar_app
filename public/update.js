@@ -43,36 +43,43 @@ function ensureUpdateBanner() {
 
   document.body.appendChild(banner);
 
-  banner
-    .querySelector("#app-update-now")
-    ?.addEventListener("click", () => {
-      updateRequested = true;
-      const updateButton = banner.querySelector(
-        "#app-update-now"
-      );
-      if (updateButton) {
-        updateButton.disabled = true;
-        updateButton.textContent = "Actualizando...";
-      }
+  const updateButton = banner.querySelector(
+    "#app-update-now"
+  );
+  const startUpdate = (event) => {
+    if (event.type === "pointerup") {
+      event.preventDefault();
+    }
+    if (updateRequested) {
+      return;
+    }
 
-      const waitingWorker =
-        updateRegistration?.waiting;
+    updateRequested = true;
+    if (updateButton) {
+      updateButton.disabled = true;
+      updateButton.textContent = "Actualizando...";
+    }
 
-      if (!waitingWorker) {
-        reloadForUpdate();
-        return;
-      }
-
+    const waitingWorker = updateRegistration?.waiting;
+    if (waitingWorker) {
       waitingWorker.postMessage({
         type: "SKIP_WAITING",
       });
+    }
 
-      window.clearTimeout(updateFallbackTimer);
-      updateFallbackTimer = window.setTimeout(
-        reloadForUpdate,
-        5000
-      );
-    });
+    // Oculta el aviso al aceptar y vuelve a solicitar la pagina al servidor.
+    // Esto evita que el banner quede bloqueado si el WebView movil no dispara
+    // controllerchange al activar el service worker.
+    banner.hidden = true;
+    window.clearTimeout(updateFallbackTimer);
+    updateFallbackTimer = window.setTimeout(
+      reloadForUpdate,
+      900
+    );
+  };
+
+  updateButton?.addEventListener("click", startUpdate);
+  updateButton?.addEventListener("pointerup", startUpdate);
 
   banner
     .querySelector("#app-update-later")
@@ -91,7 +98,9 @@ function reloadForUpdate() {
 
   updateReloading = true;
   window.clearTimeout(updateFallbackTimer);
-  window.location.reload();
+  const target = new URL(window.location.href);
+  target.searchParams.set("app-refresh", String(Date.now()));
+  window.location.replace(target.href);
 }
 
 function showUpdateBanner(registration) {
