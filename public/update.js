@@ -4,6 +4,8 @@ const UPDATE_CHECK_INTERVAL_MS =
 let updateRegistration = null;
 let updateDismissed = false;
 let updateReloading = false;
+let updateRequested = false;
+let updateFallbackTimer = null;
 const hadServiceWorkerController =
   Boolean(
     navigator.serviceWorker?.controller
@@ -44,17 +46,32 @@ function ensureUpdateBanner() {
   banner
     .querySelector("#app-update-now")
     ?.addEventListener("click", () => {
+      updateRequested = true;
+      const updateButton = banner.querySelector(
+        "#app-update-now"
+      );
+      if (updateButton) {
+        updateButton.disabled = true;
+        updateButton.textContent = "Actualizando...";
+      }
+
       const waitingWorker =
         updateRegistration?.waiting;
 
       if (!waitingWorker) {
-        window.location.reload();
+        reloadForUpdate();
         return;
       }
 
       waitingWorker.postMessage({
         type: "SKIP_WAITING",
       });
+
+      window.clearTimeout(updateFallbackTimer);
+      updateFallbackTimer = window.setTimeout(
+        reloadForUpdate,
+        5000
+      );
     });
 
   banner
@@ -65,6 +82,16 @@ function ensureUpdateBanner() {
     });
 
   return banner;
+}
+
+function reloadForUpdate() {
+  if (updateReloading) {
+    return;
+  }
+
+  updateReloading = true;
+  window.clearTimeout(updateFallbackTimer);
+  window.location.reload();
 }
 
 function showUpdateBanner(registration) {
@@ -154,14 +181,13 @@ navigator.serviceWorker?.addEventListener(
   "controllerchange",
   () => {
     if (
-      !hadServiceWorkerController ||
+      (!hadServiceWorkerController && !updateRequested) ||
       updateReloading
     ) {
       return;
     }
 
-    updateReloading = true;
-    window.location.reload();
+    reloadForUpdate();
   }
 );
 
