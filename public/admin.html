@@ -15,9 +15,9 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=134"
+      href="/styles.css?v=135"
     />
-    <script src="/theme.js?v=115" defer></script>
+    <script src="/theme.js?v=116" defer></script>
 
   </head>
 
@@ -414,8 +414,25 @@
         class="form-block glass-card admin-section-panel is-hidden admin-only"
         data-admin-section-panel="seasonal-design"
       >
-        <h2>Diseño de temporada</h2>
-        <p>Temas visuales discretos para fechas y temporadas comerciales de Colombia. Solo ajustan fondos y acentos; no cambian la estructura, el logo ni la publicidad.</p>
+        <h2>Diseño estándar de la app</h2>
+        <p class="standard-design-help">Compara seis apariencias y elige cuál usar en Parchar. La vista previa no cambia la app hasta que actives el diseño. El logo y el banner publicitario conservan su tamaño y configuración.</p>
+
+        <form id="standard-design-form">
+          <div id="standard-design-grid" class="standard-design-grid" aria-label="Seis diseños disponibles"></div>
+          <section id="standard-design-preview" class="standard-design-preview" aria-live="polite" hidden>
+            <h3 id="standard-design-preview-title"></h3>
+            <p id="standard-design-preview-note"></p>
+            <div id="standard-design-preview-screen" class="standard-preview-screen"></div>
+          </section>
+          <div class="admin-form-actions">
+            <button type="submit" class="submit-btn">Activar diseño seleccionado</button>
+          </div>
+          <p id="standard-design-message" class="feedback" role="status"></p>
+        </form>
+
+        <hr />
+        <h3>Diseño de temporada</h3>
+        <p>Calendario automático de acentos para fechas comerciales de Colombia. No modifica la estructura, el logo ni la publicidad.</p>
 
         <div id="seasonal-design-preview" class="seasonal-design-preview" aria-live="polite">
           <span class="seasonal-design-preview-swatch" aria-hidden="true"></span>
@@ -1381,7 +1398,7 @@
 
     <script src="/update.js?v=95"></script>
     <script src="/password-visibility.js?v=1"></script>
-    <script src="/admin.js?v=97"></script>
+    <script src="/admin.js?v=98"></script>
 
   </body>
 </html>

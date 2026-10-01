@@ -36,6 +36,11 @@ const {
   normalizeSeasonalSettings,
   publicSeasonalDesign,
 } = require("./lib/seasonal-design");
+const {
+  STANDARD_DESIGNS,
+  getStandardDesign,
+  normalizeStandardDesignId,
+} = require("./lib/standard-design");
 
 const PORT = Number(
   process.env.PORT || 8080
@@ -975,6 +980,28 @@ async function saveSeasonalDesignSettings(settings) {
       settings_json = EXCLUDED.settings_json,
       updated_at = CURRENT_TIMESTAMP
   `, [serialized]);
+}
+
+async function getStandardDesignSettings() {
+  const result = await pool.query(`
+    SELECT design_id
+    FROM standard_design_settings
+    WHERE id = 1
+    LIMIT 1
+  `);
+  return normalizeStandardDesignId(result.rows[0]?.design_id);
+}
+
+async function saveStandardDesignSettings(designId) {
+  const normalizedId = normalizeStandardDesignId(designId);
+  await pool.query(`
+    INSERT INTO standard_design_settings (id, design_id, updated_at)
+    VALUES (1, $1, CURRENT_TIMESTAMP)
+    ON CONFLICT (id) DO UPDATE SET
+      design_id = EXCLUDED.design_id,
+      updated_at = CURRENT_TIMESTAMP
+  `, [normalizedId]);
+  return normalizedId;
 }
 
 function parseDateOnly(value) {
@@ -5269,6 +5296,14 @@ async function initializeSqliteDatabase() {
   `);
 
   await pool.exec(`
+    CREATE TABLE IF NOT EXISTS standard_design_settings (
+      id INTEGER PRIMARY KEY,
+      design_id TEXT NOT NULL DEFAULT 'clasico',
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.exec(`
     CREATE TABLE IF NOT EXISTS ad_campaigns (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       advertiser_name TEXT NOT NULL,
@@ -5720,6 +5755,14 @@ async function initializeDatabase() {
   `);
 
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS standard_design_settings (
+      id INTEGER PRIMARY KEY,
+      design_id TEXT NOT NULL DEFAULT 'clasico',
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS ad_campaigns (
       id SERIAL PRIMARY KEY,
       advertiser_name TEXT NOT NULL,
@@ -6080,6 +6123,17 @@ const server =
           const settings = await getSeasonalDesignSettings();
           sendJson(res, 200, {
             theme: publicSeasonalDesign(settings).theme,
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/design/standard" &&
+          req.method === "GET"
+        ) {
+          const designId = await getStandardDesignSettings();
+          sendJson(res, 200, {
+            design: getStandardDesign(designId),
           });
           return;
         }
@@ -9900,6 +9954,38 @@ const server =
             ok: true,
             settings,
             activeTheme: publicSeasonalDesign(settings).theme,
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/admin/standard-design" &&
+          req.method === "GET"
+        ) {
+          if (!requireStaffRole(staffAuth, res, ["admin"])) return;
+          const activeDesignId = await getStandardDesignSettings();
+          sendJson(res, 200, {
+            designs: STANDARD_DESIGNS,
+            activeDesignId,
+          });
+          return;
+        }
+
+        if (
+          pathname === "/api/admin/standard-design" &&
+          req.method === "POST"
+        ) {
+          if (!requireStaffRole(staffAuth, res, ["admin"])) return;
+          const body = await parseJsonBody(req);
+          if (!STANDARD_DESIGNS.some((design) => design.id === body.designId)) {
+            sendJson(res, 400, { error: "Selecciona uno de los seis diseños disponibles." });
+            return;
+          }
+          const activeDesignId = await saveStandardDesignSettings(body.designId);
+          sendJson(res, 200, {
+            ok: true,
+            activeDesignId,
+            activeDesign: getStandardDesign(activeDesignId),
           });
           return;
         }

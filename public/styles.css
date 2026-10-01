@@ -3908,6 +3908,133 @@ html[data-tone-contrast="light"] .tone-control img {
 .home-body .btn-pautar .action-icon {
   background-image: url("/assets/ui/pautar-glass.png");
 }
+
+/* Standard designs configured by the admin; logo and ad banner are intentionally untouched. */
+html[data-standard-design]:not([data-standard-design="clasico"]) {
+  --text-main: var(--standard-text);
+  --text-soft: var(--standard-soft-text);
+  --line-soft: color-mix(in srgb, var(--standard-line) 56%, transparent);
+  --neon-gold: var(--standard-accent);
+  --season-accent: var(--standard-accent);
+  --season-border: var(--standard-line);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .theme-body {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--standard-page-start), white var(--tone-mix)),
+    color-mix(in srgb, var(--standard-page-end), white var(--tone-mix)));
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .theme-body .app-shell {
+  color: var(--standard-text);
+  background: linear-gradient(178deg,
+    color-mix(in srgb, var(--standard-shell-start), white var(--tone-mix)),
+    color-mix(in srgb, var(--standard-shell-end), white var(--tone-mix)) 72%);
+  border-color: color-mix(in srgb, var(--standard-line) 58%, transparent);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .top-strip {
+  background: color-mix(in srgb, var(--standard-shell-start) 94%, var(--standard-page-end));
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .search-bar {
+  border-color: color-mix(in srgb, var(--standard-line) 74%, transparent);
+  background: color-mix(in srgb, var(--standard-shell-end) 90%, var(--standard-shell-start));
+  color: var(--standard-text);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .search-bar input {
+  color: var(--standard-text);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn {
+  min-height: 158px;
+  padding: 11px 5px 9px;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--standard-line) 48%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--standard-shell-start) 24%, transparent);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--standard-page-end) 26%, transparent);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn:hover,
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--standard-accent) 78%, var(--standard-line));
+  background: color-mix(in srgb, var(--standard-shell-start) 46%, transparent);
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-label {
+  color: var(--standard-text);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.18;
+  text-wrap: balance;
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-icon {
+  width: 66px;
+  height: 66px;
+  border-radius: 17px;
+  background-color: color-mix(in srgb, var(--standard-accent) 14%, var(--standard-shell-start));
+  background-image: none;
+  background-size: contain;
+  background-position: center;
+  mask-size: contain;
+  mask-position: center;
+  mask-repeat: no-repeat;
+  filter: drop-shadow(0 3px 7px color-mix(in srgb, var(--standard-page-end) 48%, transparent));
+}
+
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-restaurante .action-icon { mask-image: url("/assets/ui/utensils.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-bar .action-icon { mask-image: url("/assets/ui/wine.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-walking .action-icon { mask-image: url("/assets/ui/footprints.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-bike .action-icon { mask-image: url("/assets/ui/bike.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-puebliar .action-icon { mask-image: url("/assets/ui/map-pinned.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-charcos .action-icon { mask-image: url("/assets/ui/waves.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-miradores .action-icon { mask-image: url("/assets/ui/mountain.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-burgermaster .action-icon { mask-image: url("/assets/ui/sandwich.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-clientes .action-icon { mask-image: url("/assets/ui/store.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-pautar .action-icon { mask-image: url("/assets/ui/megaphone.svg"); }
+html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-admin .action-icon { mask-image: url("/assets/ui/shield.svg"); }
+
+html[data-standard-design="claro"] .home-body .icon-ghost {
+  color: var(--standard-text);
+  background: color-mix(in srgb, var(--standard-shell-start) 70%, white);
+}
+
+.standard-design-help { margin: 0 0 14px; color: var(--text-soft); }
+.standard-design-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.standard-design-choice { min-width: 0; padding: 8px; border: 1px solid var(--line-soft); border-radius: 14px; color: var(--text-main); background: rgba(20, 8, 36, .22); text-align: left; cursor: pointer; }
+.standard-design-choice[aria-pressed="true"] { border-color: var(--neon-gold); box-shadow: 0 0 0 2px color-mix(in srgb, var(--neon-gold) 30%, transparent); }
+.standard-design-thumb { display: block; overflow: hidden; padding: 7px; border-radius: 10px; background: linear-gradient(155deg, var(--thumb-page-start), var(--thumb-page-end)); }
+.standard-thumb-shell { display: block; padding: 7px; border-radius: 9px; background: linear-gradient(160deg, var(--thumb-shell-start), var(--thumb-shell-end)); }
+.standard-thumb-head { display: flex; align-items: center; justify-content: space-between; height: 12px; color: var(--thumb-text); font-size: 8px; font-weight: 800; }
+.standard-thumb-search { display: block; height: 12px; margin: 5px 0 8px; border: 1px solid color-mix(in srgb, var(--thumb-line) 60%, transparent); border-radius: 8px; background: color-mix(in srgb, var(--thumb-page-end) 45%, transparent); }
+.standard-thumb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
+.standard-thumb-tile { display: grid; min-height: 33px; place-items: center; align-content: center; gap: 2px; border: 1px solid color-mix(in srgb, var(--thumb-line) 46%, transparent); border-radius: 6px; background: color-mix(in srgb, var(--thumb-shell-start) 36%, transparent); }
+.standard-thumb-icon { display: block; width: 15px; height: 15px; border-radius: 5px; background-color: var(--thumb-accent); background-image: url("/assets/ui/category-glass-atlas.png"); background-size: 310% 310%; background-position: 0 0; }
+.standard-thumb-tile:nth-child(2) .standard-thumb-icon { background-position: 47.5% 0; }
+.standard-thumb-tile:nth-child(3) .standard-thumb-icon { background-position: 95.5% 0; }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-icon { width: 13px; height: 13px; border-radius: 2px; background-image: none; mask: url("/assets/ui/utensils.svg") center / contain no-repeat; }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-tile:nth-child(2) .standard-thumb-icon { mask-image: url("/assets/ui/map-pinned.svg"); }
+.standard-design-thumb[data-icon-mode="line"] .standard-thumb-tile:nth-child(3) .standard-thumb-icon { mask-image: url("/assets/ui/waves.svg"); }
+.standard-thumb-label { display: block; width: 22px; height: 3px; border-radius: 3px; background: color-mix(in srgb, var(--thumb-text) 72%, transparent); }
+.standard-design-name { display: block; margin: 8px 2px 2px; font-size: .94rem; font-weight: 800; }
+.standard-design-note { display: block; margin: 0 2px 2px; color: var(--text-soft); font-size: .8rem; line-height: 1.3; }
+.standard-design-preview { margin-top: 16px; padding: 14px; border: 1px solid var(--line-soft); border-radius: 14px; background: rgba(20, 8, 36, .22); }
+.standard-design-preview[hidden] { display: none; }
+.standard-design-preview h3 { margin: 0 0 4px; }
+.standard-design-preview p { margin: 0 0 10px; color: var(--text-soft); }
+.standard-preview-screen { padding: 10px; border-radius: 13px; background: linear-gradient(155deg, var(--thumb-page-start), var(--thumb-page-end)); }
+.standard-preview-screen .standard-thumb-shell { padding: 12px; border-radius: 11px; }
+.standard-preview-screen .standard-thumb-head { height: 20px; font-size: 14px; }
+.standard-preview-screen .standard-thumb-search { height: 34px; border-radius: 18px; }
+.standard-preview-screen .standard-thumb-grid { gap: 8px; }
+.standard-preview-screen .standard-thumb-tile { min-height: 68px; gap: 5px; border-radius: 12px; }
+.standard-preview-screen .standard-thumb-icon { width: 30px; height: 30px; border-radius: 8px; }
+.standard-preview-screen .standard-design-thumb[data-icon-mode="line"] .standard-thumb-icon { width: 22px; height: 22px; }
+.standard-preview-screen .standard-thumb-label { width: 43px; height: 5px; }
+@media (min-width: 700px) { .standard-design-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .home-body .btn-admin .action-icon {
   background-image: url("/assets/ui/admin-glass.png");
 }

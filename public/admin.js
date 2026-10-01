@@ -125,6 +125,16 @@ const seasonalPreviewNote = document.querySelector("#seasonal-design-preview-not
 const seasonalPreviewStatus = document.querySelector("#seasonal-design-preview-status");
 let seasonalDesignThemes = [];
 let seasonalMonthNames = [];
+const standardDesignForm = document.querySelector("#standard-design-form");
+const standardDesignGrid = document.querySelector("#standard-design-grid");
+const standardDesignPreview = document.querySelector("#standard-design-preview");
+const standardDesignPreviewTitle = document.querySelector("#standard-design-preview-title");
+const standardDesignPreviewNote = document.querySelector("#standard-design-preview-note");
+const standardDesignPreviewScreen = document.querySelector("#standard-design-preview-screen");
+const standardDesignMessage = document.querySelector("#standard-design-message");
+let standardDesigns = [];
+let activeStandardDesignId = "clasico";
+let draftStandardDesignId = "clasico";
 
 const tabs = document.querySelectorAll(
   ".admin-tab"
@@ -1294,6 +1304,93 @@ async function loadBrandSettings() {
       error.message,
       true
     );
+  }
+}
+
+function standardDesignById(designId) {
+  return standardDesigns.find((design) => design.id === designId) || null;
+}
+
+function standardDesignStyle(design) {
+  const keys = ["pageStart", "pageEnd", "shellStart", "shellEnd", "accent", "text", "softText", "line"];
+  const styleKeys = ["--thumb-page-start", "--thumb-page-end", "--thumb-shell-start", "--thumb-shell-end", "--thumb-accent", "--thumb-text", "--thumb-soft-text", "--thumb-line"];
+  return keys.map((key, index) => `${styleKeys[index]}:${/^#[0-9a-f]{6}$/i.test(design?.[key] || "") ? design[key] : "#392074"}`).join(";");
+}
+
+function standardDesignThumbMarkup(design) {
+  return `
+    <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" style="${standardDesignStyle(design)}">
+      <span class="standard-thumb-shell">
+        <span class="standard-thumb-head"><span>Parchar</span><span>⌕</span></span>
+        <span class="standard-thumb-search"></span>
+        <span class="standard-thumb-grid">
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
+        </span>
+      </span>
+    </div>`;
+}
+
+function renderStandardDesignChoices() {
+  if (!standardDesignGrid) return;
+  standardDesignGrid.innerHTML = standardDesigns.map((design) => `
+    <button type="button" class="standard-design-choice" data-standard-design-option="${escapeHtml(design.id)}" aria-pressed="${design.id === draftStandardDesignId}">
+      ${standardDesignThumbMarkup(design)}
+      <span class="standard-design-name">${escapeHtml(design.name)}${design.id === activeStandardDesignId ? " · Activo" : ""}</span>
+      <span class="standard-design-note">${escapeHtml(design.note)}</span>
+    </button>
+  `).join("");
+}
+
+function updateStandardDesignPreview(designId) {
+  const design = standardDesignById(designId);
+  if (!design) return;
+  draftStandardDesignId = design.id;
+  if (standardDesignPreviewTitle) standardDesignPreviewTitle.textContent = design.name;
+  if (standardDesignPreviewNote) standardDesignPreviewNote.textContent = design.note;
+  if (standardDesignPreviewScreen) {
+    standardDesignPreviewScreen.innerHTML = standardDesignThumbMarkup(design);
+  }
+  if (standardDesignPreview) standardDesignPreview.hidden = false;
+  renderStandardDesignChoices();
+}
+
+async function loadStandardDesignSettings() {
+  if (!standardDesignForm || !isAdmin()) return;
+  try {
+    const response = await staffFetch("/api/admin/standard-design");
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "No se pudieron cargar los diseños.");
+    standardDesigns = data.designs || [];
+    activeStandardDesignId = data.activeDesignId || "clasico";
+    draftStandardDesignId = activeStandardDesignId;
+    renderStandardDesignChoices();
+    updateStandardDesignPreview(activeStandardDesignId);
+    setFeedback(standardDesignMessage, "Diseño activo cargado.");
+  } catch (error) {
+    setFeedback(standardDesignMessage, error.message, true);
+  }
+}
+
+async function saveStandardDesignSettings(event) {
+  event.preventDefault();
+  if (!standardDesignForm || !isAdmin() || !standardDesignById(draftStandardDesignId)) return;
+  setFeedback(standardDesignMessage, "Activando diseño en Parchar...");
+  try {
+    const response = await staffFetch("/api/admin/standard-design", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ designId: draftStandardDesignId }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "No se pudo activar el diseño.");
+    activeStandardDesignId = data.activeDesignId;
+    renderStandardDesignChoices();
+    updateStandardDesignPreview(activeStandardDesignId);
+    setFeedback(standardDesignMessage, "Diseño activado. Se actualizará en las demás sesiones automáticamente.");
+  } catch (error) {
+    setFeedback(standardDesignMessage, error.message, true);
   }
 }
 
@@ -4843,6 +4940,9 @@ async function loadDashboardData({
     tasks.push(
       loadSeasonalDesignSettings()
     );
+    tasks.push(
+      loadStandardDesignSettings()
+    );
   } else if (currentStaff?.role === "publicidad") {
     tasks.push(
       loadAdRequests({
@@ -5071,6 +5171,11 @@ seasonalDesignForm?.addEventListener("submit", (event) => {
 seasonalDesignForm?.addEventListener("input", updateSeasonalDesignControls);
 seasonalDesignForm?.addEventListener("change", updateSeasonalDesignControls);
 seasonalDesignReset?.addEventListener("click", restoreInitialSeasonalDesign);
+standardDesignGrid?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-standard-design-option]");
+  if (button) updateStandardDesignPreview(button.dataset.standardDesignOption);
+});
+standardDesignForm?.addEventListener("submit", saveStandardDesignSettings);
 
 refreshStaffUsersButton?.addEventListener(
   "click",

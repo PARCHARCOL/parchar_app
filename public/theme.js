@@ -1,6 +1,7 @@
 const toneStorageKey = "parchar-background-tone";
 const readingScaleStorageKey = "parchar-reading-scale-v1";
 const seasonalThemeStorageKey = "parchar-seasonal-theme-v1";
+const standardDesignStorageKey = "parchar-standard-design-v1";
 const defaultSeasonalPalette = {
   id: "default",
   accent: "#e5c77a",
@@ -19,6 +20,29 @@ function applySeasonalTheme(theme) {
   root.style.setProperty("--season-surface", safeTheme.surface);
   root.style.setProperty("--season-deep", safeTheme.deep);
   root.style.setProperty("--season-border", safeTheme.border);
+}
+
+function applyStandardDesign(design) {
+  const root = document.documentElement;
+  const keys = ["pageStart", "pageEnd", "shellStart", "shellEnd", "accent", "text", "softText", "line"];
+  const valid = design && typeof design.id === "string" && keys.every((key) => /^#[0-9a-f]{6}$/i.test(design[key] || ""));
+  if (!valid) return;
+  root.dataset.standardDesign = design.id;
+  root.style.setProperty("--standard-page-start", design.pageStart);
+  root.style.setProperty("--standard-page-end", design.pageEnd);
+  root.style.setProperty("--standard-shell-start", design.shellStart);
+  root.style.setProperty("--standard-shell-end", design.shellEnd);
+  root.style.setProperty("--standard-accent", design.accent);
+  root.style.setProperty("--standard-text", design.text);
+  root.style.setProperty("--standard-soft-text", design.softText);
+  root.style.setProperty("--standard-line", design.line);
+}
+
+try {
+  const cachedDesign = localStorage.getItem(standardDesignStorageKey);
+  if (cachedDesign) applyStandardDesign(JSON.parse(cachedDesign));
+} catch {
+  // Use the default Parchar design when local storage is unavailable.
 }
 
 try {
@@ -43,6 +67,23 @@ async function refreshSeasonalTheme() {
 
 refreshSeasonalTheme();
 window.addEventListener("focus", refreshSeasonalTheme);
+
+async function refreshStandardDesign() {
+  try {
+    const response = await fetch("/api/design/standard", { cache: "no-store" });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!data.design) return;
+    applyStandardDesign(data.design);
+    localStorage.setItem(standardDesignStorageKey, JSON.stringify(data.design));
+  } catch {
+    // Keep the last downloaded design, or the built-in Parchar design.
+  }
+}
+
+refreshStandardDesign();
+window.addEventListener("focus", refreshStandardDesign);
+window.setInterval(refreshStandardDesign, 30 * 1000);
 
 function scheduleSeasonalMonthRefresh() {
   const parts = Object.fromEntries(new Intl.DateTimeFormat("en-US", {
