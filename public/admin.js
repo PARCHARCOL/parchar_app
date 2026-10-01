@@ -133,8 +133,8 @@ const standardDesignPreviewNote = document.querySelector("#standard-design-previ
 const standardDesignPreviewScreen = document.querySelector("#standard-design-preview-screen");
 const standardDesignMessage = document.querySelector("#standard-design-message");
 let standardDesigns = [];
-let activeStandardDesignId = "clasico";
-let draftStandardDesignId = "clasico";
+let activeStandardDesignId = "actual";
+let draftStandardDesignId = "actual";
 
 const tabs = document.querySelectorAll(
   ".admin-tab"
@@ -1319,14 +1319,14 @@ function standardDesignStyle(design) {
 
 function standardDesignThumbMarkup(design) {
   return `
-    <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" style="${standardDesignStyle(design)}">
+    <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" data-design-id="${escapeHtml(design.id)}" style="${standardDesignStyle(design)}">
       <span class="standard-thumb-shell">
         <span class="standard-thumb-head"><span>Parchar</span><span>⌕</span></span>
         <span class="standard-thumb-search"></span>
         <span class="standard-thumb-grid">
-          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
-          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
-          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label"></span></span>
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label">A pie</span></span>
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label">Bares</span></span>
+          <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label">Rutas</span></span>
         </span>
       </span>
     </div>`;
@@ -1363,7 +1363,7 @@ async function loadStandardDesignSettings() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error || "No se pudieron cargar los diseños.");
     standardDesigns = data.designs || [];
-    activeStandardDesignId = data.activeDesignId || "clasico";
+    activeStandardDesignId = data.activeDesignId || "actual";
     draftStandardDesignId = activeStandardDesignId;
     renderStandardDesignChoices();
     updateStandardDesignPreview(activeStandardDesignId);

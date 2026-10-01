@@ -3910,7 +3910,7 @@ html[data-tone-contrast="light"] .tone-control img {
 }
 
 /* Standard designs configured by the admin; logo and ad banner are intentionally untouched. */
-html[data-standard-design]:not([data-standard-design="clasico"]) {
+html[data-standard-design]:not([data-standard-design="actual"]) {
   --text-main: var(--standard-text);
   --text-soft: var(--standard-soft-text);
   --line-soft: color-mix(in srgb, var(--standard-line) 56%, transparent);
@@ -3919,13 +3919,13 @@ html[data-standard-design]:not([data-standard-design="clasico"]) {
   --season-border: var(--standard-line);
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .theme-body {
+html[data-standard-design]:not([data-standard-design="actual"]) .theme-body {
   background: linear-gradient(160deg,
     color-mix(in srgb, var(--standard-page-start), white var(--tone-mix)),
     color-mix(in srgb, var(--standard-page-end), white var(--tone-mix)));
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .theme-body .app-shell {
+html[data-standard-design]:not([data-standard-design="actual"]) .theme-body .app-shell {
   color: var(--standard-text);
   background: linear-gradient(178deg,
     color-mix(in srgb, var(--standard-shell-start), white var(--tone-mix)),
@@ -3933,37 +3933,42 @@ html[data-standard-design]:not([data-standard-design="clasico"]) .theme-body .ap
   border-color: color-mix(in srgb, var(--standard-line) 58%, transparent);
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .top-strip {
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .top-strip {
   background: color-mix(in srgb, var(--standard-shell-start) 94%, var(--standard-page-end));
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .search-bar {
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .search-bar {
   border-color: color-mix(in srgb, var(--standard-line) 74%, transparent);
   background: color-mix(in srgb, var(--standard-shell-end) 90%, var(--standard-shell-start));
   color: var(--standard-text);
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .search-bar input {
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .search-bar input {
   color: var(--standard-text);
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn {
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-btn {
   min-height: 158px;
-  padding: 11px 5px 9px;
-  gap: 7px;
-  border: 1px solid color-mix(in srgb, var(--standard-line) 48%, transparent);
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--standard-shell-start) 24%, transparent);
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--standard-page-end) 26%, transparent);
+  padding: 10px 5px 9px;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--standard-accent) 46%, var(--standard-line));
+  border-radius: 19px;
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--standard-shell-start) 74%, white 8%),
+    color-mix(in srgb, var(--standard-shell-end) 90%, var(--standard-page-end)));
+  box-shadow: inset 0 2px 12px rgba(255,255,255,.13),
+    0 7px 20px color-mix(in srgb, var(--standard-accent) 22%, transparent);
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn:hover,
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-btn:focus-visible {
-  border-color: color-mix(in srgb, var(--standard-accent) 78%, var(--standard-line));
-  background: color-mix(in srgb, var(--standard-shell-start) 46%, transparent);
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-btn:hover,
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-btn:focus-visible {
+  border-color: color-mix(in srgb, var(--standard-accent) 84%, white);
+  background: linear-gradient(155deg,
+    color-mix(in srgb, var(--standard-shell-start) 68%, white 16%),
+    color-mix(in srgb, var(--standard-shell-end) 82%, var(--standard-accent)));
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-label {
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-label {
   color: var(--standard-text);
   font-size: 1rem;
   font-weight: 700;
@@ -3971,31 +3976,21 @@ html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .act
   text-wrap: balance;
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .action-icon {
-  width: 66px;
-  height: 66px;
-  border-radius: 17px;
-  background-color: color-mix(in srgb, var(--standard-accent) 14%, var(--standard-shell-start));
-  background-image: none;
-  background-size: contain;
-  background-position: center;
-  mask-size: contain;
-  mask-position: center;
-  mask-repeat: no-repeat;
-  filter: drop-shadow(0 3px 7px color-mix(in srgb, var(--standard-page-end) 48%, transparent));
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 16px;
+  background-color: transparent;
+  background-image: url("/assets/ui/category-glass-atlas.png");
+  background-size: 310% 310%;
+  background-position: var(--icon-x) var(--icon-y);
+  filter: saturate(1.16) brightness(1.05)
+    drop-shadow(0 3px 7px color-mix(in srgb, var(--standard-accent) 45%, transparent));
 }
 
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-restaurante .action-icon { mask-image: url("/assets/ui/utensils.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-bar .action-icon { mask-image: url("/assets/ui/wine.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-walking .action-icon { mask-image: url("/assets/ui/footprints.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-bike .action-icon { mask-image: url("/assets/ui/bike.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-puebliar .action-icon { mask-image: url("/assets/ui/map-pinned.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-charcos .action-icon { mask-image: url("/assets/ui/waves.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-miradores .action-icon { mask-image: url("/assets/ui/mountain.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-burgermaster .action-icon { mask-image: url("/assets/ui/sandwich.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-clientes .action-icon { mask-image: url("/assets/ui/store.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-pautar .action-icon { mask-image: url("/assets/ui/megaphone.svg"); }
-html[data-standard-design]:not([data-standard-design="clasico"]) .home-body .btn-admin .action-icon { mask-image: url("/assets/ui/shield.svg"); }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-charcos .action-icon { background-image: url("/assets/ui/charcos-waterfall-glass.png"); background-size: contain; background-position: center; }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-pautar .action-icon { background-image: url("/assets/ui/pautar-glass.png"); background-size: 104% 104%; background-position: center; }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-admin .action-icon { background-image: url("/assets/ui/admin-glass.png"); background-size: 104% 104%; background-position: center; }
 
 html[data-standard-design="claro"] .home-body .icon-ghost {
   color: var(--standard-text);

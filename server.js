@@ -5298,7 +5298,7 @@ async function initializeSqliteDatabase() {
   await pool.exec(`
     CREATE TABLE IF NOT EXISTS standard_design_settings (
       id INTEGER PRIMARY KEY,
-      design_id TEXT NOT NULL DEFAULT 'clasico',
+      design_id TEXT NOT NULL DEFAULT 'actual',
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -5757,7 +5757,7 @@ async function initializeDatabase() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS standard_design_settings (
       id INTEGER PRIMARY KEY,
-      design_id TEXT NOT NULL DEFAULT 'clasico',
+      design_id TEXT NOT NULL DEFAULT 'actual',
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
@@ -9978,7 +9978,7 @@ const server =
           if (!requireStaffRole(staffAuth, res, ["admin"])) return;
           const body = await parseJsonBody(req);
           if (!STANDARD_DESIGNS.some((design) => design.id === body.designId)) {
-            sendJson(res, 400, { error: "Selecciona uno de los seis diseños disponibles." });
+            sendJson(res, 400, { error: "Selecciona uno de los siete diseños disponibles." });
             return;
           }
           const activeDesignId = await saveStandardDesignSettings(body.designId);
