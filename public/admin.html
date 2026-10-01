@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=133"
+      href="/styles.css?v=134"
     />
     <script src="/theme.js?v=115" defer></script>
 
@@ -92,6 +92,15 @@
           </button>
 
         </form>
+
+        <div class="auth-links staff-recovery-links">
+          <button type="button" class="text-btn" id="staff-forgot-password">
+            Olvidé mi clave
+          </button>
+        </div>
+        <p id="staff-recovery-help" class="field-hint" hidden>
+          Pide al administrador de Parchar que restablezca tu clave. Si eres el administrador principal, contacta al responsable técnico del sistema.
+        </p>
 
         <p
           id="staff-login-message"
@@ -640,6 +649,12 @@
           activos, pausados o rechazados.
         </p>
 
+        <nav class="admin-category-nav" aria-label="Categorias de locales" id="admin-business-category-nav">
+          <button type="button" class="admin-category-tab active" data-admin-business-category="todos">Todos los locales <span class="admin-tab-badge" data-admin-alert-count="business:todos">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-business-category="restaurante">Restaurantes <span class="admin-tab-badge" data-admin-alert-count="business:restaurante">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-business-category="bar">Bares <span class="admin-tab-badge" data-admin-alert-count="business:bar">0</span></button>
+        </nav>
+
         <div class="admin-tabs">
 
           <button
@@ -699,9 +714,9 @@
 
       <section
         id="admin-sites-section"
-        class="form-block glass-card admin-section-panel is-hidden"
+        class="form-block glass-card admin-section-panel is-hidden admin-only"
         data-admin-section-panel="sites"
-        data-role-access="admin,asesor"
+        data-role-access="admin"
       >
 
         <h2>
@@ -711,6 +726,22 @@
         <p>
           Aqui se sube la informacion que alimenta los botones Charcos, Miradores, Puebliar, BurgerMaster y En bici: lugares naturales, pueblos, rutas, restaurantes de evento, ciclorutas y paradas ciclistas.
         </p>
+
+        <nav class="admin-category-nav" aria-label="Categorias de sitios" id="admin-site-category-nav">
+          <button type="button" class="admin-category-tab active" data-admin-site-category="charco">Charcos <span class="admin-tab-badge" data-admin-alert-count="site:charco">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="pueblo">Pueblos <span class="admin-tab-badge" data-admin-alert-count="site:pueblo">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="mirador">Miradores <span class="admin-tab-badge" data-admin-alert-count="site:mirador">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="cicloruta">Ciclorutas <span class="admin-tab-badge" data-admin-alert-count="site:cicloruta">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="ruta_bici">Rutas en bici <span class="admin-tab-badge" data-admin-alert-count="site:ruta_bici">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="parada_ciclista">Paradas ciclistas <span class="admin-tab-badge" data-admin-alert-count="site:parada_ciclista">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="parque">Parques <span class="admin-tab-badge" data-admin-alert-count="site:parque">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="ruta_pueblo">Rutas a pueblos <span class="admin-tab-badge" data-admin-alert-count="site:ruta_pueblo">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="burgermaster">BurgerMaster <span class="admin-tab-badge" data-admin-alert-count="site:burgermaster">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-site-category="naturaleza">Naturaleza <span class="admin-tab-badge" data-admin-alert-count="site:naturaleza">0</span></button>
+          <button type="button" class="admin-category-tab admin-category-create" data-admin-site-category="crear">Crear sitio</button>
+        </nav>
+
+        <div id="admin-site-create-panel" class="admin-category-panel" hidden>
 
         <div class="admin-import-panel">
           <strong>
@@ -928,8 +959,12 @@
           class="feedback"
         ></p>
 
+        </div>
+
+        <div id="admin-site-list-panel" class="admin-category-panel">
+
         <div class="my-businesses-head staff-users-head">
-          <h3>
+          <h3 id="admin-site-list-title">
             Sitios cargados
           </h3>
 
@@ -951,6 +986,8 @@
           </p>
         </div>
 
+        </div>
+
       </section>
 
       <section
@@ -968,7 +1005,13 @@
           Crea campanas con fechas, prioridad y rotacion automatica en el banner.
         </p>
 
-        <div class="marketing-only">
+        <nav class="admin-category-nav" aria-label="Categorias de publicidad" id="admin-ads-category-nav">
+          <button type="button" class="admin-category-tab active" data-admin-ads-panel="requests">Solicitudes de pauta <span class="admin-tab-badge" data-admin-alert-count="adRequests">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-ads-panel="publicistRequests">Servicio de publicista <span class="admin-tab-badge" data-admin-alert-count="publicistRequests">0</span></button>
+          <button type="button" class="admin-category-tab" data-admin-ads-panel="campaigns">Crear y administrar pautas <span class="admin-tab-badge" data-admin-alert-count="campaigns">0</span></button>
+        </nav>
+
+        <div id="admin-ads-campaigns-panel" class="admin-category-panel marketing-only" hidden>
           <div class="ad-admin-guide">
             <strong>
               Recomendacion de pauta
@@ -1210,9 +1253,12 @@
           </div>
         </div>
 
-        <div class="my-businesses-head ad-requests-head marketing-only">
+        </div>
+
+        <div id="admin-ads-requests-panel" class="admin-category-panel marketing-only">
+        <div class="my-businesses-head ad-requests-head">
           <h3>
-            Solicitudes de pauta
+            <span id="admin-ad-requests-title">Solicitudes de pauta</span>
             <span
               class="admin-heading-badge"
               data-admin-alert-count="adRequests"
@@ -1230,12 +1276,14 @@
 
         <div
           id="admin-ad-request-list"
-          class="admin-list marketing-only"
+          class="admin-list"
         >
 
           <p class="loading">
             Cargando solicitudes...
           </p>
+
+        </div>
 
         </div>
 
@@ -1332,7 +1380,8 @@
     </main>
 
     <script src="/update.js?v=93"></script>
-    <script src="/admin.js?v=95"></script>
+    <script src="/password-visibility.js?v=1"></script>
+    <script src="/admin.js?v=97"></script>
 
   </body>
 </html>

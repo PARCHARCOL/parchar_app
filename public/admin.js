@@ -5,6 +5,27 @@ const businessSummary =
   document.querySelector(
     "#admin-business-summary"
   );
+const businessCategoryButtons = document.querySelectorAll(
+  "[data-admin-business-category]"
+);
+const siteCategoryButtons = document.querySelectorAll(
+  "[data-admin-site-category]"
+);
+const adsPanelButtons = document.querySelectorAll(
+  "[data-admin-ads-panel]"
+);
+const siteCreatePanel = document.querySelector("#admin-site-create-panel");
+const siteListPanel = document.querySelector("#admin-site-list-panel");
+const siteListTitle = document.querySelector("#admin-site-list-title");
+const adsCampaignsPanel = document.querySelector("#admin-ads-campaigns-panel");
+const adsRequestsPanel = document.querySelector("#admin-ads-requests-panel");
+const adRequestsTitle = document.querySelector("#admin-ad-requests-title");
+const staffForgotPasswordButton = document.querySelector(
+  "#staff-forgot-password"
+);
+const staffRecoveryHelp = document.querySelector(
+  "#staff-recovery-help"
+);
 
 const STAFF_SESSION_KEY =
   "parchar_staff_session";
@@ -228,6 +249,9 @@ const adminAlertCards =
 
 let currentStatus =
   "pendiente";
+let currentBusinessCategory = "todos";
+let currentSiteCategory = "charco";
+let currentAdsPanel = "requests";
 let currentAdminSection =
   "businesses";
 let staffToken = "";
@@ -247,7 +271,7 @@ let adminSoundEnabled =
     ADMIN_SOUND_PREF_KEY
   ) !== "false";
 
-const ADMIN_ALERT_POLL_MS = 45000;
+const ADMIN_ALERT_POLL_MS = 15000;
 
 const BUSINESS_STATUS_LABELS = {
   todos: "Todos",
@@ -262,6 +286,18 @@ const SITE_STATUS_PRIORITY = {
   rechazado: 1,
   activo: 2,
 };
+const SITE_CATEGORY_KEYS = [
+  "charco",
+  "pueblo",
+  "mirador",
+  "cicloruta",
+  "ruta_bici",
+  "parada_ciclista",
+  "parque",
+  "ruta_pueblo",
+  "burgermaster",
+  "naturaleza",
+];
 
 function escapeHtml(value) {
 
@@ -430,6 +466,17 @@ function getOpenAdRequests() {
   );
 }
 
+function adRequestNeedsPublicist(item) {
+  return item?.needs_publicist === true ||
+    item?.needs_publicist === 1 ||
+    item?.needs_publicist === "1" ||
+    item?.needs_publicist === "true";
+}
+
+function getOpenPublicistRequests() {
+  return getOpenAdRequests().filter(adRequestNeedsPublicist);
+}
+
 function getPendingBusinesses() {
   return currentBusinesses.filter(
     (item) =>
@@ -449,6 +496,26 @@ function getSitesForReview() {
     (item) =>
       item.status === "pausado"
   );
+}
+
+function normalizeAdminSiteCategory(value) {
+  const category = String(value || "").trim().toLowerCase();
+  if (category === "ruta_moto") return "ruta_pueblo";
+  return category;
+}
+
+function getPendingBusinessCategoryCount(category) {
+  return getPendingBusinesses().filter((item) =>
+    category === "todos"
+      ? true
+      : String(item.category || "").trim().toLowerCase() === category
+  ).length;
+}
+
+function getSiteReviewCount(category) {
+  return getSitesForReview().filter(
+    (item) => normalizeAdminSiteCategory(item.siteType) === category
+  ).length;
 }
 
 function getMaxNumericId(items) {
@@ -487,18 +554,23 @@ function getAdminAlertSnapshot() {
     getPendingBusinesses();
   const openAdRequests =
     getOpenAdRequests();
-  const publicistRequests =
-    openAdRequests.filter(
-      (item) =>
-        item.needs_publicist === true ||
-        item.needs_publicist === 1 ||
-        item.needs_publicist === "1" ||
-        item.needs_publicist === "true"
-    );
+  const publicistRequests = getOpenPublicistRequests();
+  const standardAdRequests = openAdRequests.filter(
+    (item) => !adRequestNeedsPublicist(item)
+  );
   const activeReviews =
     getActiveReviews();
   const sitesForReview =
     getSitesForReview();
+  const categoryCounts = {
+    "business:todos": getPendingBusinessCategoryCount("todos"),
+    "business:restaurante": getPendingBusinessCategoryCount("restaurante"),
+    "business:bar": getPendingBusinessCategoryCount("bar"),
+    campaigns: currentAdCampaigns.length,
+  };
+  SITE_CATEGORY_KEYS.forEach((category) => {
+    categoryCounts[`site:${category}`] = getSiteReviewCount(category);
+  });
   const reportCount =
     currentReviews.reduce(
       (total, item) =>
@@ -514,7 +586,7 @@ function getAdminAlertSnapshot() {
       businesses:
         pendingBusinesses.length,
       adRequests:
-        openAdRequests.length,
+        standardAdRequests.length,
       publicistRequests:
         publicistRequests.length,
       reviews:
@@ -522,6 +594,7 @@ function getAdminAlertSnapshot() {
       sites:
         sitesForReview.length,
       reports: reportCount,
+      ...categoryCounts,
     },
     markers: {
       businesses:
@@ -530,7 +603,7 @@ function getAdminAlertSnapshot() {
         ),
       adRequests:
         getMaxNumericId(
-          openAdRequests
+          standardAdRequests
         ),
       publicistRequests:
         getMaxNumericId(
@@ -548,6 +621,31 @@ function getAdminAlertSnapshot() {
         `${reportCount}:${getLatestReportMarker(
           currentReviews
         )}`,
+      ...Object.fromEntries(
+        Object.entries(categoryCounts).map(([key]) => {
+          if (key.startsWith("business:")) {
+            const category = key.split(":")[1];
+            return [
+              key,
+              getMaxNumericId(
+                category === "todos"
+                  ? getPendingBusinesses()
+                  : getPendingBusinesses().filter(
+                      (item) =>
+                        String(item.category || "").trim().toLowerCase() === category
+                    )
+              ),
+            ];
+          }
+          if (key.startsWith("site:")) {
+            const category = key.split(":")[1];
+            return [key, getMaxNumericId(getSitesForReview().filter(
+              (item) => normalizeAdminSiteCategory(item.siteType) === category
+            ))];
+          }
+          return [key, getMaxNumericId(currentAdCampaigns)];
+        })
+      ),
     },
   };
 }
@@ -562,6 +660,7 @@ function hasNewAdminAlert(
 
   return Object.keys(next.counts).some(
     (key) => {
+      if (key === "campaigns") return false;
       const previousCount =
         previous.counts[key] || 0;
       const nextCount =
@@ -606,6 +705,13 @@ function updateAdminSoundButton() {
   );
 }
 
+function getPrimaryAdminAlertTotal(counts = {}) {
+  return Object.entries(counts).reduce((total, [key, value]) => {
+    if (key.includes(":") || key === "campaigns") return total;
+    return total + Number(value || 0);
+  }, 0);
+}
+
 function renderAdminAlertCenter(
   snapshot
 ) {
@@ -636,17 +742,75 @@ function renderAdminAlertCenter(
     );
   });
 
-  const total =
-    Object.values(counts).reduce(
-      (sum, value) =>
-        sum + Number(value || 0),
-      0
-    );
+  const total = getPrimaryAdminAlertTotal(counts);
 
   document.title =
     total > 0
       ? `(${total}) Admin | Parchar`
       : "Admin | Parchar";
+}
+
+function updateAdminCategoryButtons(buttons, attribute, selectedValue) {
+  buttons.forEach((button) => {
+    const isActive = button.dataset[attribute] === selectedValue;
+    button.classList.toggle("active", isActive);
+    button.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function openBusinessCategory(category) {
+  currentBusinessCategory = category;
+  updateAdminCategoryButtons(
+    businessCategoryButtons,
+    "adminBusinessCategory",
+    category
+  );
+  renderBusinesses(currentBusinesses);
+}
+
+function openSiteCategory(category) {
+  if (!isAdmin()) return;
+  if (category === "crear") {
+    resetSiteForm();
+    if (siteForm?.elements.siteType) {
+      siteForm.elements.siteType.value = currentSiteCategory;
+    }
+    if (siteCreatePanel) siteCreatePanel.hidden = false;
+    if (siteListPanel) siteListPanel.hidden = true;
+  } else {
+    currentSiteCategory = category;
+    if (siteCreatePanel) siteCreatePanel.hidden = true;
+    if (siteListPanel) siteListPanel.hidden = false;
+    renderSites(currentOpenSites);
+  }
+  updateAdminCategoryButtons(
+    siteCategoryButtons,
+    "adminSiteCategory",
+    category
+  );
+}
+
+function openAdsPanel(panel) {
+  if (!canManageAds()) return;
+  currentAdsPanel = ["campaigns", "publicistRequests"].includes(panel)
+    ? panel
+    : "requests";
+  if (adsCampaignsPanel) {
+    adsCampaignsPanel.hidden = currentAdsPanel !== "campaigns";
+  }
+  if (adsRequestsPanel) {
+    adsRequestsPanel.hidden = currentAdsPanel === "campaigns";
+  }
+  if (adRequestsTitle) {
+    adRequestsTitle.textContent = currentAdsPanel === "publicistRequests"
+      ? "Solicitudes de servicio de publicista"
+      : "Solicitudes de pauta";
+  }
+  updateAdminCategoryButtons(
+    adsPanelButtons,
+    "adminAdsPanel",
+    currentAdsPanel
+  );
 }
 
 function updateAdminAlertCenter({
@@ -671,12 +835,7 @@ function updateAdminAlertCenter({
 
   const counts =
     nextSnapshot.counts;
-  const total =
-    Object.values(counts).reduce(
-      (sum, value) =>
-        sum + Number(value || 0),
-      0
-    );
+  const total = getPrimaryAdminAlertTotal(counts);
 
   setAdminAlertStatus(
     notify && shouldNotify &&
@@ -1045,6 +1204,7 @@ function showAdminDashboard() {
   );
   syncStaffRoleFields();
   updateAdminSoundButton();
+  openAdsPanel(currentAdsPanel);
   setDefaultCampaignDates();
   syncAdCreativeFields();
 }
@@ -1510,7 +1670,7 @@ tabs.forEach((tab) => {
       currentStatus =
         tab.dataset.status;
 
-      loadBusinesses();
+      renderBusinesses(currentBusinesses);
     }
   );
 });
@@ -1902,13 +2062,18 @@ function renderBusinesses(items) {
   currentBusinesses =
     items || [];
 
-  renderBusinessSummary(
-    currentBusinesses
-  );
-
+  const filteredByCategory =
+    currentBusinessCategory === "todos"
+      ? items || []
+      : (items || []).filter(
+          (item) =>
+            String(item.category || "").trim().toLowerCase() ===
+            currentBusinessCategory
+        );
+  renderBusinessSummary(filteredByCategory);
   const filtered =
     (
-      items || []
+      filteredByCategory
     ).filter(
       (item) =>
         currentStatus ===
@@ -1918,30 +2083,29 @@ function renderBusinesses(items) {
     );
 
   if (!filtered.length) {
-    const total =
-      (items || []).length;
     const label =
       BUSINESS_STATUS_LABELS[
         currentStatus
       ] || currentStatus;
+    const categoryLabel =
+      currentBusinessCategory === "todos"
+        ? "locales"
+        : currentBusinessCategory === "bar"
+        ? "bares"
+        : "restaurantes";
+    const emptyMessage =
+      currentStatus === "pendiente"
+        ? `No hay solicitudes pendientes de ${categoryLabel}.`
+        : currentStatus === "todos"
+        ? `No hay ${categoryLabel} registrados.`
+        : `No hay ${categoryLabel} en estado ${label.toLowerCase()}.`;
 
     businessList.innerHTML = `
       <div class="glass-card">
-
-        <h3>
-          No hay negocios en ${escapeHtml(
-            label.toLowerCase()
-          )}
-        </h3>
-
-        <p>
-          Total registrados en la base actual: ${escapeHtml(
-            total
-          )}
-        </p>
+        <h3>${escapeHtml(emptyMessage)}</h3>
 
         <p class="tiny">
-          Si el cliente dice que lo creo y no aparece aqui, probablemente no termino el envio, esta usando cache vieja de la app, o lo registro antes del cambio a Neon.
+          Cuando llegue una solicitud de esta categoria aparecera aqui para revision.
         </p>
 
       </div>
@@ -2325,6 +2489,8 @@ function editSite(id) {
     return;
   }
 
+  openSiteCategory("crear");
+
   siteForm.elements.siteId.value =
     site.id;
   siteForm.elements.name.value =
@@ -2408,13 +2574,21 @@ function renderSites(items) {
 
   currentOpenSites =
     sortSitesForAdmin(items);
+  if (siteListTitle) {
+    siteListTitle.textContent = `${siteTypeLabel(currentSiteCategory)} cargados`;
+  }
 
-  if (!currentOpenSites.length) {
+  const selectedSites = currentOpenSites.filter(
+    (site) =>
+      normalizeAdminSiteCategory(site.siteType) === currentSiteCategory
+  );
+
+  if (!selectedSites.length) {
     siteList.innerHTML = `
       <div class="glass-card">
-        <h3>No hay sitios cargados</h3>
+        <h3>No hay ${escapeHtml(siteTypeLabel(currentSiteCategory).toLowerCase())} cargados</h3>
         <p>
-          Crea el primer charco, mirador, pueblo o sitio natural con coordenadas reales.
+          Cuando existan sitios de esta categoria apareceran aqui para revisarlos y activarlos.
         </p>
       </div>
     `;
@@ -2422,7 +2596,7 @@ function renderSites(items) {
   }
 
   siteList.innerHTML =
-    currentOpenSites
+    selectedSites
       .map(
         (site) => `
           <article class="glass-card admin-card admin-site-card">
@@ -3724,17 +3898,25 @@ function renderAdRequests(items) {
 
   currentAdRequests = items || [];
 
-  if (!items.length) {
+  const selectedRequests = currentAdRequests.filter((item) =>
+    currentAdsPanel === "publicistRequests"
+      ? adRequestNeedsPublicist(item)
+      : !adRequestNeedsPublicist(item)
+  );
+
+  if (!selectedRequests.length) {
     adRequestList.innerHTML = `
       <div class="glass-card">
-        <h3>No hay solicitudes de pauta</h3>
+        <h3>${currentAdsPanel === "publicistRequests"
+          ? "No hay solicitudes de servicio de publicista"
+          : "No hay solicitudes de pauta"}</h3>
       </div>
     `;
     return;
   }
 
   adRequestList.innerHTML =
-    items
+    selectedRequests
       .map(
         (item) => {
           const phone = String(
@@ -4262,6 +4444,9 @@ function renderStaffUsers(items) {
               <button type="button" class="ghost-btn" onclick="setStaffUserRole(${Number(item.id)})">
                 Guardar perfil
               </button>
+              <button type="button" class="ghost-btn" onclick="resetStaffUserPassword(${Number(item.id)})">
+                Restablecer clave
+              </button>
               <button
                 type="button"
                 class="${
@@ -4472,6 +4657,45 @@ async function setStaffUserStatus(
     }
 
     await loadStaffUsers();
+  } catch (error) {
+    alert(error.message);
+  }
+}
+
+async function resetStaffUserPassword(id) {
+  if (!isAdmin()) {
+    return;
+  }
+  const staffUser = currentStaffUsers.find(
+    (item) => Number(item.id) === Number(id)
+  );
+  if (!staffUser) {
+    return;
+  }
+  const newPassword = window.prompt(
+    `Escribe una clave temporal nueva para ${staffUser.displayName} (minimo 8 caracteres):`
+  );
+  if (newPassword === null) {
+    return;
+  }
+  if (newPassword.length < 8) {
+    alert("La clave temporal debe tener al menos 8 caracteres.");
+    return;
+  }
+  try {
+    const response = await staffFetch(
+      `/api/admin/staff-users/${Number(id)}/password`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }),
+      }
+    );
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "No se pudo restablecer la clave.");
+    }
+    alert("Clave restablecida. Comparte la clave temporal con el usuario por un canal privado.");
   } catch (error) {
     alert(error.message);
   }
@@ -4746,6 +4970,11 @@ staffLoginForm?.addEventListener(
   }
 );
 
+staffForgotPasswordButton?.addEventListener("click", () => {
+  if (!staffRecoveryHelp) return;
+  staffRecoveryHelp.hidden = !staffRecoveryHelp.hidden;
+});
+
 adminSectionTabs.forEach((tab) => {
   tab.addEventListener("click", () => {
     showAdminSection(
@@ -4762,6 +4991,29 @@ adminSectionOpeners.forEach((opener) => {
       opener.dataset.adminOpenSection,
       { scroll: true }
     );
+  });
+});
+
+businessCategoryButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openBusinessCategory(button.dataset.adminBusinessCategory);
+  });
+});
+
+siteCategoryButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openSiteCategory(button.dataset.adminSiteCategory);
+  });
+});
+
+adsPanelButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    openAdsPanel(button.dataset.adminAdsPanel);
+    if (currentAdsPanel === "campaigns") {
+      loadAdCampaigns();
+    } else {
+      loadAdRequests();
+    }
   });
 });
 

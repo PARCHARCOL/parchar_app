@@ -7895,7 +7895,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -7934,7 +7934,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -7966,7 +7966,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -8269,7 +8269,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -8373,7 +8373,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -8514,7 +8514,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin", "asesor"]
+              ["admin"]
             )
           ) {
             return;
@@ -8888,6 +8888,68 @@ const server =
                 created.rows[0]
               ),
           });
+          return;
+        }
+
+        if (
+          pathname.match(
+            /^\/api\/admin\/staff-users\/\d+\/password$/
+          ) &&
+          req.method === "POST"
+        ) {
+          if (
+            !requireStaffRole(
+              staffAuth,
+              res,
+              ["admin"]
+            )
+          ) {
+            return;
+          }
+
+          const id = pathname.split("/")[4];
+          if (Number(id) === Number(staffAuth.staff.id)) {
+            sendJson(res, 400, {
+              error: "Usa el restablecimiento administrativo para cambiar tu propia clave.",
+            });
+            return;
+          }
+
+          const body = await parseJsonBody(req);
+          const newPassword = cleanText(body.newPassword);
+          if (newPassword.length < 8) {
+            sendJson(res, 400, {
+              error: "La clave temporal debe tener al menos 8 caracteres.",
+            });
+            return;
+          }
+
+          const existing = await pool.query(
+            `SELECT id, role FROM staff_users WHERE id = $1 LIMIT 1`,
+            [id]
+          );
+          if (!existing.rows.length) {
+            sendJson(res, 404, {
+              error: "Usuario interno no encontrado.",
+            });
+            return;
+          }
+          if (existing.rows[0].role === "admin") {
+            sendJson(res, 400, {
+              error: "El restablecimiento del administrador principal requiere al responsable técnico del sistema.",
+            });
+            return;
+          }
+
+          await pool.query(
+            `UPDATE staff_users SET password_hash = $1 WHERE id = $2`,
+            [hashPassword(newPassword), id]
+          );
+          await pool.query(
+            `DELETE FROM staff_sessions WHERE staff_user_id = $1`,
+            [id]
+          );
+          sendJson(res, 200, { ok: true });
           return;
         }
 

@@ -61,8 +61,8 @@ const AUTH_VIEW_COPY = {
     intro: "Confirma tus datos para consultar el correo de acceso.",
   },
   "reset-password": {
-    title: "Cambiar clave",
-    intro: "Verifica tu cuenta y define una nueva contrasena.",
+    title: "Recuperar clave",
+    intro: "Confirma los datos de tu cuenta y define una nueva clave.",
   },
 };
 
