@@ -1309,6 +1309,14 @@ function standardDesignThumbMarkup(design) {
     ? '<span class="standard-thumb-holiday-tag"><span aria-hidden="true">❄️ 🔔 🎅 🦌 🧝</span><strong>Navidad</strong></span>'
     : design.id === "feria-flores"
       ? '<span class="standard-thumb-holiday-tag standard-thumb-flower-tag"><span aria-hidden="true">🌼 🌺 💐 🌸</span><strong>Feria de las Flores</strong></span>'
+      : design.id === "dia-madres"
+        ? '<span class="standard-thumb-holiday-tag standard-thumb-mothers-tag"><span aria-hidden="true">💐 🎀 🌷</span><strong>Día de Madres</strong></span>'
+        : design.id === "amor"
+          ? '<span class="standard-thumb-holiday-tag standard-thumb-love-tag"><span aria-hidden="true">💘 🌹 💌</span><strong>Amor</strong></span>'
+          : design.id === "halloween"
+            ? '<span class="standard-thumb-holiday-tag standard-thumb-halloween-tag"><span aria-hidden="true">🎃 🦇 👻</span><strong>Halloween</strong></span>'
+            : design.id === "amor-amistad"
+              ? '<span class="standard-thumb-holiday-tag standard-thumb-friendship-tag"><span aria-hidden="true">💬 💝 🫶</span><strong>Amor y Amistad</strong></span>'
     : "";
   return `
     <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" data-layout="${escapeHtml(design.layout || "glass-grid")}" data-design-id="${escapeHtml(design.id)}" style="${standardDesignStyle(design)}">

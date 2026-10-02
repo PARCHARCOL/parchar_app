@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs><linearGradient id="bubble" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff8ff"/><stop offset="1" stop-color="#ffb6e2"/></linearGradient><linearGradient id="heart" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ff7eb9"/><stop offset="1" stop-color="#f33765"/></linearGradient></defs>
+  <path d="M14 24h70a12 12 0 0 1 12 12v31a12 12 0 0 1-12 12H48L31 91V79H14A12 12 0 0 1 2 67V36a12 12 0 0 1 12-12Z" fill="url(#bubble)" stroke="#fff" stroke-width="3"/><circle cx="29" cy="51" r="4" fill="#854aa1"/><circle cx="49" cy="51" r="4" fill="#e64a94"/><circle cx="69" cy="51" r="4" fill="#36bcb6"/>
+  <path d="M118 118h67a11 11 0 0 1 11 11v31a11 11 0 0 1-11 11h-14v12l-17-12h-36a11 11 0 0 1-11-11v-31a11 11 0 0 1 11-11Z" fill="#b6fbef" stroke="#fff" stroke-width="3"/><circle cx="137" cy="144" r="4" fill="#8748a3"/><circle cx="153" cy="144" r="4" fill="#e64a94"/><circle cx="169" cy="144" r="4" fill="#36a7bf"/>
+  <path d="M111 53c0-14 18-20 27-6 9-14 27-8 27 6 0 14-27 31-27 31s-27-17-27-31Z" fill="url(#heart)" stroke="#fff1ce" stroke-width="3"/>
+  <path d="M21 135c0-10 13-15 20-5 7-10 20-5 20 5 0 10-20 22-20 22s-20-12-20-22Z" fill="#ffc84e" stroke="#fff4be" stroke-width="2.5"/>
+  <path d="M16 105q14-10 28 0t28 0m76-87q14 10 28 0m-26 12q14 10 28 0" stroke="#ffcf67" stroke-width="4" stroke-linecap="round"/><path d="m87 117 6 2-4 5 7-1m20 60 5 2-4 5 7-1" stroke="#b47ae7" stroke-width="3" stroke-linecap="round"/>
+  <g fill="#ffe27b"><path d="m95 38 2 6 6 2-6 2-2 6-2-6-6-2 6-2zM83 158l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/><circle cx="83" cy="89" r="3"/><circle cx="104" cy="171" r="3"/></g>
+</svg>

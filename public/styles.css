@@ -4551,6 +4551,168 @@ html[data-standard-design="feria-flores"][data-standard-design] .home-body .acti
 .home-body .brand-size-row:not(.has-video-logo) .brand-logo { width: 100%; height: auto; max-height: none; }
 .home-body .search-bar { border-radius: 12px; }
 
+/* Four distinct seasonal button silhouettes with their own illustrated motifs. */
+html[data-standard-design="dia-madres"][data-standard-design] .home-body .action-btn {
+  position: relative;
+  overflow: visible;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 5px 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+html[data-standard-design="dia-madres"][data-standard-design] .home-body .action-btn::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 26px;
+  border: 3px solid #ffe4a1;
+  border-radius: 50%;
+  background-image: url("/assets/ui/dia-madres-motifs.svg"), radial-gradient(circle at 32% 22%, #ffffff70, transparent 33%), var(--category-surface);
+  background-position: center;
+  background-size: 100% 100%;
+  box-shadow: inset 0 3px 10px #fff9, inset 0 -6px 12px #4a183b72, 0 0 0 2px #d789bd, 0 6px 12px #09051465;
+}
+html[data-standard-design="dia-madres"][data-standard-design] .home-body .action-icon {
+  position: relative;
+  z-index: 1;
+  width: 70px;
+  height: 70px;
+  background-image: linear-gradient(135deg, #fffbd5, #ffe2ed 50%, #ffffff);
+  filter: drop-shadow(0 2px 3px #63253f99);
+}
+
+html[data-standard-design="amor"][data-standard-design] .home-body .action-btn {
+  position: relative;
+  overflow: visible;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 5px 8px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+html[data-standard-design="amor"][data-standard-design] .home-body .action-btn::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 2px 26px;
+  clip-path: polygon(50% 96%, 8% 58%, 3% 43%, 6% 28%, 16% 17%, 30% 14%, 42% 20%, 50% 31%, 58% 20%, 70% 14%, 84% 17%, 94% 28%, 97% 43%, 92% 58%);
+  background-image: url("/assets/ui/amor-motifs.svg"), radial-gradient(circle at 50% 42%, #ff5269, #c71f49 68%, #851333);
+  background-position: center;
+  background-size: 100% 100%;
+  filter: drop-shadow(0 7px 7px #12061599);
+}
+html[data-standard-design="amor"][data-standard-design] .home-body .action-icon {
+  position: relative;
+  z-index: 1;
+  width: 68px;
+  height: 68px;
+  background-image: linear-gradient(135deg, #fff4b0, #ffd16b 55%, #fff0c2);
+  filter: drop-shadow(0 2px 3px #64142f);
+}
+
+html[data-standard-design="halloween"][data-standard-design] .home-body .action-btn {
+  position: relative;
+  overflow: visible;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 5px 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+html[data-standard-design="halloween"][data-standard-design] .home-body .action-btn::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 26px;
+  border: 4px solid #ffb23d;
+  border-radius: 43% 43% 45% 45% / 38% 38% 54% 54%;
+  background-image: url("/assets/ui/halloween-motifs.svg"), repeating-linear-gradient(90deg, #4b255c30 0 24%, #160f2b30 24% 30%), var(--category-surface);
+  background-position: center;
+  background-size: 100% 100%;
+  box-shadow: inset 0 3px 9px #fff8, inset 0 -8px 12px #260c326e, 0 0 0 2px #7540a4, 0 6px 12px #09051472;
+}
+html[data-standard-design="halloween"][data-standard-design] .home-body .action-icon {
+  position: relative;
+  z-index: 1;
+  width: 76px;
+  height: 76px;
+  background-image: linear-gradient(135deg, #fff4a6, #fff 55%, #ffd983);
+  filter: drop-shadow(0 2px 3px #301438);
+}
+
+html[data-standard-design="amor-amistad"][data-standard-design] .home-body .action-btn {
+  position: relative;
+  overflow: visible;
+  aspect-ratio: 1;
+  min-height: 0;
+  padding: 5px 4px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  filter: none;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 4px;
+}
+html[data-standard-design="amor-amistad"][data-standard-design] .home-body .action-btn::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 0 0 26px;
+  border: 2px solid #fff3bc;
+  border-radius: 26px 26px 26px 7px;
+  background-image: url("/assets/ui/amor-amistad-motifs.svg"), linear-gradient(145deg, #f372bd, #8755cf 52%, #26babc);
+  background-position: center;
+  background-size: 100% 100%;
+  box-shadow: inset 0 3px 8px #fff9, 0 0 0 2px #744ab0, 0 6px 12px #09051465;
+}
+html[data-standard-design="amor-amistad"][data-standard-design] .home-body .action-btn::after {
+  content: "";
+  position: absolute;
+  bottom: 18px;
+  left: 16px;
+  z-index: 0;
+  width: 14px;
+  height: 14px;
+  border-right: 2px solid #fff3bc;
+  border-bottom: 2px solid #fff3bc;
+  background: #9a55c4;
+  transform: skew(-18deg) rotate(40deg);
+}
+html[data-standard-design="amor-amistad"][data-standard-design] .home-body .action-icon {
+  position: relative;
+  z-index: 1;
+  width: 72px;
+  height: 72px;
+  background-image: linear-gradient(135deg, #fff7da, #ffe5f5 50%, #d6ffff);
+  filter: drop-shadow(0 2px 3px #3e205d99);
+}
+
+.standard-design-thumb[data-design-id="dia-madres"] .standard-thumb-tile { min-height: 38px; border: 2px solid #ffe4a1; border-radius: 50%; background: url("/assets/ui/dia-madres-motifs.svg") center / 100% 100% no-repeat, radial-gradient(circle at 32% 22%, #ffffff70, transparent 33%), linear-gradient(145deg, #f079b6, #78386e); }
+.standard-design-thumb[data-design-id="amor"] .standard-thumb-tile { min-height: 38px; border: 0; border-radius: 0; clip-path: polygon(50% 96%, 8% 58%, 3% 43%, 6% 28%, 16% 17%, 30% 14%, 42% 20%, 50% 31%, 58% 20%, 70% 14%, 84% 17%, 94% 28%, 97% 43%, 92% 58%); background: url("/assets/ui/amor-motifs.svg") center / 100% 100% no-repeat, linear-gradient(145deg, #ff5269, #a9143a); }
+.standard-design-thumb[data-design-id="halloween"] .standard-thumb-tile { min-height: 38px; border: 2px solid #ffb23d; border-radius: 43% 43% 45% 45% / 38% 38% 54% 54%; background: url("/assets/ui/halloween-motifs.svg") center / 100% 100% no-repeat, linear-gradient(145deg, #ff941b, #8a3ac6); }
+.standard-design-thumb[data-design-id="amor-amistad"] .standard-thumb-tile { min-height: 38px; border: 2px solid #fff3bc; border-radius: 10px 10px 10px 3px; clip-path: polygon(0 0, 100% 0, 100% 83%, 62% 83%, 49% 100%, 42% 83%, 0 83%); background: url("/assets/ui/amor-amistad-motifs.svg") center / 100% 100% no-repeat, linear-gradient(145deg, #f372bd, #8755cf 52%, #26babc); }
+.standard-thumb-mothers-tag { border-color: #ffe4a1; background: #742c61e8; }
+.standard-thumb-love-tag { border-color: #ffb2c2; background: #971b3fe8; }
+.standard-thumb-halloween-tag { border-color: #ffb23d; background: #382052e8; }
+.standard-thumb-friendship-tag { border-color: #bafff0; background: #54206fe8; }
+
 .home-body .action-label {
   width: 100%;
   max-width: 164px;

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs><linearGradient id="petal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff3b0"/><stop offset=".48" stop-color="#ff83bd"/><stop offset="1" stop-color="#c82978"/></linearGradient><linearGradient id="ribbon" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0b4"/><stop offset=".5" stop-color="#e8a633"/><stop offset="1" stop-color="#9e5a1b"/></linearGradient></defs>
+  <path d="M8 26Q100-7 192 26M8 174q92 33 184 0" stroke="url(#ribbon)" stroke-width="4"/>
+  <g stroke="#fff2dc" stroke-width="1.2">
+    <g transform="translate(25 46)"><ellipse cy="-8" rx="5" ry="9" fill="url(#petal)"/><ellipse cy="-8" rx="5" ry="9" fill="url(#petal)" transform="rotate(72)"/><ellipse cy="-8" rx="5" ry="9" fill="url(#petal)" transform="rotate(144)"/><ellipse cy="-8" rx="5" ry="9" fill="url(#petal)" transform="rotate(216)"/><ellipse cy="-8" rx="5" ry="9" fill="url(#petal)" transform="rotate(288)"/><circle r="3.5" fill="#ffd951"/></g>
+    <g transform="translate(175 48) scale(.8)"><ellipse cy="-8" rx="5" ry="9" fill="#ff9cc9"/><ellipse cy="-8" rx="5" ry="9" fill="#ff9cc9" transform="rotate(72)"/><ellipse cy="-8" rx="5" ry="9" fill="#ff9cc9" transform="rotate(144)"/><ellipse cy="-8" rx="5" ry="9" fill="#ff9cc9" transform="rotate(216)"/><ellipse cy="-8" rx="5" ry="9" fill="#ff9cc9" transform="rotate(288)"/><circle r="3.5" fill="#ffd951"/></g>
+  </g>
+  <g stroke="#78d18c" stroke-width="3" stroke-linecap="round"><path d="M20 59q7 13 1 24m155-21q-8 12-2 23M18 142q11-10 9-21m150 22q-10-9-8-20"/><path d="m18 73-8-6m12 10 8-7m142-1 8-6m-12 9-8-7m-133 64-9-4m12 1 8-8m131 11 9-5m-12 2-8-8"/></g>
+  <path d="M72 151 100 177l28-26c16-15-5-34-19-20l-9 9-9-9c-14-14-35 5-19 20Z" fill="#df397d" stroke="#ffe39c" stroke-width="3"/>
+  <path d="M83 153q17 12 34 0m-17-3c-8-10-9-18 0-24 9 6 8 14 0 24Z" fill="url(#ribbon)" stroke="#fff0bd" stroke-width="2"/><path d="m99 150-12 17m14-17 12 17" stroke="#ffd978" stroke-width="3"/>
+  <g fill="#ffe477"><path d="m63 48 2 6 6 2-6 2-2 6-2-6-6-2 6-2zM139 40l2 5 5 2-5 2-2 5-2-5-5-2 5-2zM151 139l2 5 5 2-5 2-2 5-2-5-5-2 5-2z"/></g>
+</svg>
