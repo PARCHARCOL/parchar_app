@@ -1305,15 +1305,17 @@ function standardDesignStyle(design) {
 }
 
 function standardDesignThumbMarkup(design) {
-  const holidayBadge = design.id === "clasico-luminoso"
+  const designBadge = design.id === "clasico-luminoso"
     ? '<span class="standard-thumb-holiday-tag"><span aria-hidden="true">❄️ 🔔 🎅 🦌 🧝</span><strong>Navidad</strong></span>'
+    : design.id === "feria-flores"
+      ? '<span class="standard-thumb-holiday-tag standard-thumb-flower-tag"><span aria-hidden="true">🌼 🌺 💐 🌸</span><strong>Feria de las Flores</strong></span>'
     : "";
   return `
     <div class="standard-design-thumb" data-icon-mode="${design.iconMode === "line" ? "line" : "glass"}" data-layout="${escapeHtml(design.layout || "glass-grid")}" data-design-id="${escapeHtml(design.id)}" style="${standardDesignStyle(design)}">
       <span class="standard-thumb-shell">
         <span class="standard-thumb-head"><span>Parchar</span><span>⌕</span></span>
         <span class="standard-thumb-search"></span>
-        ${holidayBadge}
+        ${designBadge}
         <span class="standard-thumb-grid">
           <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label">A pie</span></span>
           <span class="standard-thumb-tile"><span class="standard-thumb-icon"></span><span class="standard-thumb-label">Bares</span></span>

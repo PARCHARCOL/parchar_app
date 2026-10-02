@@ -49,8 +49,14 @@ function renderBrandLogo(
   path,
   type
 ) {
-  const source =
+  let source =
     path || PARCHAR_DEFAULT_LOGO;
+  if (
+    element.closest(".home-body") &&
+    source === PARCHAR_DEFAULT_LOGO
+  ) {
+    source = "/assets/parchar-logo-home.png";
+  }
   const needsVideo =
     isBrandVideo(source, type);
   const logoContainer = element.closest(
