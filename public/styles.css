@@ -4525,7 +4525,7 @@ html[data-standard-design="coral"][data-standard-design] .home-body .action-labe
 }
 
 /* Feria de las Flores: preserve the festive button size and add floral silleta details. */
-html[data-standard-design="feria-flores"] .home-body .action-btn {
+html[data-standard-design="feria-flores"][data-standard-design] .home-body .action-btn {
   position: relative;
   overflow: hidden;
   aspect-ratio: 1;
@@ -4540,7 +4540,7 @@ html[data-standard-design="feria-flores"] .home-body .action-btn {
   background-clip: padding-box, padding-box, border-box;
   box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 0 0 1px #ffe16b, 0 8px 14px #09051465;
 }
-html[data-standard-design="feria-flores"] .home-body .action-icon { width: 82px; height: 82px; filter: drop-shadow(0 2px 3px #0009); }
+html[data-standard-design="feria-flores"][data-standard-design] .home-body .action-icon { width: 82px; height: 82px; filter: drop-shadow(0 2px 3px #0009); }
 
 .standard-design-thumb[data-design-id="feria-flores"] .standard-thumb-tile { min-height: 38px; border: 3px solid transparent; border-radius: 9px; background: url("/assets/ui/feria-flores-motifs.svg") center / 100% 100% no-repeat, linear-gradient(145deg, #ffdc62, #ef5d9e 48%, #42d5b5); box-shadow: inset 0 2px 5px #fff9, 0 2px 3px #0005; }
 .standard-design-thumb[data-design-id="feria-flores"] .standard-thumb-icon { width: 20px; height: 20px; }
