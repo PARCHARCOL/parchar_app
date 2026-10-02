@@ -4713,6 +4713,13 @@ html[data-standard-design="amor-amistad"][data-standard-design] .home-body .acti
 .standard-thumb-halloween-tag { border-color: #ffb23d; background: #382052e8; }
 .standard-thumb-friendship-tag { border-color: #bafff0; background: #54206fe8; }
 
+/* Keep category glyphs crisp over the seasonal illustrations and gradients. */
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .action-icon {
+  background-image: linear-gradient(180deg, #fff, #fff);
+  -webkit-filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #13071df2) drop-shadow(0 2px 5px #000e);
+  filter: drop-shadow(0 0 1px #fff) drop-shadow(0 0 3px #13071df2) drop-shadow(0 2px 5px #000e);
+}
+
 .home-body .action-label {
   width: 100%;
   max-width: 164px;
