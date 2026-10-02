@@ -1805,97 +1805,6 @@ textarea {
   display: none;
 }
 
-.seasonal-design-preview {
-  display: grid;
-  grid-template-columns: 3rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-height: 74px;
-  margin: 16px 0;
-  padding: 12px 14px;
-  border: 1px solid color-mix(in srgb, var(--seasonal-preview-border, var(--line-soft)) 50%, transparent);
-  border-radius: 12px;
-  background: linear-gradient(110deg,
-    color-mix(in srgb, var(--seasonal-preview-surface, #392074) 26%, transparent),
-    color-mix(in srgb, var(--seasonal-preview-deep, #1c0a39) 52%, transparent));
-}
-
-.seasonal-design-preview-swatch {
-  width: 3rem;
-  aspect-ratio: 1;
-  border: 1px solid var(--seasonal-preview-border, var(--line-soft));
-  border-radius: 10px;
-  background: linear-gradient(145deg,
-    var(--seasonal-preview-accent, var(--neon-gold)),
-    var(--seasonal-preview-surface, #392074) 72%);
-}
-
-.seasonal-design-preview > div {
-  min-width: 0;
-}
-
-.seasonal-design-preview strong,
-.seasonal-design-preview > div > span {
-  display: block;
-}
-
-.seasonal-design-preview > div > span {
-  margin-top: 3px;
-  color: var(--text-soft);
-  font-size: 0.85rem;
-}
-
-.seasonal-design-status {
-  color: var(--text-soft);
-  font-size: 0.82rem;
-  text-align: right;
-}
-
-.seasonal-month-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.seasonal-month-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(120px, 1fr);
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid var(--line-soft);
-  border-radius: 10px;
-  background: rgba(18, 8, 34, 0.36);
-}
-
-.seasonal-month-row > label {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  color: var(--text-main);
-}
-
-.seasonal-month-row input[type="checkbox"] {
-  width: 1.05rem;
-  height: 1.05rem;
-  margin: 0;
-  accent-color: var(--season-accent);
-}
-
-.seasonal-month-row select {
-  min-width: 0;
-  width: 100%;
-  margin: 0;
-}
-
-.seasonal-design-form > label.is-hidden {
-  display: none;
-}
-
 .admin-form-actions {
   display: flex;
   flex-wrap: wrap;
@@ -1905,25 +1814,6 @@ textarea {
 
 .admin-form-actions > button {
   width: auto;
-}
-
-@media (max-width: 620px) {
-  .seasonal-design-preview {
-    grid-template-columns: 2.5rem minmax(0, 1fr);
-  }
-
-  .seasonal-design-preview-swatch {
-    width: 2.5rem;
-  }
-
-  .seasonal-design-status {
-    grid-column: 2;
-    text-align: left;
-  }
-
-  .seasonal-month-list {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 .ghost-btn.is-muted {
@@ -3522,23 +3412,6 @@ body > .ad-banner {
     color-mix(in srgb, #1c0a39, white var(--tone-mix)) 65%);
 }
 
-html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body {
-  background: linear-gradient(160deg,
-    color-mix(in srgb, color-mix(in srgb, #29104e 90%, var(--season-deep)), white var(--tone-mix)),
-    color-mix(in srgb, color-mix(in srgb, #10071d 94%, var(--season-accent)), white var(--tone-mix)));
-}
-
-html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body .app-shell {
-  background: linear-gradient(178deg,
-    color-mix(in srgb, color-mix(in srgb, #392074 91%, var(--season-surface)), white var(--tone-mix)),
-    color-mix(in srgb, color-mix(in srgb, #1c0a39 94%, var(--season-deep)), white var(--tone-mix)) 65%);
-  border-color: color-mix(in srgb, var(--season-border) 30%, var(--line-soft));
-}
-
-html[data-seasonal-theme]:not([data-seasonal-theme="default"]) .theme-body .app-shell :is(.home-recommendation-card, .glass-card, .form-block) {
-  border-color: color-mix(in srgb, var(--season-border) 24%, var(--line-soft));
-}
-
 html[data-tone-contrast="light"] .theme-body {
   --text-main: #211632;
   --text-soft: #514061;
@@ -3986,13 +3859,45 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-
 
 /* 1. Glossy square app buttons. The clickable button itself is the colored tile. */
 html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn {
+  position: relative;
+  overflow: hidden;
   aspect-ratio: 1;
   min-height: 0;
-  border-color: #ffffffa6;
+  border: 3px solid #e4c04f;
   border-radius: 25px;
-  box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 8px 14px #09051465;
+  box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 0 0 2px #bd293d, 0 8px 14px #09051465;
 }
 html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-icon { width: 82px; height: 82px; }
+html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn::before {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 3px;
+  left: 14px;
+  right: 29px;
+  height: 14px;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at 9% 72%, #f53c4b 0 3px, transparent 3.8px),
+    radial-gradient(circle at 31% 55%, #ffe45a 0 3px, transparent 3.8px),
+    radial-gradient(circle at 54% 72%, #42e9ff 0 3px, transparent 3.8px),
+    radial-gradient(circle at 77% 55%, #f53c4b 0 3px, transparent 3.8px),
+    linear-gradient(174deg, transparent 0 43%, #176b3c 44% 52%, transparent 53%);
+  background-repeat: no-repeat;
+  filter: drop-shadow(0 1px 2px #0009);
+}
+html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  top: 2px;
+  right: 2px;
+  width: 34px;
+  height: 34px;
+  pointer-events: none;
+  background: url("/assets/ui/holly-corner.svg") center / contain no-repeat;
+  filter: drop-shadow(0 2px 2px #0008);
+}
 
 /* 2. Soft graphite buttons. */
 html[data-standard-design="violeta"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr)); }
@@ -4087,6 +3992,9 @@ html[data-standard-design="coral"][data-standard-design] .home-body .action-labe
 .standard-design-preview[hidden] { display: none; }
 .standard-design-preview h3 { margin: 0 0 4px; }
 .standard-design-preview p { margin: 0 0 10px; color: var(--text-soft); }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile { position: relative; overflow: hidden; border: 2px solid #e4c04f; box-shadow: 0 0 0 1px #bd293d, inset 0 2px 5px #fff9, 0 2px 3px #0005; }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile::before { content: ""; position: absolute; top: 1px; left: 4px; right: 13px; height: 7px; background-image: radial-gradient(circle at 10% 70%, #f53c4b 0 1.5px, transparent 2px), radial-gradient(circle at 38% 60%, #ffe45a 0 1.5px, transparent 2px), radial-gradient(circle at 67% 70%, #42e9ff 0 1.5px, transparent 2px), linear-gradient(174deg, transparent 0 43%, #176b3c 44% 52%, transparent 53%); }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile::after { content: ""; position: absolute; top: 1px; right: 1px; width: 13px; height: 13px; background: url("/assets/ui/holly-corner.svg") center / contain no-repeat; }
 .standard-preview-screen { padding: 10px; border-radius: 13px; background: linear-gradient(155deg, var(--thumb-page-start), var(--thumb-page-end)); }
 .standard-preview-screen .standard-thumb-shell { padding: 12px; border-radius: 11px; }
 .standard-preview-screen .standard-thumb-head { height: 20px; font-size: 14px; }

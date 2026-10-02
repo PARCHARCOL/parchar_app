@@ -15,9 +15,9 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=139"
+      href="/styles.css?v=140"
     />
-    <script src="/theme.js?v=116" defer></script>
+    <script src="/theme.js?v=117" defer></script>
 
   </head>
 
@@ -285,9 +285,9 @@
           <button
             type="button"
             class="admin-section-tab admin-only"
-            data-admin-section-tab="seasonal-design"
+            data-admin-section-tab="button-design"
           >
-            Diseño
+            Diseño de botones
           </button>
 
           <button
@@ -410,9 +410,9 @@
       </section>
 
       <section
-        id="admin-seasonal-design-section"
+        id="admin-button-design-section"
         class="form-block glass-card admin-section-panel is-hidden admin-only"
-        data-admin-section-panel="seasonal-design"
+        data-admin-section-panel="button-design"
       >
         <h2>Diseño estándar de la app</h2>
         <p class="standard-design-help">Cambia solo el estilo de los botones de categorías. El fondo, el logo, el buscador, el anuncio y el resto de la pantalla se conservan. La vista previa no cambia la app hasta que actives un diseño.</p>
@@ -430,47 +430,6 @@
           <p id="standard-design-message" class="feedback" role="status"></p>
         </form>
 
-        <hr />
-        <h3>Diseño de temporada</h3>
-        <p>Calendario automático de acentos para fechas comerciales de Colombia. No modifica la estructura, el logo ni la publicidad.</p>
-
-        <div id="seasonal-design-preview" class="seasonal-design-preview" aria-live="polite">
-          <span class="seasonal-design-preview-swatch" aria-hidden="true"></span>
-          <div>
-            <strong id="seasonal-design-preview-title">Cargando tema...</strong>
-            <span id="seasonal-design-preview-note"></span>
-          </div>
-          <span id="seasonal-design-preview-status" class="seasonal-design-status"></span>
-        </div>
-
-        <form id="seasonal-design-form" class="form-grid seasonal-design-form">
-          <label>
-            Activación
-            <select id="seasonal-design-mode" name="mode">
-              <option value="automatic">Cambiar automáticamente cada mes</option>
-              <option value="manual">Mantener un tema fijo</option>
-              <option value="off">Usar siempre el diseño normal</option>
-            </select>
-          </label>
-
-          <label id="seasonal-manual-theme-field" class="is-hidden">
-            Tema fijo
-            <select id="seasonal-manual-theme" name="manualThemeId"></select>
-          </label>
-
-          <div id="seasonal-month-settings" class="full-row">
-            <h3>Calendario de temas</h3>
-            <p class="field-hint">Parchar usa la fecha de Colombia. Puedes cambiar el tema asignado a cada mes o apagar meses puntuales. Las fechas móviles, como Semana Santa, se pueden ajustar cambiando su tema de mes.</p>
-            <div id="seasonal-month-list" class="seasonal-month-list"></div>
-          </div>
-
-          <div class="admin-form-actions full-row">
-            <button type="submit" class="submit-btn">Guardar diseño</button>
-            <button id="seasonal-design-reset" type="button" class="ghost-btn">Restaurar calendario inicial</button>
-          </div>
-        </form>
-
-        <p id="seasonal-design-message" class="feedback" role="status"></p>
       </section>
 
       <section
@@ -1398,7 +1357,7 @@
 
     <script src="/update.js?v=96"></script>
     <script src="/password-visibility.js?v=1"></script>
-    <script src="/admin.js?v=101"></script>
+    <script src="/admin.js?v=102"></script>
 
   </body>
 </html>
