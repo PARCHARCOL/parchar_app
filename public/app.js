@@ -388,10 +388,67 @@ async function loadBurgerMasterPromotion() {
   syncBurgerMasterPromotion();
 }
 
-function showBurgerMasterInactiveStatus() {
-  updateStatus(
-    `BurgerMaster en Medellin se realiza ${getBurgerMasterPromotionWhenText()}. El boton se activa cuando la promocion este vigente.`
+function positionBurgerMasterBubble(button, bubble) {
+  if (!button || !bubble || bubble.hidden) return;
+
+  const rect = button.getBoundingClientRect();
+  const margin = 12;
+  const gap = 12;
+  const width = Math.min(280, window.innerWidth - margin * 2);
+  bubble.style.width = `${width}px`;
+
+  const rightSpace = window.innerWidth - rect.right - gap - margin;
+  const leftSpace = rect.left - gap - margin;
+  const placement = rightSpace >= width
+    ? "right"
+    : leftSpace >= width
+      ? "left"
+      : rightSpace >= leftSpace
+        ? "right"
+        : "left";
+  bubble.dataset.placement = placement;
+
+  const desiredLeft = placement === "right"
+    ? rect.right + gap
+    : rect.left - width - gap;
+  const left = Math.min(
+    Math.max(desiredLeft, margin),
+    window.innerWidth - width - margin
   );
+  const top = Math.min(
+    Math.max(rect.top + rect.height / 2 - bubble.offsetHeight / 2, margin),
+    window.innerHeight - bubble.offsetHeight - margin
+  );
+
+  bubble.style.left = `${left}px`;
+  bubble.style.top = `${top}px`;
+}
+
+function showBurgerMasterInactiveStatus(button = null) {
+  const message = `BurgerMaster en Medellín se realiza ${getBurgerMasterPromotionWhenText()}. El botón se activa cuando la promoción esté vigente.`;
+  if (!button) {
+    updateStatus(message);
+    return;
+  }
+
+  updateStatus("");
+  let bubble = document.querySelector("#burger-master-comic-bubble");
+  if (!bubble) {
+    bubble = document.createElement("div");
+    bubble.id = "burger-master-comic-bubble";
+    bubble.className = "burger-master-comic-bubble";
+    bubble.setAttribute("role", "status");
+    bubble.setAttribute("aria-live", "polite");
+    document.body.appendChild(bubble);
+  }
+
+  bubble.textContent = message;
+  bubble.hidden = false;
+  positionBurgerMasterBubble(button, bubble);
+  window.clearTimeout(bubble.dismissTimer);
+  bubble.dismissTimer = window.setTimeout(() => {
+    bubble.hidden = true;
+  }, 8000);
 }
 
 function getMonthNameFromDateOnly(value) {
@@ -664,7 +721,7 @@ async function redirectWithSearch(query) {
   window.location.href = url.toString();
 }
 
-function handleCategory(route) {
+function handleCategory(route, button) {
   if (route === "clientes") {
     window.location.href = "/clients.html";
     return;
@@ -687,7 +744,7 @@ function handleCategory(route) {
 
   if (route === "burgermaster") {
     if (!isBurgerMasterActive()) {
-      showBurgerMasterInactiveStatus();
+      showBurgerMasterInactiveStatus(button);
       return;
     }
 
@@ -1011,7 +1068,7 @@ for (const button of buttons) {
   button.addEventListener("click", () => {
     const route = button.dataset.route;
     if (!route) return;
-    handleCategory(route);
+    handleCategory(route, button);
   });
 }
 

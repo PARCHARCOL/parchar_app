@@ -413,6 +413,67 @@ video.brand-logo {
   font-weight: 600;
 }
 
+.burger-master-comic-bubble {
+  position: fixed;
+  z-index: 10050;
+  width: 280px;
+  max-width: calc(100vw - 24px);
+  padding: 13px 16px;
+  border: 3px solid #29162f;
+  border-radius: 24px 24px 22px 20px;
+  color: #29162f;
+  background: linear-gradient(145deg, #fff9e8, #ffedc1);
+  box-shadow: 5px 6px 0 #29162f, 0 12px 28px #0007;
+  font-size: clamp(13px, 3.8vw, 15px);
+  font-weight: 900;
+  line-height: 1.35;
+  transform: rotate(-1deg);
+  pointer-events: none;
+}
+
+.burger-master-comic-bubble[hidden] {
+  display: none !important;
+}
+
+.burger-master-comic-bubble::before,
+.burger-master-comic-bubble::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 16px;
+  height: 20px;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  transform: translateY(-50%);
+}
+
+.burger-master-comic-bubble::before {
+  background: #29162f;
+}
+
+.burger-master-comic-bubble::after {
+  width: 12px;
+  height: 14px;
+  background: #fff4d7;
+}
+
+.burger-master-comic-bubble[data-placement="right"]::before {
+  left: -13px;
+}
+
+.burger-master-comic-bubble[data-placement="right"]::after {
+  left: -8px;
+}
+
+.burger-master-comic-bubble[data-placement="left"]::before {
+  right: -13px;
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.burger-master-comic-bubble[data-placement="left"]::after {
+  right: -8px;
+  transform: translateY(-50%) rotate(180deg);
+}
+
 .status-muted.success,
 .feedback.success {
   color: var(--success);
@@ -3863,41 +3924,17 @@ html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .
   overflow: hidden;
   aspect-ratio: 1;
   min-height: 0;
-  border: 3px solid #e4c04f;
+  border: 4px solid transparent;
   border-radius: 25px;
-  box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 0 0 2px #bd293d, 0 8px 14px #09051465;
+  background-image: url("/assets/ui/christmas-motifs.svg"), var(--category-surface), repeating-linear-gradient(135deg, #fff0c0 0 7px, #c9283f 7px 14px, #207b43 14px 21px);
+  background-position: center, center, center;
+  background-size: 100% 100%, 100% 100%, auto;
+  background-repeat: no-repeat, no-repeat, repeat;
+  background-origin: padding-box, padding-box, border-box;
+  background-clip: padding-box, padding-box, border-box;
+  box-shadow: inset 0 3px 9px #ffffff94, inset 0 -5px 10px #0004, 0 0 0 1px #e4c04f, 0 8px 14px #09051465;
 }
 html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-icon { width: 82px; height: 82px; }
-html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn::before {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  top: 3px;
-  left: 14px;
-  right: 29px;
-  height: 14px;
-  pointer-events: none;
-  background-image:
-    radial-gradient(circle at 9% 72%, #f53c4b 0 3px, transparent 3.8px),
-    radial-gradient(circle at 31% 55%, #ffe45a 0 3px, transparent 3.8px),
-    radial-gradient(circle at 54% 72%, #42e9ff 0 3px, transparent 3.8px),
-    radial-gradient(circle at 77% 55%, #f53c4b 0 3px, transparent 3.8px),
-    linear-gradient(174deg, transparent 0 43%, #176b3c 44% 52%, transparent 53%);
-  background-repeat: no-repeat;
-  filter: drop-shadow(0 1px 2px #0009);
-}
-html[data-standard-design="clasico-luminoso"][data-standard-design] .home-body .action-btn::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  top: 2px;
-  right: 2px;
-  width: 34px;
-  height: 34px;
-  pointer-events: none;
-  background: url("/assets/ui/holly-corner.svg") center / contain no-repeat;
-  filter: drop-shadow(0 2px 2px #0008);
-}
 
 /* 2. Soft graphite buttons. */
 html[data-standard-design="violeta"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(auto-fit, minmax(min(100%, 144px), 1fr)); }
@@ -3992,9 +4029,11 @@ html[data-standard-design="coral"][data-standard-design] .home-body .action-labe
 .standard-design-preview[hidden] { display: none; }
 .standard-design-preview h3 { margin: 0 0 4px; }
 .standard-design-preview p { margin: 0 0 10px; color: var(--text-soft); }
-.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile { position: relative; overflow: hidden; border: 2px solid #e4c04f; box-shadow: 0 0 0 1px #bd293d, inset 0 2px 5px #fff9, 0 2px 3px #0005; }
-.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile::before { content: ""; position: absolute; top: 1px; left: 4px; right: 13px; height: 7px; background-image: radial-gradient(circle at 10% 70%, #f53c4b 0 1.5px, transparent 2px), radial-gradient(circle at 38% 60%, #ffe45a 0 1.5px, transparent 2px), radial-gradient(circle at 67% 70%, #42e9ff 0 1.5px, transparent 2px), linear-gradient(174deg, transparent 0 43%, #176b3c 44% 52%, transparent 53%); }
-.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile::after { content: ""; position: absolute; top: 1px; right: 1px; width: 13px; height: 13px; background: url("/assets/ui/holly-corner.svg") center / contain no-repeat; }
+.standard-thumb-holiday-tag { display: flex; width: fit-content; max-width: 100%; align-items: center; flex-wrap: wrap; gap: 2px 7px; margin: 3px 0 5px; padding: 3px 7px; border: 1px solid #f3d577; border-radius: 999px; color: #fff9dc; background: linear-gradient(100deg, #a91e39, #187447); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.standard-thumb-holiday-tag > span { font-size: 14px; letter-spacing: 0; }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile { position: relative; overflow: hidden; border: 3px solid transparent; border-radius: 9px; background-image: url("/assets/ui/christmas-motifs.svg"), var(--thumb-card, linear-gradient(145deg, #4ee777, #0c7e4d)), repeating-linear-gradient(135deg, #fff0c0 0 5px, #c9283f 5px 10px, #207b43 10px 15px); background-position: center, center, center; background-size: 100% 100%, 100% 100%, auto; background-repeat: no-repeat, no-repeat, repeat; background-origin: padding-box, padding-box, border-box; background-clip: padding-box, padding-box, border-box; box-shadow: 0 0 0 1px #e4c04f, inset 0 2px 5px #fff9, 0 2px 3px #0005; }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile:nth-child(2) { --thumb-card: linear-gradient(145deg, #ff70cd, #a71e8b); }
+.standard-design-thumb[data-design-id="clasico-luminoso"] .standard-thumb-tile:nth-child(3) { --thumb-card: linear-gradient(145deg, #54e3ff, #0873bf); }
 .standard-preview-screen { padding: 10px; border-radius: 13px; background: linear-gradient(155deg, var(--thumb-page-start), var(--thumb-page-end)); }
 .standard-preview-screen .standard-thumb-shell { padding: 12px; border-radius: 11px; }
 .standard-preview-screen .standard-thumb-head { height: 20px; font-size: 14px; }

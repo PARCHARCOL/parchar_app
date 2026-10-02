@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" fill="none">
+  <defs>
+    <linearGradient id="bell" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff49a"/>
+      <stop offset=".48" stop-color="#ffc62d"/>
+      <stop offset="1" stop-color="#bd6115"/>
+    </linearGradient>
+    <linearGradient id="red" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ff6570"/>
+      <stop offset="1" stop-color="#c70f35"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Luces y guirnalda sobre el borde superior -->
+  <path d="M8 25C48 5 145 7 192 25" stroke="#124b2c" stroke-width="4" stroke-linecap="round"/>
+  <path d="m17 20 5 12m10-16 5 13m12-17 4 13m14-15 2 14m17-15 1 14m19-14-1 14m19-13-3 14m18-12-4 14m18-9-5 14m17-7-6 13" stroke="#257445" stroke-width="3" stroke-linecap="round"/>
+  <path d="M17 27v7m28-16v8m32-11v8m36-7v8m34-3v8m26 0v7" stroke="#173d2a" stroke-width="2"/>
+  <circle cx="17" cy="36" r="4" fill="#ff4057" stroke="#fff0b2" stroke-width="1.5"/>
+  <circle cx="45" cy="28" r="4" fill="#ffe45a" stroke="#fff0b2" stroke-width="1.5"/>
+  <circle cx="77" cy="24" r="4" fill="#53eaff" stroke="#fff0b2" stroke-width="1.5"/>
+  <circle cx="113" cy="25" r="4" fill="#ff4057" stroke="#fff0b2" stroke-width="1.5"/>
+  <circle cx="147" cy="30" r="4" fill="#ffe45a" stroke="#fff0b2" stroke-width="1.5"/>
+  <circle cx="173" cy="37" r="4" fill="#53eaff" stroke="#fff0b2" stroke-width="1.5"/>
+
+  <!-- Copos de nieve -->
+  <g stroke="#e5f9ff" stroke-width="3" stroke-linecap="round">
+    <path d="M22 65v26M11 71l22 14M33 71 11 85M22 65l-4 5m4-5 4 5M11 85l6-1m-6 1 2 6m26-20-6 1m6-1-2-6"/>
+    <path d="M179 103v23m-10-18 20 13m-1-13-20 13m11-18-4 5m4-5 4 5m-15 8 5-1m-5 1 2 5m18-13-5 1m5-1-2-5"/>
+    <path d="M36 139v17m-8-13 16 10m0-10-16 10m8-14-3 4m3-4 3 4"/>
+  </g>
+
+  <!-- Santa Claus -->
+  <g stroke="#752337" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M43 43c3-16 22-23 34-13 5 4 7 9 6 15-11-6-24-6-40-2Z" fill="url(#red)"/>
+    <path d="M42 43c13-7 28-8 42-2l-2 8c-13-5-26-4-40 2Z" fill="#fff8e6"/>
+    <circle cx="83" cy="30" r="6" fill="#fff8e6"/>
+    <path d="M46 48c5-9 20-13 31-7 9 5 11 16 6 24-6 10-21 12-31 5-9-6-11-14-6-22Z" fill="#ffd5ae"/>
+    <path d="M48 61c9-4 18-4 29 0 0 10-9 17-18 15-7-1-11-7-11-15Z" fill="#fff8e6"/>
+    <path d="M55 56c3 3 7 3 10 0m3 0c3 3 6 3 9 0" stroke="#752337" stroke-width="2" stroke-linecap="round"/>
+    <path d="M64 63c4-3 8-3 12 0-3 5-9 6-12 0Z" fill="#e1a048"/>
+  </g>
+
+  <!-- Campana -->
+  <g stroke="#81500e" stroke-width="1.7" stroke-linejoin="round">
+    <path d="M145 43c0-9 5-15 13-15s13 6 13 15c0 6 2 10 6 14h-38c4-4 6-8 6-14Z" fill="url(#bell)"/>
+    <path d="M141 58h34v5h-34z" fill="#ffe171"/>
+    <circle cx="158" cy="67" r="4" fill="#d3283f"/>
+    <path d="M151 28c1-5 4-7 7-7s6 2 7 7" stroke="#fff0ae" stroke-width="3" stroke-linecap="round"/>
+    <path d="M151 39v12" stroke="#fff3b2" stroke-width="2.5" stroke-linecap="round"/>
+  </g>
+
+  <!-- Reno -->
+  <g stroke="#51321f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M27 173c-8-6-9-13-6-20m6 9c1-8 5-13 10-16m-11 17-8-7m16 0 4-8m-16 5-4-8m19 11 8-7" fill="none"/>
+    <path d="M21 168c1-10 8-16 17-15 10 1 16 9 14 18-2 9-9 14-18 12-9-1-14-7-13-15Z" fill="#a65b35"/>
+    <path d="M23 163c-7-4-10-2-12 2 6 0 8 3 9 7m31-10c7-4 10-2 12 2-6 0-8 3-9 7" fill="#bc7548"/>
+    <circle cx="32" cy="167" r="1.7" fill="#24172a"/>
+    <circle cx="44" cy="167" r="1.7" fill="#24172a"/>
+    <ellipse cx="38" cy="176" rx="6" ry="5" fill="#ed3348" stroke="#8d1b2b"/>
+    <path d="M35 182c2 2 5 2 7 0" stroke="#fff0de"/>
+  </g>
+
+  <!-- Duende -->
+  <g stroke="#165530" stroke-width="1.7" stroke-linejoin="round">
+    <path d="M153 164c-3-13 3-23 18-30 1 9 5 15 13 18-7 7-15 11-31 12Z" fill="#2ab45b"/>
+    <path d="M153 159c10-2 20-6 28-11l4 6c-8 7-19 11-31 12Z" fill="#f0c842"/>
+    <circle cx="185" cy="133" r="5" fill="#fff5d8" stroke="#b88620"/>
+    <path d="M156 163c5-6 15-8 23-3 7 5 8 14 2 21-6 7-17 7-24 1-6-5-6-13-1-19Z" fill="#ffd2a9"/>
+    <path d="M154 171c-8-5-12-3-14 2 6 0 9 3 11 7m31-9c8-4 11-1 12 4-6-1-9 1-11 5" fill="#ffd2a9"/>
+    <circle cx="166" cy="171" r="1.5" fill="#242033"/>
+    <circle cx="178" cy="171" r="1.5" fill="#242033"/>
+    <path d="M166 179c4 3 8 3 12 0" stroke="#b23a3f" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>
