@@ -7120,6 +7120,7 @@ const server =
                 longitude,
                 social_link,
                 rut_document,
+                (commerce_document IS NOT NULL AND commerce_document <> '') AS has_commerce_document,
                 status,
                 created_at,
                 video_path,
@@ -7352,6 +7353,13 @@ const server =
           let commerceDocument =
             currentBusiness
               .commerce_document || "";
+
+          if (!commerceDocument && !commerceFile) {
+            sendJson(res, 400, {
+              error: "Debes subir la Cámara de Comercio del negocio.",
+            });
+            return;
+          }
 
           if (
             rutFile &&
@@ -7724,6 +7732,13 @@ const server =
             sendJson(res, 400, {
               error:
                 "Debes subir el RUT del negocio.",
+            });
+            return;
+          }
+
+          if (!commerceFile) {
+            sendJson(res, 400, {
+              error: "Debes subir la Cámara de Comercio del negocio.",
             });
             return;
           }
@@ -10420,6 +10435,16 @@ const server =
             );
           const business =
             existing.rows[0];
+          if (!business) {
+            sendJson(res, 404, { error: "Local no encontrado." });
+            return;
+          }
+          if (!business.rut_document || !business.commerce_document) {
+            sendJson(res, 400, {
+              error: "Para aprobar el local se requieren el RUT y la Cámara de Comercio. Solicita al propietario que complete los documentos.",
+            });
+            return;
+          }
           const nearest =
             business
               ? findNearestCoverageZone(

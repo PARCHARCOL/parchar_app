@@ -21,6 +21,7 @@ const logoutButton = document.querySelector("#client-logout");
 const businessForm = document.querySelector("#business-form");
 const businessMessage = document.querySelector("#business-message");
 const rutInput = document.querySelector("input[name='rutDocument']");
+const commerceInput = document.querySelector("input[name='commerceDocument']");
 const coordinateInputs = document.querySelectorAll(".coordinate-input");
 
 const videoInput = document.querySelector("#video-input");
@@ -166,9 +167,13 @@ function setBusinessFormClientData(client) {
   if (ownerPhoneInput) ownerPhoneInput.value = client.phone || "";
 }
 
-function setBusinessFileRequirements(isEditing) {
+function setBusinessFileRequirements(isEditing, hasCommerceDocument = false) {
   if (rutInput) {
     rutInput.required = !isEditing;
+  }
+
+  if (commerceInput) {
+    commerceInput.required = !isEditing || !hasCommerceDocument;
   }
 
   if (videoInput) {
@@ -213,7 +218,7 @@ function startBusinessEdit(item) {
   editingBusinessId = String(item.id || "");
   businessForm.reset();
   setBusinessFormClientData(currentClient);
-  setBusinessFileRequirements(true);
+  setBusinessFileRequirements(true, Boolean(item.has_commerce_document));
   clearVideoStatus();
 
   const fields = businessForm.elements;
@@ -247,7 +252,9 @@ function startBusinessEdit(item) {
 
   setMessage(
     videoStatus,
-    "Modo edicion: si no subes un RUT o video nuevo, se conserva el archivo actual.",
+    item.has_commerce_document
+      ? "Modo edicion: se conservan el RUT, la Cámara de Comercio y el video si no cargas archivos nuevos."
+      : "Modo edicion: este local necesita Cámara de Comercio en PDF; el RUT y video actuales se conservan.",
     false
   );
 
@@ -732,11 +739,12 @@ businessForm?.addEventListener("submit", async (event) => {
   const latitude = Number(latitudeRaw);
   const longitude = Number(longitudeRaw);
   const rutFile = rutInput?.files?.[0];
+  const commerceFile = commerceInput?.files?.[0];
   const videoFile = videoInput?.files?.[0];
 
   setMessage(
     businessMessage,
-    isEditing ? "Guardando cambios del local..." : "Subiendo negocio y RUT..."
+    isEditing ? "Guardando cambios del local..." : "Subiendo negocio y documentos..."
   );
 
   if (
@@ -766,6 +774,15 @@ businessForm?.addEventListener("submit", async (event) => {
     setMessage(
       businessMessage,
       "El nuevo RUT debe estar en formato PDF.",
+      true
+    );
+    return;
+  }
+
+  if (commerceFile && !isPdfFile(commerceFile)) {
+    setMessage(
+      businessMessage,
+      "La Cámara de Comercio debe estar en formato PDF.",
       true
     );
     return;
