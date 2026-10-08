@@ -1535,6 +1535,7 @@ function renderCards(
                   </details>
                 </div>
                 <p><strong>Direccion:</strong> ${escapeHtml(item.address || "No registrada")}, ${escapeHtml(item.city || "")}</p>
+                ${window.renderSiteDisclosure()}
                 <p><strong>Oferta:</strong> ${escapeHtml(item.products || "Consulta directamente con el local")}</p>
                 <p>${escapeHtml(item.description || "")}</p>
                 <div class="parchar-panel">

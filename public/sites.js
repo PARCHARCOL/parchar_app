@@ -1259,6 +1259,7 @@ function renderSiteCard(site) {
           </div>
           <p class="site-distance"><strong>Distancia:</strong> ${escapeHtml(estimateTravelText(distanceKm))}</p>
           ${publicAddress ? `<p><strong>Referencia:</strong> ${escapeHtml(publicAddress)}</p>` : ""}
+          ${window.renderSiteDisclosure()}
           <p>${escapeHtml(publicDescription)}</p>
           ${tags ? `<div class="site-tags">${tags}</div>` : ""}
         </div>

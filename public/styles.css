@@ -2883,6 +2883,39 @@ body > .ad-banner {
   color: var(--text-soft);
 }
 
+.site-disclosure {
+  margin: 4px 0 8px;
+  padding: 10px 12px;
+  border-left: 2px solid rgba(255, 190, 106, 0.65);
+}
+
+.site-disclosure p {
+  margin: 0 0 6px;
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.site-disclosure-link {
+  border: 0;
+  padding: 2px 0;
+  background: none;
+  color: #ffcf75;
+  font: inherit;
+  font-size: 0.94rem;
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.site-disclosure-link:focus-visible {
+  outline: 2px solid #ffcf75;
+  outline-offset: 3px;
+}
+
+.site-disclosure-modal-card p {
+  line-height: 1.5;
+}
+
 .ad-publicist-choice {
   display: flex;
   align-items: flex-start;
