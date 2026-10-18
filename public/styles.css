@@ -4995,3 +4995,27 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .acti
     max-height: 104px;
   }
 }
+
+/* Search stays touch-friendly without inheriting form-field padding on mobile. */
+@media (max-width: 540px) {
+  .home-body .search-bar {
+    height: 52px;
+    min-height: 52px;
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .home-body .search-submit {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .home-body .search-bar input {
+    height: 44px;
+    min-height: 0;
+    padding: 0;
+    line-height: 1.2;
+    font-size: clamp(16px, 1rem, 24px);
+  }
+}
