@@ -52,7 +52,7 @@ function renderBrandLogo(
   let source =
     path || PARCHAR_DEFAULT_LOGO;
   if (
-    element.closest(".home-body") &&
+    element.closest(".home-body, .splash") &&
     source === PARCHAR_DEFAULT_LOGO
   ) {
     source = "/assets/parchar-logo-home.png";

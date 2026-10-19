@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v184";
+const CACHE_NAME = "parchar-shell-v185";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -120,22 +120,30 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (request.mode === "navigate") {
+    const refresh = fetch(request).then(async (response) => {
+      if (response.status === 200) {
+        const html = await response.clone().text();
+        // Do not replace the installed app with a hosting-provider waiting page.
+        if (html.includes('class="splash"') || html.includes('class="theme-body')) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(request, response.clone());
+        }
+      }
+      return response;
+    });
+    event.waitUntil(refresh.catch(() => {}));
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(
+          url.pathname === "/" ||
+          (url.pathname === "/index.html" && url.searchParams.get("source") === "pwa")
+            ? "/loading.html"
+            : request,
+          { ignoreSearch: true }
+        );
+        if (cached) return cached;
         try {
-          const networkResponse =
-            await fetch(request);
-
-          if (
-            networkResponse.status === 200
-          ) {
-            await cache.put(
-              request,
-              networkResponse.clone()
-            );
-          }
-
-          return networkResponse;
+          return await refresh;
         } catch {
           return (
             (await cache.match(request, {
@@ -156,31 +164,28 @@ self.addEventListener("fetch", (event) => {
     );
 
   if (shouldRefreshFromNetwork) {
+    const refresh = fetch(request).then(async (response) => {
+      const type = response.headers.get("content-type") || "";
+      const isExpectedType = url.pathname.endsWith(".html")
+        ? type.includes("text/html")
+        : url.pathname.endsWith(".css")
+          ? type.includes("text/css")
+          : url.pathname.endsWith(".js")
+            ? /(?:javascript|ecmascript)/i.test(type)
+            : /json|manifest/i.test(type);
+      if (response.status === 200 && isExpectedType) {
+        const cache = await caches.open(CACHE_NAME);
+        await cache.put(request, response.clone());
+      }
+      return response;
+    });
+    event.waitUntil(refresh.catch(() => {}));
     event.respondWith(
-      fetch(request)
-        .then((networkResponse) => {
-          if (
-            networkResponse.status === 200
-          ) {
-            const responseCopy =
-              networkResponse.clone();
-            caches
-              .open(CACHE_NAME)
-              .then((cache) =>
-                cache.put(
-                  request,
-                  responseCopy
-                )
-              );
-          }
-
-          return networkResponse;
-        })
-        .catch(() =>
-          caches.match(request, {
-            ignoreSearch: true,
-          })
-        )
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(request, { ignoreSearch: true });
+        if (cached) return cached;
+        return refresh;
+      })
     );
     return;
   }
