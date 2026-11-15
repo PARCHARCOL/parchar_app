@@ -8,7 +8,27 @@ const eventResults = document.querySelector("#event-results");
 let agendaToday = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
 let agendaUntil = "";
 let agendaRequest = 0;
-let agendaCategories = {};
+let agendaCategories = { musica: "Música", teatro: "Teatro y humor", cine: "Cine", danza: "Danza", arte: "Arte y exposiciones", literatura: "Literatura", talleres: "Talleres", charlas: "Charlas", ferias: "Ferias", familia: "Familia", deporte: "Deporte", otros: "Otros planes" };
+let agendaMetadataLoaded = false;
+const selectedAgendaCategory = new URLSearchParams(location.search).get("category");
+const hasAgendaCategory = Object.hasOwn(agendaCategories, selectedAgendaCategory);
+const categoryMenu = document.querySelector("#event-category-menu");
+const categoryView = document.querySelector("#event-category-view");
+const categoryIcons = { musica: "music", deporte: "bike", charlas: "message-circle", ferias: "store", familia: "user-round" };
+categoryMenu.innerHTML = Object.entries(agendaCategories).map(([key, label], index) => `<a class="event-category-window event-window-${index % 6}" href="/events.html?category=${key}"><img src="/assets/ui/${categoryIcons[key] || "calendar-days"}.svg" alt="" /><h2>${agendaEscape(label)}</h2><span aria-hidden="true">↗</span></a>`).join("");
+categoryMenu.hidden = hasAgendaCategory;
+categoryView.hidden = !hasAgendaCategory;
+for (const [key, label] of Object.entries(agendaCategories)) eventCategory.add(new Option(label, key));
+eventCategory.querySelector('option[value=""]').remove();
+if (hasAgendaCategory) {
+  eventCategory.value = selectedAgendaCategory;
+  document.querySelector(".inner-top h1").textContent = agendaCategories[selectedAgendaCategory];
+  document.title = `${agendaCategories[selectedAgendaCategory]} | Parchar`;
+  const back = document.querySelector(".inner-top a");
+  back.href = "/events.html";
+  back.setAttribute("aria-label", "Volver a categorías");
+}
+eventCategory.addEventListener("change", () => { location.href = `/events.html?category=${encodeURIComponent(eventCategory.value)}`; });
 let agendaRefreshTimer;
 let agendaSyncRetries = 0;
 function datePlus(date, days) { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
@@ -54,10 +74,10 @@ async function loadAgenda() {
     const data = await response.json();
     if (request !== agendaRequest) return;
     if (!response.ok) throw new Error(data.error || "No pudimos consultar la agenda.");
-    if (!Object.keys(agendaCategories).length) {
+    if (!agendaMetadataLoaded) {
+      agendaMetadataLoaded = true;
       agendaCategories = data.categories;
       for (const city of data.cities) eventCity.add(new Option(city, city));
-      for (const [key, label] of Object.entries(data.categories)) eventCategory.add(new Option(label, key));
     }
     agendaToday = data.today;
     if (!eventDate.value) eventDate.value = agendaToday;
@@ -97,4 +117,4 @@ document.querySelectorAll("[data-event-date]").forEach((button) => button.addEve
   document.querySelectorAll("[data-event-date]").forEach((b) => { b.classList.toggle("active", b === button); b.setAttribute("aria-pressed", String(b === button)); });
   loadAgenda();
 }));
-loadAgenda();
+if (hasAgendaCategory) loadAgenda();

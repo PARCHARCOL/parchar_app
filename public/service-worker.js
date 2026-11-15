@@ -1,7 +1,8 @@
-const CACHE_NAME = "parchar-shell-v191";
+const CACHE_NAME = "parchar-shell-v192";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
+  "/assets/ui/music.svg",
   "/index.html",
   "/descargar.html",
   "/loading.html",

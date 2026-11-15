@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Qué hacer hoy | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=172" />
+    <link rel="stylesheet" href="/styles.css?v=173" />
     <script src="/theme.js?v=117" defer></script>
   </head>
   <body class="theme-body list-body events-body">
@@ -13,6 +13,8 @@
         <a class="icon-ghost icon-link" href="/" aria-label="Volver"><img src="/assets/ui/arrow-left.svg" alt="" /></a>
         <h1>Qué hacer hoy</h1>
       </header>
+      <nav id="event-category-menu" class="event-category-menu" aria-label="Categorías de eventos"></nav>
+      <div id="event-category-view" hidden>
       <form id="event-filters" class="event-filters" role="search">
         <label>Municipio<select id="event-city"><option value="">Toda el Área Metropolitana</option></select></label>
         <label>Categoría<select id="event-category"><option value="">Todas</option></select></label>
@@ -32,9 +34,10 @@
       <details class="event-sources"><summary>Fuentes y actualización</summary><ul id="event-source-status"></ul></details>
       <section id="event-results" class="event-magazine" aria-label="Agenda de eventos"></section>
       <p class="event-source-note">Programación publicada por las fuentes indicadas. Confirma horarios, entradas y cambios con el organizador.</p>
+      </div>
       <aside class="ad-banner" aria-label="Publicidad"><span class="ad-pill">Anuncio</span><p>Pauta tu marca en Parchar</p><button type="button" class="ad-cta">Anunciar</button></aside>
     </main>
-    <script src="/events.js?v=5"></script>
+    <script src="/events.js?v=6"></script>
     <script src="/ads.js?v=117"></script>
     <script src="/update.js?v=96"></script>
   </body>
