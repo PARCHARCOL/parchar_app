@@ -17,7 +17,7 @@
     const filter = document.querySelector("#events-admin-filter").value;
     const selected = items.filter((e) => filter === "all" || (filter === "pausado" ? e.status === "pausado" : e.endDate >= today));
     list.innerHTML = selected.length ? selected.map((e) => `<article class="glass-card admin-card">
-      <h3>${esc(e.name)}</h3><p>${esc(e.date)} · ${esc(e.city)} · ${e.status === "activo" ? "Publicado" : "Pausado"}</p>
+      <h3>${esc(e.name)}</h3><p>${esc(e.date)} · ${esc(e.city)} · ${e.audience === "restringido" ? "Invitación cerrada · fuera de la agenda pública" : e.status === "activo" ? "Publicado" : "Pausado"}</p>
       <p>${esc(e.sourceName)} · ${e.sourceKind === "automatico" ? "Carga automática" : "Edición del equipo"}</p>
       <div class="event-actions"><button type="button" class="ghost-btn" data-event-edit="${esc(e.id)}">Editar</button><button type="button" class="ghost-btn" data-event-status="${esc(e.id)}">${e.status === "activo" ? "Pausar" : "Publicar"}</button><a href="${esc(e.sourceUrl)}" target="_blank" rel="noopener noreferrer">Consultar fuente ↗</a></div>
     </article>`).join("") : "<p>No hay eventos en este filtro.</p>";
@@ -33,6 +33,7 @@
       if (city) form.elements.city.value = city;
       if (category) form.elements.category.value = category;
       status.textContent = `${data.sync.message} ${data.sync.updatedAt ? `Última consulta: ${new Date(data.sync.updatedAt).toLocaleString("es-CO")}` : ""}`;
+      document.querySelector("#events-admin-sources").innerHTML = (data.sync.sources || []).map((source) => `<li><a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">${esc(source.name)}</a><span>${source.ok ? `${source.count} fechas` : "No disponible"}</span><small>${esc(source.message)}</small></li>`).join("");
       render();
     } catch (error) { status.textContent = error.message; }
   }
@@ -55,7 +56,12 @@
     const toggle = event.target.closest("[data-event-status]");
     if (edit) {
       const item = items.find((e) => e.id === edit.dataset.eventEdit);
-      for (const [key, value] of Object.entries(item)) if (form.elements.namedItem(key)) form.elements.namedItem(key).value = value || "";
+      form.reset();
+      for (const [key, value] of Object.entries(item)) {
+        const field = form.elements.namedItem(key);
+        if (field?.type === "checkbox") field.checked = Boolean(value);
+        else if (field) field.value = value || "";
+      }
       form.closest("details").open = true; form.elements.name.focus();
     }
     if (toggle) {

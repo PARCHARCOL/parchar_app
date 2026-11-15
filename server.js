@@ -6185,7 +6185,7 @@ const server =
 
         if (pathname === "/api/events" || pathname.startsWith("/api/admin/events")) {
           if (pathname.startsWith("/api/admin/") && !requireStaffRole(staffAuth, res, ["admin", "asesor"])) return;
-          await eventAgenda.handle(req, res, requestUrl);
+          await eventAgenda.handle(req, res, requestUrl, staffAuth);
           return;
         }
 

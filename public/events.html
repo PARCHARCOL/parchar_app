@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Qué hacer hoy | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=170" />
+    <link rel="stylesheet" href="/styles.css?v=172" />
     <script src="/theme.js?v=117" defer></script>
   </head>
   <body class="theme-body list-body events-body">
@@ -15,9 +15,11 @@
       </header>
       <form id="event-filters" class="event-filters" role="search">
         <label>Municipio<select id="event-city"><option value="">Toda el Área Metropolitana</option></select></label>
-        <label>Fecha<input id="event-date" type="date" required /></label>
         <label>Categoría<select id="event-category"><option value="">Todas</option></select></label>
-        <label>Buscar<input id="event-search" type="search" placeholder="Evento o lugar" /></label>
+        <details id="event-advanced" class="event-advanced" open><summary>Fecha y búsqueda</summary><div class="event-extra-fields">
+          <label>Fecha<input id="event-date" type="date" required /></label>
+          <label>Buscar<input id="event-search" type="search" placeholder="Evento o lugar" /></label>
+        </div></details>
         <button class="submit-btn" type="submit">Buscar</button>
       </form>
       <nav class="event-date-tabs" aria-label="Fecha de los eventos">
@@ -27,11 +29,12 @@
         <button class="chip-filter" data-event-date="week" aria-pressed="false">Próximos 7 días</button>
       </nav>
       <p id="event-status" role="status" aria-live="polite">Consultando agenda…</p>
+      <details class="event-sources"><summary>Fuentes y actualización</summary><ul id="event-source-status"></ul></details>
       <section id="event-results" class="event-magazine" aria-label="Agenda de eventos"></section>
       <p class="event-source-note">Programación publicada por las fuentes indicadas. Confirma horarios, entradas y cambios con el organizador.</p>
       <aside class="ad-banner" aria-label="Publicidad"><span class="ad-pill">Anuncio</span><p>Pauta tu marca en Parchar</p><button type="button" class="ad-cta">Anunciar</button></aside>
     </main>
-    <script src="/events.js?v=2"></script>
+    <script src="/events.js?v=5"></script>
     <script src="/ads.js?v=117"></script>
     <script src="/update.js?v=96"></script>
   </body>

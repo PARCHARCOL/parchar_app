@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=170"
+      href="/styles.css?v=172"
     />
     <script src="/theme.js?v=117" defer></script>
 
@@ -694,6 +694,7 @@
         <h2>Qué hacer hoy · Eventos</h2>
         <div class="event-actions"><button id="events-sync" type="button" class="submit-btn">Actualizar desde las fuentes</button><button id="events-refresh" type="button" class="ghost-btn">Actualizar listado</button></div>
         <p id="events-admin-status" role="status" aria-live="polite"></p>
+        <ul id="events-admin-sources" class="event-source-health"></ul>
         <details class="place-more"><summary>Crear o editar evento</summary>
           <form id="events-admin-form" class="form-grid">
             <input type="hidden" name="id" />
@@ -708,8 +709,13 @@
             <label>Dirección<input name="address" maxlength="200" /></label>
             <label>Precio o entrada<input name="price" maxlength="120" /></label>
             <label>Fuente u organizador<input name="sourceName" maxlength="120" required /></label>
+            <label>Tipo de organizador<select name="organizerType"><option value="institucional">Institución</option><option value="privado">Organizador privado</option></select></label>
+            <label>Acceso<select name="audience"><option value="publico">Abierto al público</option><option value="restringido">Invitación cerrada · no aparece en la agenda pública</option></select></label>
+            <label class="full-row legal-check"><input type="checkbox" name="referenceChecked" />He contrastado organizador, fecha, lugar y referencia del evento.</label>
             <label>Enlace de referencia<input name="sourceUrl" type="url" placeholder="https://" required /></label>
             <label>URL de imagen<input name="image" type="url" placeholder="https://" /></label>
+            <label class="full-row legal-check"><input type="checkbox" name="imageRightsConfirmed" />El titular autorizó el uso de esta imagen en Parchar o su licencia lo permite.</label>
+            <label class="full-row">Referencia de la autorización o licencia<input name="imageAuthorization" maxlength="300" placeholder="Enlace a la licencia o referencia del permiso recibido" /></label>
             <label class="full-row">Descripción<textarea name="description" maxlength="600" rows="3"></textarea></label>
             <label>Publicación<select name="status"><option value="pausado">Pausado</option><option value="activo">Publicado</option></select></label>
             <button type="submit" class="submit-btn">Guardar evento</button><button type="reset" class="ghost-btn">Limpiar</button>
@@ -1386,7 +1392,7 @@
     <script src="/update.js?v=96"></script>
     <script src="/password-visibility.js?v=1"></script>
     <script src="/admin.js?v=106"></script>
-    <script src="/events-admin.js?v=1"></script>
+    <script src="/events-admin.js?v=2"></script>
 
   </body>
 </html>
