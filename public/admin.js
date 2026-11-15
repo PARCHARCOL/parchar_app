@@ -1305,6 +1305,7 @@ function standardDesignStyle(design) {
 }
 
 function standardDesignThumbMarkup(design) {
+  if (design.id === "mural") return `<div class="home-mural-preview"><span class="home-mural-preview-logo"><img src="/assets/parchar-logo-home.png" alt="Parchar" /></span><span style="background-image:url('/assets/ui/home-scene-restaurante.webp')">Restaurantes</span><span style="background-image:url('/assets/ui/home-scene-bar.webp')">Bares</span><span style="background-image:url('/assets/ui/home-scene-charcos.webp')">Charcos</span><span style="background-image:url('/assets/ui/home-scene-puebliar.webp')">Puebliar</span></div>`;
   const designBadge = design.id === "clasico-luminoso"
     ? '<span class="standard-thumb-holiday-tag"><span aria-hidden="true">❄️ 🔔 🎅 🦌 🧝</span><strong>Navidad</strong></span>'
     : design.id === "feria-flores"

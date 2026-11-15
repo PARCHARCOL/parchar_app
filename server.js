@@ -9905,7 +9905,7 @@ const server =
           if (!requireStaffRole(staffAuth, res, ["admin"])) return;
           const body = await parseJsonBody(req);
           if (!STANDARD_DESIGNS.some((design) => design.id === body.designId)) {
-            sendJson(res, 400, { error: "Selecciona uno de los siete diseños disponibles." });
+            sendJson(res, 400, { error: "Selecciona uno de los diseños disponibles." });
             return;
           }
           const activeDesignId = await saveStandardDesignSettings(body.designId);

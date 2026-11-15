@@ -5156,6 +5156,45 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .acti
 .events-body .event-explorer-stage { position: relative; margin-inline: auto; }
 .events-body .event-explorer .event-category-menu { position: absolute; top: 0; left: 0; transform-origin: top left; }
 .events-body .event-explorer-viewport:focus-visible, .events-body .event-explorer-tools button:focus-visible { outline: 3px solid #65ffe5; outline-offset: -3px; }
+.home-logo-window[hidden] { display: none !important; }
+html[data-standard-design="mural"][data-standard-design] .home-body { padding: 0; margin: 0; }
+html[data-standard-design="mural"][data-standard-design] .home-body .app-shell { display: block; width: 100%; max-width: none; padding: 0 0 20px; margin: 0; border: 0; border-radius: 0; }
+html[data-standard-design="mural"][data-standard-design] .home-body .app-shell::before { display: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 8px 12px; margin: 0; }
+html[data-standard-design="mural"][data-standard-design] .home-body .search-bar { margin: 8px 12px; width: auto; }
+html[data-standard-design="mural"][data-standard-design] .home-body .tone-control { margin: 8px 12px; }
+html[data-standard-design="mural"][data-standard-design] .home-body .button-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: dense; grid-auto-columns: auto; gap: 2px; width: 100%; max-width: none; margin: 12px 0; padding: 0; overflow: visible; scroll-snap-type: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-btn { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: stretch; justify-content: flex-end; width: auto; min-width: 0; max-width: none; height: auto; min-height: 170px; padding: 16px 12px; border: 0; border-radius: 0; box-shadow: none; aspect-ratio: auto; background: #063b4c; overflow: hidden; color: #fff; text-decoration: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-btn::before { content: ""; position: absolute; inset: 0; z-index: -2; background-image: var(--home-scene); background-size: cover; background-position: center; opacity: 1; border: 0; border-radius: 0; transform: none; pointer-events: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-btn::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, #020e25f2, transparent 72%); opacity: 1; border: 0; border-radius: 0; pointer-events: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-icon { display: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-label { width: 100%; max-width: none; height: auto; flex-shrink: 0; align-self: auto; padding: 0; color: #fff; font-size: 1.1rem; line-height: 1.45; text-align: left; text-shadow: 0 2px 4px #000; overflow-wrap: anywhere; }
+html[data-standard-design="mural"][data-standard-design] .home-body .home-logo-window { grid-column: span 2; grid-row: span 2; display: grid; place-items: center; min-width: 0; min-height: 342px; padding: 12px; background: #052638; box-sizing: border-box; }
+html[data-standard-design="mural"][data-standard-design] .home-body .home-logo-window .brand-size-row { width: 100%; max-width: none; margin: 0; padding: 0; border: 0; background: none; box-shadow: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .home-logo-window .brand-logo { width: 100%; height: auto; max-height: 330px; object-fit: contain; margin: 0; border: 0; filter: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .button-grid > .ad-banner { position: relative !important; inset: auto !important; transform: none !important; grid-column: 1 / -1; grid-row: auto; width: 100% !important; max-width: none !important; height: 230px; min-height: 230px; margin: 0 !important; border: 0; border-radius: 0; z-index: 1; box-sizing: border-box; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-events { --home-scene: url('/assets/ui/event-scene-otros.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-restaurante { --home-scene: url('/assets/ui/home-scene-restaurante.webp'); grid-column: span 2; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-bar { --home-scene: url('/assets/ui/home-scene-bar.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-walking { --home-scene: url('/assets/ui/home-scene-walking.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-bike { --home-scene: url('/assets/ui/home-scene-bici.webp'); grid-column: span 2; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-puebliar { --home-scene: url('/assets/ui/home-scene-puebliar.webp'); grid-column: span 2; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-charcos { --home-scene: url('/assets/ui/home-scene-charcos.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-miradores { --home-scene: url('/assets/ui/home-scene-miradores.webp'); grid-column: span 2; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-burgermaster { --home-scene: url('/assets/ui/home-scene-burgermaster.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-clientes { --home-scene: url('/assets/ui/home-scene-clientes.webp'); grid-column: span 2; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-pautar { --home-scene: url('/assets/ui/event-scene-musica.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-admin { --home-scene: url('/assets/ui/event-scene-charlas.webp'); }
+html[data-standard-design="mural"][data-standard-design] .home-body .home-recommendations { display: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .action-btn:focus-visible { outline: 3px solid #ffdc61; outline-offset: -4px; }
+.home-mural-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; background: #052638; width: 100%; min-height: 180px; }
+.home-mural-preview > span { min-width: 0; min-height: 75px; display: flex; align-items: flex-end; padding: 6px; background-size: cover; background-position: center; color: #fff; font-size: 12px; text-shadow: 0 1px 4px #000; }
+.home-mural-preview > .home-mural-preview-logo { grid-column: span 2; grid-row: span 2; align-items: center; }
+.home-mural-preview-logo img { width: 100%; object-fit: contain; }
+@media (min-width: 900px) {
+  html[data-standard-design="mural"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  html[data-standard-design="mural"][data-standard-design] .home-body .button-grid > .ad-banner { grid-column: span 3; grid-row: span 2; height: auto; min-height: 342px; }
+}
 @media (min-width: 900px) {
   .events-body .event-category-menu { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 }

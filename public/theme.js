@@ -8,6 +8,20 @@ function applyStandardDesign(design) {
   const valid = design && typeof design.id === "string" && keys.every((key) => /^#[0-9a-f]{6}$/i.test(design[key] || ""));
   if (!valid) return;
   root.dataset.standardDesign = design.id;
+  const logoWindow = document.querySelector("#home-logo-window");
+  const logo = document.querySelector(".home-body .brand-size-row");
+  if (logoWindow && logo) {
+    const mural = design.id === "mural";
+    if (mural && logo.parentElement !== logoWindow) logoWindow.append(logo);
+    if (!mural && logo.parentElement === logoWindow) document.querySelector(".home-body .top-strip").insertBefore(logo, document.querySelector("#home-alerts-btn"));
+    logoWindow.hidden = !mural;
+    const ad = document.querySelector(".home-body .ad-banner");
+    const grid = document.querySelector(".home-body .button-grid");
+    if (ad && grid) {
+      if (mural && ad.parentElement !== grid) grid.insertBefore(ad, grid.querySelector(".btn-restaurante"));
+      if (!mural && ad.parentElement === grid) document.body.append(ad);
+    }
+  }
   root.style.setProperty("--standard-page-start", design.pageStart);
   root.style.setProperty("--standard-page-end", design.pageEnd);
   root.style.setProperty("--standard-shell-start", design.shellStart);
