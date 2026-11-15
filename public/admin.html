@@ -15,7 +15,7 @@
 
     <link
       rel="stylesheet"
-      href="/styles.css?v=167"
+      href="/styles.css?v=170"
     />
     <script src="/theme.js?v=117" defer></script>
 
@@ -260,6 +260,8 @@
               data-admin-alert-count="sites"
             >0</span>
           </button>
+
+          <button type="button" class="admin-section-tab" data-admin-section-tab="events" data-role-access="admin,asesor">Eventos</button>
 
           <button
             type="button"
@@ -688,11 +690,40 @@
 
       </section>
 
+      <section id="admin-events-section" class="form-block glass-card admin-section-panel is-hidden" data-admin-section-panel="events" data-role-access="admin,asesor">
+        <h2>Qué hacer hoy · Eventos</h2>
+        <div class="event-actions"><button id="events-sync" type="button" class="submit-btn">Actualizar desde las fuentes</button><button id="events-refresh" type="button" class="ghost-btn">Actualizar listado</button></div>
+        <p id="events-admin-status" role="status" aria-live="polite"></p>
+        <details class="place-more"><summary>Crear o editar evento</summary>
+          <form id="events-admin-form" class="form-grid">
+            <input type="hidden" name="id" />
+            <label>Nombre<input name="name" maxlength="160" required /></label>
+            <label>Municipio<select name="city" required></select></label>
+            <label>Categoría<select name="category" required></select></label>
+            <label>Fecha inicial<input name="date" type="date" required /></label>
+            <label>Fecha final<input name="endDate" type="date" /></label>
+            <label>Horario<input name="time" maxlength="100" placeholder="7:00 p. m." /></label>
+            <label>Hora de finalización<input name="endTime" type="time" /></label>
+            <label>Lugar<input name="venue" maxlength="200" /></label>
+            <label>Dirección<input name="address" maxlength="200" /></label>
+            <label>Precio o entrada<input name="price" maxlength="120" /></label>
+            <label>Fuente u organizador<input name="sourceName" maxlength="120" required /></label>
+            <label>Enlace de referencia<input name="sourceUrl" type="url" placeholder="https://" required /></label>
+            <label>URL de imagen<input name="image" type="url" placeholder="https://" /></label>
+            <label class="full-row">Descripción<textarea name="description" maxlength="600" rows="3"></textarea></label>
+            <label>Publicación<select name="status"><option value="pausado">Pausado</option><option value="activo">Publicado</option></select></label>
+            <button type="submit" class="submit-btn">Guardar evento</button><button type="reset" class="ghost-btn">Limpiar</button>
+          </form>
+        </details>
+        <label>Filtrar listado<select id="events-admin-filter"><option value="upcoming">Próximos</option><option value="pausado">Pausados</option><option value="all">Todos</option></select></label>
+        <div id="events-admin-list" class="event-admin-list"></div>
+      </section>
+
       <section
         id="admin-sites-section"
-        class="form-block glass-card admin-section-panel is-hidden admin-only"
+        class="form-block glass-card admin-section-panel is-hidden"
         data-admin-section-panel="sites"
-        data-role-access="admin"
+        data-role-access="admin,asesor"
       >
 
         <h2>
@@ -716,8 +747,6 @@
           <button type="button" class="admin-category-tab" data-admin-site-category="naturaleza">Naturaleza <span class="admin-tab-badge" data-admin-alert-count="site:naturaleza">0</span></button>
           <button type="button" class="admin-category-tab admin-category-create" data-admin-site-category="crear">Crear sitio</button>
         </nav>
-
-        <div id="admin-site-create-panel" class="admin-category-panel" hidden>
 
         <div class="admin-import-panel">
           <strong>
@@ -758,6 +787,10 @@
             </button>
           </div>
         </div>
+
+        <p id="admin-site-message" class="feedback" role="status" aria-live="polite"></p>
+
+        <div id="admin-site-create-panel" class="admin-category-panel" hidden>
 
         <form
           id="admin-site-form"
@@ -929,11 +962,6 @@
             Cancelar edicion
           </button>
         </form>
-
-        <p
-          id="admin-site-message"
-          class="feedback"
-        ></p>
 
         </div>
 
@@ -1358,6 +1386,7 @@
     <script src="/update.js?v=96"></script>
     <script src="/password-visibility.js?v=1"></script>
     <script src="/admin.js?v=106"></script>
+    <script src="/events-admin.js?v=1"></script>
 
   </body>
 </html>

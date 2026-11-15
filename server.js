@@ -5951,6 +5951,8 @@ async function initializeDatabase() {
   );
 }
 
+const eventAgenda = require("./lib/event-agenda").createAgenda({ pool, sendJson, parseJsonBody });
+
 const server =
   http.createServer(
     async (req, res) => {
@@ -6179,6 +6181,12 @@ const server =
           if (!staffAuth) {
             return;
           }
+        }
+
+        if (pathname === "/api/events" || pathname.startsWith("/api/admin/events")) {
+          if (pathname.startsWith("/api/admin/") && !requireStaffRole(staffAuth, res, ["admin", "asesor"])) return;
+          await eventAgenda.handle(req, res, requestUrl);
+          return;
         }
 
         if (
@@ -7938,7 +7946,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -7970,7 +7978,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -8273,7 +8281,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -8377,7 +8385,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -8518,7 +8526,7 @@ const server =
             !requireStaffRole(
               staffAuth,
               res,
-              ["admin"]
+              ["admin", "asesor"]
             )
           ) {
             return;
@@ -11603,7 +11611,8 @@ const server =
   );
 
 initializeDatabase()
-  .then(() => {
+  .then(async () => {
+    await eventAgenda.init();
     server.listen(PORT, () => {
       console.log(
         `Parchar corriendo en puerto ${PORT}`

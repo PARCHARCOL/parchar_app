@@ -225,6 +225,25 @@ video.brand-logo {
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
+.event-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 14px 0; }
+.event-filters label { min-width: 0; }
+.event-filters input, .event-filters select { min-width: 0; max-width: 100%; }
+.event-filters button { align-self: end; min-height: 44px; }
+.event-date-tabs, .event-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-block: 10px; }
+.event-magazine { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 16px; }
+.event-card { min-width: 0; }
+.event-card h2 { margin: 12px 0; font-size: 1.3rem; line-height: 1.3; overflow-wrap: anywhere; }
+.event-card-date { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 0.95rem; }
+.event-card-date strong { color: var(--neon-gold); }
+.event-photo { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: contain; margin-block: 10px; }
+.event-source-note { line-height: 1.5; color: var(--text-soft); font-size: 0.95rem; }
+.event-admin-list { display: grid; gap: 12px; margin-top: 14px; }
+.event-actions a { overflow-wrap: anywhere; }
+.home-body .btn-events .action-icon { background: url('/assets/ui/calendar-days.svg') center / 62% no-repeat, linear-gradient(145deg, #ffbc45, #e35c23); border: 3px solid #ffe5a3; border-radius: 22px; box-shadow: inset 0 3px 6px #fff8, inset 0 -4px 8px #5e170988; }
+html[data-standard-design]:not([data-standard-design="actual"]) .home-body .btn-events { --category-glyph: url('/assets/ui/calendar-days.svg'); --category-surface: linear-gradient(145deg, #ffbc45, #e35c23); }
+@media (min-width: 700px) { .event-magazine { grid-template-columns: repeat(2, minmax(0, 1fr)); } .event-filters { grid-template-columns: repeat(4, minmax(0, 1fr)) auto; } }
+@media (max-width: 360px) { .event-filters { grid-template-columns: minmax(0, 1fr); } }
+
 .search-bar input {
   flex: 1;
   min-width: 0;

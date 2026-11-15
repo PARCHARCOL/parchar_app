@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Qué hacer hoy | Parchar</title>
+    <link rel="stylesheet" href="/styles.css?v=170" />
+    <script src="/theme.js?v=117" defer></script>
+  </head>
+  <body class="theme-body list-body events-body">
+    <main class="app-shell">
+      <header class="top-strip inner-top">
+        <a class="icon-ghost icon-link" href="/" aria-label="Volver"><img src="/assets/ui/arrow-left.svg" alt="" /></a>
+        <h1>Qué hacer hoy</h1>
+      </header>
+      <form id="event-filters" class="event-filters" role="search">
+        <label>Municipio<select id="event-city"><option value="">Toda el Área Metropolitana</option></select></label>
+        <label>Fecha<input id="event-date" type="date" required /></label>
+        <label>Categoría<select id="event-category"><option value="">Todas</option></select></label>
+        <label>Buscar<input id="event-search" type="search" placeholder="Evento o lugar" /></label>
+        <button class="submit-btn" type="submit">Buscar</button>
+      </form>
+      <nav class="event-date-tabs" aria-label="Fecha de los eventos">
+        <button class="chip-filter active" data-event-date="today" aria-pressed="true">Hoy</button>
+        <button class="chip-filter" data-event-date="tomorrow" aria-pressed="false">Mañana</button>
+        <button class="chip-filter" data-event-date="weekend" aria-pressed="false">Fin de semana</button>
+      </nav>
+      <p id="event-status" role="status" aria-live="polite">Consultando agenda…</p>
+      <section id="event-results" class="event-magazine" aria-label="Agenda de eventos"></section>
+      <p class="event-source-note">Programación publicada por las fuentes indicadas. Confirma horarios, entradas y cambios con el organizador.</p>
+      <aside class="ad-banner" aria-label="Publicidad"><span class="ad-pill">Anuncio</span><p>Pauta tu marca en Parchar</p><button type="button" class="ad-cta">Anunciar</button></aside>
+    </main>
+    <script src="/events.js?v=1"></script>
+    <script src="/ads.js?v=117"></script>
+    <script src="/update.js?v=96"></script>
+  </body>
+</html>
