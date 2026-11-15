@@ -15,6 +15,17 @@ test("unknown recurrence is not converted into daily events", () => {
   const html = '<h1>Exposición de prueba</h1><p class="pec_event_page_sub_p">noviembre 1, 2026 a diciembre 20, 2026</p>';
   assert.deepEqual(agenda.parseSourceEvent(html, "https://example.org/event"), []);
 });
+
+test("area search uses location and matches known municipalities exactly", () => {
+  const event = { name: "Show en Sabaneta", description: "Invitados de Bello", city: "Medellín", venue: "Teatro Laureles", address: "Calle 40, Belén", date: "2026-11-15", endDate: "2026-11-15", category: "teatro" };
+  const filters = { date: "2026-11-15", category: "teatro" };
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "medellin" }), true);
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "belen" }), true);
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "Laureles" }), true);
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "Sabaneta" }), false);
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "Bello" }), false);
+  assert.equal(agenda.eventMatches(event, { ...filters, area: "   " }), true);
+});
 test("imports only explicit recurrence dates, preserving the closing time", () => {
   const html = '<h1>Concierto de prueba</h1><p class="pec_event_page_sub_p">noviembre 15, 2026 6:30 pm - 8:30 pm</p><ul class="pec_event_page_action_menu"><li>noviembre 15, 2026</li><li>noviembre 22, 2026</li></ul>';
   const items = agenda.parseSourceEvent(html, "https://example.org/event");

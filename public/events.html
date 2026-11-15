@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Qué hacer hoy | Parchar</title>
-    <link rel="stylesheet" href="/styles.css?v=173" />
+    <link rel="stylesheet" href="/styles.css?v=174" />
     <script src="/theme.js?v=117" defer></script>
   </head>
   <body class="theme-body list-body events-body">
@@ -13,31 +13,33 @@
         <a class="icon-ghost icon-link" href="/" aria-label="Volver"><img src="/assets/ui/arrow-left.svg" alt="" /></a>
         <h1>Qué hacer hoy</h1>
       </header>
-      <nav id="event-category-menu" class="event-category-menu" aria-label="Categorías de eventos"></nav>
+      <section id="event-explorer" class="event-explorer" aria-label="Explorar categorías">
+        <div class="event-explorer-tools" role="group" aria-label="Zoom del mural">
+          <button type="button" id="event-zoom-out" aria-label="Alejar ventanas" title="Alejar ventanas">−</button>
+          <output id="event-zoom-level" aria-live="polite">100%</output>
+          <button type="button" id="event-zoom-in" aria-label="Acercar ventanas" title="Acercar ventanas">+</button>
+          <button type="button" id="event-zoom-reset" aria-label="Restablecer vista" title="Restablecer vista">⤢</button>
+        </div>
+        <div id="event-explorer-viewport" class="event-explorer-viewport" tabindex="0" aria-label="Mural desplazable de categorías">
+          <div id="event-explorer-stage" class="event-explorer-stage">
+            <nav id="event-category-menu" class="event-category-menu" aria-label="Categorías de eventos"></nav>
+          </div>
+        </div>
+      </section>
       <div id="event-category-view" hidden>
       <form id="event-filters" class="event-filters" role="search">
-        <label>Municipio<select id="event-city"><option value="">Toda el Área Metropolitana</option></select></label>
-        <label>Categoría<select id="event-category"><option value="">Todas</option></select></label>
-        <details id="event-advanced" class="event-advanced" open><summary>Fecha y búsqueda</summary><div class="event-extra-fields">
-          <label>Fecha<input id="event-date" type="date" required /></label>
-          <label>Buscar<input id="event-search" type="search" placeholder="Evento o lugar" /></label>
-        </div></details>
-        <button class="submit-btn" type="submit">Buscar</button>
+        <label class="event-area-label" for="event-area">Zona</label>
+        <input id="event-area" type="search" placeholder="Barrio, sector o municipio" aria-label="Buscar por barrio, sector o municipio" />
+        <button type="submit" class="event-area-submit" aria-label="Buscar en esta zona" title="Buscar en esta zona"><img src="/assets/ui/search.svg" alt="" /></button>
       </form>
-      <nav class="event-date-tabs" aria-label="Fecha de los eventos">
-        <button class="chip-filter active" data-event-date="today" aria-pressed="true">Hoy</button>
-        <button class="chip-filter" data-event-date="tomorrow" aria-pressed="false">Mañana</button>
-        <button class="chip-filter" data-event-date="weekend" aria-pressed="false">Fin de semana</button>
-        <button class="chip-filter" data-event-date="week" aria-pressed="false">Próximos 7 días</button>
-      </nav>
       <p id="event-status" role="status" aria-live="polite">Consultando agenda…</p>
-      <details class="event-sources"><summary>Fuentes y actualización</summary><ul id="event-source-status"></ul></details>
       <section id="event-results" class="event-magazine" aria-label="Agenda de eventos"></section>
+      <details class="event-sources"><summary>Fuentes y actualización</summary><ul id="event-source-status"></ul></details>
       <p class="event-source-note">Programación publicada por las fuentes indicadas. Confirma horarios, entradas y cambios con el organizador.</p>
       </div>
       <aside class="ad-banner" aria-label="Publicidad"><span class="ad-pill">Anuncio</span><p>Pauta tu marca en Parchar</p><button type="button" class="ad-cta">Anunciar</button></aside>
     </main>
-    <script src="/events.js?v=6"></script>
+    <script src="/events.js?v=7"></script>
     <script src="/ads.js?v=117"></script>
     <script src="/update.js?v=96"></script>
   </body>
