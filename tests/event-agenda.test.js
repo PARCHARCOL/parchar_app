@@ -27,6 +27,17 @@ test("source discovery rejects foreign hosts and removes duplicate event links",
   assert.equal(items.length, 1);
   assert.equal(items[0].url, url);
 });
+
+test("imports complete calendar entries even when they are absent from the featured links", () => {
+  const cell = '<div class="dp_pec_date" data-dppec-date="2026-11-16"><a class="dp_daily_event" data-dppec-event="42"><strong>10:00 am - 1:00 pm</strong></a><div class="eventsPreview"><li data-dppec-event="42"><span>10:00 am</span><i>Conversatorio de prueba</i><i>Biblioteca<br>Calle 1</i></li></div></div>';
+  const items = agenda.parseSourceCalendar(cell + cell);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].name, "Conversatorio de prueba");
+  assert.equal(items[0].date, "2026-11-16");
+  assert.equal(items[0].endTime, "13:00");
+  assert.equal(items[0].venue, "Biblioteca Calle 1");
+  assert.equal(items[0].sourceUrl, "https://agenda.patrimoniomedellin.gov.co/?p=42");
+});
 test("rejects invalid dates and unsafe event reference links", () => {
   const event = { name: "Prueba", city: "Sabaneta", category: "arte", date: "2026-11-16", sourceUrl: "https://example.org/event" };
   assert.equal(agenda.normalizeEvent(event).city, "Sabaneta");

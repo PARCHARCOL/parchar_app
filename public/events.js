@@ -9,6 +9,8 @@ let agendaToday = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota",
 let agendaUntil = "";
 let agendaRequest = 0;
 let agendaCategories = {};
+let agendaRefreshTimer;
+let agendaSyncRetries = 0;
 function datePlus(date, days) { const d = new Date(`${date}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + days); return d.toISOString().slice(0, 10); }
 function agendaDateLabel(date) { return new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "long" }).format(new Date(`${date}T12:00:00Z`)); }
 function renderAgenda(items) {
@@ -36,6 +38,7 @@ function renderAgenda(items) {
   eventResults.querySelectorAll("img").forEach((image) => image.addEventListener("error", () => { image.hidden = true; }));
 }
 async function loadAgenda() {
+  clearTimeout(agendaRefreshTimer);
   const request = ++agendaRequest;
   eventStatus.textContent = "Consultando agenda…";
   const params = new URLSearchParams({ date: eventDate.value, city: eventCity.value, category: eventCategory.value, q: document.querySelector("#event-search").value });
@@ -53,7 +56,14 @@ async function loadAgenda() {
     agendaToday = data.today;
     renderAgenda(data.items);
     eventStatus.textContent = data.items.length ? `${data.items.length} ${data.items.length === 1 ? "evento" : "eventos"}${eventCity.value ? ` en ${eventCity.value}` : " en el Área Metropolitana"}` :
-      `No encontramos eventos publicados${eventCity.value ? ` en ${eventCity.value}` : " para esta zona"} en la fecha seleccionada. Puedes consultar otro día o municipio.`;
+      `Sin resultados en las fuentes consultadas${eventCity.value ? ` para ${eventCity.value}` : " para el Área Metropolitana"} en estas fechas. Prueba Próximos 7 días u otro municipio. Esto no significa que no haya actividades en la ciudad.`;
+    if ((data.sync.running || !data.sync.updatedAt) && agendaSyncRetries < 24) {
+      agendaSyncRetries++;
+      eventStatus.textContent = "Actualizando la agenda desde la fuente. Los resultados aparecerán aquí al terminar…";
+      agendaRefreshTimer = setTimeout(loadAgenda, 5000);
+    } else {
+      agendaRefreshTimer = setTimeout(loadAgenda, 5 * 60 * 1000);
+    }
     if (data.sync.errorAt && (!data.sync.updatedAt || data.sync.errorAt > data.sync.updatedAt)) eventStatus.textContent += " No se pudo actualizar la fuente; consulta la fecha de actualización de cada evento.";
   } catch (error) {
     if (request !== agendaRequest) return;
@@ -68,7 +78,7 @@ document.querySelectorAll("[data-event-date]").forEach((button) => button.addEve
   const mode = button.dataset.eventDate;
   const day = new Date(`${agendaToday}T12:00:00Z`).getUTCDay();
   eventDate.value = mode === "tomorrow" ? datePlus(agendaToday, 1) : mode === "weekend" ? datePlus(agendaToday, day === 0 || day === 6 ? 0 : 6 - day) : agendaToday;
-  agendaUntil = mode === "weekend" ? datePlus(eventDate.value, day === 0 ? 0 : 1) : "";
+  agendaUntil = mode === "weekend" ? datePlus(eventDate.value, day === 0 ? 0 : 1) : mode === "week" ? datePlus(agendaToday, 6) : "";
   document.querySelectorAll("[data-event-date]").forEach((b) => { b.classList.toggle("active", b === button); b.setAttribute("aria-pressed", String(b === button)); });
   loadAgenda();
 }));

@@ -8,7 +8,8 @@ administradores y asesores. Las API de gestion requieren la sesion interna.
 Agenda Colaborativa de Patrimonio Medellin:
 https://agenda.patrimoniomedellin.gov.co/agenda-colaborativa/
 
-El conector descubre las referencias individuales publicadas en esa pagina.
+El conector importa las fechas explicitas del calendario mensual completo y
+complementa los eventos destacados con sus referencias individuales.
 Solo importa fechas explicitas; no interpreta un rango de fechas como una
 recurrencia diaria. Las imagenes se referencian desde la fuente, sin copiar
 archivos al almacenamiento de Parchar. Cada ficha conserva su referencia.
