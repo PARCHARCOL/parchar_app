@@ -5158,9 +5158,16 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .acti
 .events-body .event-explorer-viewport:focus-visible, .events-body .event-explorer-tools button:focus-visible { outline: 3px solid #65ffe5; outline-offset: -3px; }
 .home-logo-window[hidden] { display: none !important; }
 html[data-standard-design="mural"][data-standard-design] .home-body { padding: 0; margin: 0; }
-html[data-standard-design="mural"][data-standard-design] .home-body .app-shell { display: block; width: 100%; max-width: none; padding: 0 0 20px; margin: 0; border: 0; border-radius: 0; }
+html[data-standard-design="mural"][data-standard-design] .home-body .app-shell { display: block; width: 100%; max-width: none; padding: 0 0 calc(var(--ad-height) + env(safe-area-inset-bottom, 0px) + 32px); margin: 0; border: 0; border-radius: 0; }
 html[data-standard-design="mural"][data-standard-design] .home-body .app-shell::before { display: none; }
-html[data-standard-design="mural"][data-standard-design] .home-body .top-strip { display: flex; align-items: center; justify-content: space-between; min-height: 56px; padding: 8px 12px; margin: 0; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip { display: grid; place-items: center; min-height: 260px; padding: 16px; margin: 0; background: linear-gradient(#02173033, #02173044), url('/assets/ui/home-scene-charcos.webp') center 42% / cover; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip > .icon-ghost { display: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip > .brand-size-row { display: grid; place-items: center; width: min(100%, 560px); height: auto; margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip .brand-logo { display: block; width: 100%; height: 240px; max-height: none; object-fit: contain; margin: 0; padding: 0; background: transparent; border: 0; filter: none; }
+html[data-standard-design="mural"][data-standard-design] .home-body > .ad-banner { position: fixed !important; left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); width: 100%; max-width: none; height: var(--ad-height); min-height: var(--ad-height); margin: 0; border-radius: 0; box-sizing: border-box; z-index: 30; border: 1px solid #52dacf; box-shadow: 0 -2px 12px #13b7dd44; }
+.home-reading-options { margin: 12px; }
+.home-reading-options > summary { cursor: pointer; font-size: 0.9rem; }
+.home-reading-options .reading-accessibility { margin-top: 8px; }
 html[data-standard-design="mural"][data-standard-design] .home-body .search-bar { margin: 8px 12px; width: auto; }
 html[data-standard-design="mural"][data-standard-design] .home-body .tone-control { margin: 8px 12px; }
 html[data-standard-design="mural"][data-standard-design] .home-body .button-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: none; grid-auto-flow: dense; grid-auto-columns: auto; gap: 2px; width: 100%; max-width: none; margin: 12px 0; padding: 0; overflow: visible; scroll-snap-type: none; }
@@ -5189,7 +5196,7 @@ html[data-standard-design="mural"][data-standard-design] .home-body .home-recomm
 html[data-standard-design="mural"][data-standard-design] .home-body .action-btn:focus-visible { outline: 3px solid #ffdc61; outline-offset: -4px; }
 .home-mural-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; background: #052638; width: 100%; min-height: 180px; }
 .home-mural-preview > span { min-width: 0; min-height: 75px; display: flex; align-items: flex-end; padding: 6px; background-size: cover; background-position: center; color: #fff; font-size: 12px; text-shadow: 0 1px 4px #000; }
-.home-mural-preview > .home-mural-preview-logo { grid-column: span 2; grid-row: span 2; align-items: center; }
+.home-mural-preview > .home-mural-preview-logo { grid-column: 1 / -1; align-items: center; background: url('/assets/ui/home-scene-charcos.webp') center / cover; }
 .home-mural-preview-logo img { width: 100%; object-fit: contain; }
 @media (min-width: 900px) {
   html[data-standard-design="mural"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }

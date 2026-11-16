@@ -11,7 +11,7 @@ test("mural is an optional design and classic remains the default", () => {
   assert.equal(normalizeStandardDesignId("unknown"), "actual");
 });
 
-test("switching home design moves the existing logo and player without duplicating them", () => {
+test("mural keeps one header logo and one fixed player, including upgrades from the old mural", () => {
   const node = () => ({
     children: [], parentElement: null,
     append(child) { this.insertBefore(child, null); },
@@ -30,12 +30,14 @@ test("switching home design moves the existing logo and player without duplicati
   const source = fs.readFileSync(require.resolve("../public/theme.js"), "utf8");
   const context = vm.createContext({ document });
   vm.runInContext(source.slice(source.indexOf("function applyStandardDesign"), source.indexOf("\ntry {")), context);
+  logoWindow.append(logo);
+  grid.append(ad);
   context.applyStandardDesign(getStandardDesign("mural"));
   context.applyStandardDesign(getStandardDesign("mural"));
-  assert.equal(logo.parentElement, logoWindow);
-  assert.equal(logoWindow.children.length, 1);
-  assert.equal(ad.parentElement, grid);
-  assert.equal(grid.children.filter((item) => item === ad).length, 1);
+  assert.equal(logo.parentElement, header);
+  assert.equal(logoWindow.children.length, 0);
+  assert.equal(ad.parentElement, body);
+  assert.equal(body.children.filter((item) => item === ad).length, 1);
   context.applyStandardDesign(getStandardDesign("actual"));
   assert.equal(logo.parentElement, header);
   assert.equal(ad.parentElement, body);

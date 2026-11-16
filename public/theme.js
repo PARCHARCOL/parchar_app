@@ -12,14 +12,17 @@ function applyStandardDesign(design) {
   const logo = document.querySelector(".home-body .brand-size-row");
   if (logoWindow && logo) {
     const mural = design.id === "mural";
-    if (mural && logo.parentElement !== logoWindow) logoWindow.append(logo);
-    if (!mural && logo.parentElement === logoWindow) document.querySelector(".home-body .top-strip").insertBefore(logo, document.querySelector("#home-alerts-btn"));
-    logoWindow.hidden = !mural;
+    const header = document.querySelector(".home-body .top-strip");
+    if (logo.parentElement !== header) header.insertBefore(logo, document.querySelector("#home-alerts-btn"));
+    logoWindow.hidden = true;
     const ad = document.querySelector(".home-body .ad-banner");
-    const grid = document.querySelector(".home-body .button-grid");
-    if (ad && grid) {
-      if (mural && ad.parentElement !== grid) grid.insertBefore(ad, grid.querySelector(".btn-restaurante"));
-      if (!mural && ad.parentElement === grid) document.body.append(ad);
+    if (ad && ad.parentElement !== document.body) document.body.append(ad);
+    const options = document.querySelector("#home-reading-options");
+    const controls = document.querySelector(".reading-accessibility");
+    if (options) {
+      options.hidden = !mural;
+      if (controls && mural && controls.parentElement !== options) options.append(controls);
+      if (controls && !mural && controls.parentElement === options) header.insertAdjacentElement("afterend", controls);
     }
   }
   root.style.setProperty("--standard-page-start", design.pageStart);
@@ -113,6 +116,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <button type="button" data-reading-adjust="20" aria-label="Aumentar el tamaño del texto">A+</button>
     `;
     topStrip.insertAdjacentElement("afterend", controls);
+    if (document.documentElement.dataset.standardDesign === "mural") document.querySelector("#home-reading-options")?.append(controls);
     controls.addEventListener("click", (event) => {
       const button = event.target.closest("[data-reading-adjust]");
       if (!button) return;
