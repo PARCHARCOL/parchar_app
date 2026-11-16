@@ -11,13 +11,13 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1075.0",
+    "@panzoom/panzoom": "4.6.2",
     "cheerio": "1.1.2",
     "cloudinary": "^2.10.0",
-    "multer": "^2.2.0",
+    "multer": "^2.5.0",
     "pg": "^8.13.1"
   },
   "license": "MIT",
-  "devDependencies": {},
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PARCHARCOL/parchar_app.git"

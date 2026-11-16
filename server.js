@@ -5952,6 +5952,7 @@ async function initializeDatabase() {
 }
 
 const eventAgenda = require("./lib/event-agenda").createAgenda({ pool, sendJson, parseJsonBody });
+const creativeWall = require("./lib/creative-wall").createCreativeWall({ pool, sendJson, parseJsonBody, requireClientAuth });
 
 const server =
   http.createServer(
@@ -6183,6 +6184,10 @@ const server =
           }
         }
 
+        if (pathname === "/api/creative" || pathname.startsWith("/api/creative/") || pathname === "/api/admin/creative" || pathname.startsWith("/api/admin/creative/")) {
+          await creativeWall.handle(req, res, requestUrl, staffAuth);
+          return;
+        }
         if (pathname === "/api/events" || pathname.startsWith("/api/admin/events")) {
           if (pathname.startsWith("/api/admin/") && !requireStaffRole(staffAuth, res, ["admin", "asesor"])) return;
           await eventAgenda.handle(req, res, requestUrl, staffAuth);
@@ -11613,6 +11618,7 @@ const server =
 initializeDatabase()
   .then(async () => {
     await eventAgenda.init();
+    await creativeWall.init();
     server.listen(PORT, () => {
       console.log(
         `Parchar corriendo en puerto ${PORT}`

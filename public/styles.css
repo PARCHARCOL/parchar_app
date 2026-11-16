@@ -5157,6 +5157,8 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .acti
 .events-body .event-explorer .event-category-menu { position: absolute; top: 0; left: 0; transform-origin: top left; }
 .events-body .event-explorer-viewport:focus-visible, .events-body .event-explorer-tools button:focus-visible { outline: 3px solid #65ffe5; outline-offset: -3px; }
 .home-logo-window[hidden] { display: none !important; }
+.home-body .btn-creative .action-icon { background: #492674 url('/assets/ui/pencil.svg') center / 62% no-repeat; border: 3px solid #4cdec9; border-radius: 20px; }
+html[data-standard-design="mural"][data-standard-design] .home-body .btn-creative { --home-scene: url('/assets/ui/event-scene-arte.webp'); }
 html[data-standard-design="mural"][data-standard-design] .home-body { padding: 0; margin: 0; }
 html[data-standard-design="mural"][data-standard-design] .home-body .app-shell { display: block; width: 100%; max-width: none; padding: 0 0 calc(var(--ad-height) + env(safe-area-inset-bottom, 0px) + 32px); margin: 0; border: 0; border-radius: 0; }
 html[data-standard-design="mural"][data-standard-design] .home-body .app-shell::before { display: none; }
