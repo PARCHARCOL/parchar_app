@@ -463,6 +463,7 @@ async function bootstrapSession() {
     const data = await apiRequest("/api/clients/me");
     currentClient = data.client;
     saveSession(currentToken, currentClient);
+    if (returnToCreativeWall()) return;
     await showLoggedInState();
   } catch {
     clearSession();
@@ -495,6 +496,12 @@ registerForm?.addEventListener("submit", async (event) => {
   }
 });
 
+function returnToCreativeWall() {
+  if (new URLSearchParams(location.search).get("next") !== "creative") return false;
+  location.replace("/creative.html?editor=1");
+  return true;
+}
+
 loginForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
 
@@ -516,6 +523,7 @@ loginForm?.addEventListener("submit", async (event) => {
     currentClient = data.client;
 
     saveSession(currentToken, currentClient);
+    if (returnToCreativeWall()) return;
     loginForm.reset();
 
     await showLoggedInState();

@@ -4,13 +4,22 @@
   const world = $("#wall-world"), viewport = $("#wall-viewport"), list = $("#wall-list");
   const editor = $("#wall-editor"), detail = $("#wall-detail"), canvas = $("#wall-drawing");
   let session = {}, mode = "canvas", items = [], current, strokes = [], redo = [], drawing, background = renderer.colors[0], color = renderer.colors[2], avatar = renderer.avatars[0], request = 0, timer;
-  let liked = new Set(), before = "";
-  try { session = JSON.parse(localStorage.getItem("parchar_client_session") || "{}"); } catch {}
+  let liked = new Set(), before = "", submitting = false;
+  function syncSession() {
+    session = {};
+    try { const saved = JSON.parse(localStorage.getItem("parchar_client_session") || "{}"); if (typeof saved?.token === "string" && saved.token) session = saved; } catch {}
+    $("#wall-auth-note").hidden = !!session.token;
+    $("#wall-publish").disabled = submitting;
+  }
+  syncSession();
   const panzoom = Panzoom(world, { canvas: true, minScale: 0.2, maxScale: 2.5, origin: "0 0", startScale: 0.8, startX: -160, startY: -165, step: 0.25, overflow: "hidden" });
   viewport.addEventListener("wheel", panzoom.zoomWithWheel, { passive: false });
   async function api(path, options = {}) {
+    syncSession();
     const response = await fetch(path, { ...options, cache: "no-store", headers: { "Content-Type": "application/json", ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}) } });
-    const data = await response.json(); if (!response.ok) throw new Error(data.error || "No pudimos completar la operación."); return data;
+    const data = await response.json();
+    if (response.status === 401) { try { localStorage.removeItem("parchar_client_session"); } catch {} syncSession(); }
+    if (!response.ok) throw new Error(data.error || "No pudimos completar la operación."); return data;
   }
   function bounds() { const scale = panzoom.getScale(), pan = panzoom.getPan(); return new URLSearchParams({ x: -viewport.clientWidth / (2 * scale) - pan.x - 120, y: -viewport.clientHeight / (2 * scale) - pan.y - 120, w: Math.min(12000, viewport.clientWidth / scale + 240), h: Math.min(12000, viewport.clientHeight / scale + 240) }); }
   async function load(append = false) {
@@ -46,8 +55,7 @@
   swatches("#wall-colors", renderer.colors, color, (v) => { color = v; }); swatches("#wall-backgrounds", renderer.colors, background, (v) => { background = v; });
   renderer.avatars.forEach((value) => { const button = document.createElement("button"); button.type = "button"; button.className = `wall-avatar-icon avatar-${value}`; button.setAttribute("aria-label", `Avatar ${value}`); button.title = `Avatar ${value}`; button.setAttribute("aria-pressed", String(value === avatar)); button.textContent = "P"; button.onclick = () => { avatar = value; $("#wall-avatars").querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); }; $("#wall-avatars").append(button); });
   function openEditor() {
-    $("#wall-auth-note").hidden = !!session.token;
-    $("#wall-publish").disabled = !session.token;
+    syncSession();
     if (!$("#wall-alias").value) $("#wall-alias").value = (session.client?.fullName || "").split(" ")[0].slice(0, 24);
     editor.showModal(); repaint();
   }
@@ -64,12 +72,24 @@
   $("#wall-clear").onclick = () => { if (strokes.length && confirm("¿Borrar los trazos del dibujo?")) { strokes = []; redo = []; repaint(); } };
   $("#wall-draft").onclick = () => { try { localStorage.setItem("parchar_creative_draft_v1", JSON.stringify(creation())); $("#wall-editor-status").textContent = "Borrador guardado en este dispositivo."; } catch { $("#wall-editor-status").textContent = "No se pudo guardar el borrador en este dispositivo."; } };
   try { const draft = JSON.parse(localStorage.getItem("parchar_creative_draft_v1") || "null"); if (draft) { $("#wall-text").value = String(draft.text || "").slice(0, 280); $("#wall-alias").value = String(draft.alias || "").slice(0, 24); strokes = Array.isArray(draft.strokes) ? draft.strokes.slice(0, 120) : []; background = renderer.colors.includes(draft.background) ? draft.background : background; avatar = renderer.avatars.includes(draft.avatar) ? draft.avatar : avatar; swatches("#wall-backgrounds", renderer.colors, background, (v) => { background = v; }); $("#wall-avatars").querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(renderer.avatars[i] === avatar))); } } catch {}
-  $("#wall-editor-form").onsubmit = async (event) => { event.preventDefault(); $("#wall-publish").disabled = true; try { const payload = { ...creation(), strokes: strokes.map(({ color, width, points }) => ({ color, width, points })) }; const data = await api("/api/creative", { method: "POST", body: JSON.stringify(payload) }); $("#wall-editor-status").textContent = data.message; strokes = []; redo = []; $("#wall-text").value = ""; try { localStorage.removeItem("parchar_creative_draft_v1"); } catch {} repaint(); } catch (error) { $("#wall-editor-status").textContent = error.message; } finally { $("#wall-publish").disabled = !session.token; } };
+  function signInWithDraft(event) {
+    syncSession(); if (session.token) return;
+    event.preventDefault();
+    try { localStorage.setItem("parchar_creative_draft_v1", JSON.stringify(creation())); location.assign("/clients.html?next=creative"); }
+    catch { $("#wall-editor-status").textContent = "No se pudo conservar el borrador. Inicia sesión en otra pestaña y vuelve aquí para no perder tu creación."; }
+  }
+  $("#wall-publish").addEventListener("click", signInWithDraft);
+  $("#wall-auth-note a").addEventListener("click", (event) => { syncSession(); if (session.token) { event.preventDefault(); return; } signInWithDraft(event); });
+  $("#wall-editor-form").onsubmit = async (event) => { event.preventDefault(); syncSession(); if (!session.token) { signInWithDraft(event); return; } submitting = true; syncSession(); try { const payload = { ...creation(), strokes: strokes.map(({ color, width, points }) => ({ color, width, points })) }; const data = await api("/api/creative", { method: "POST", body: JSON.stringify(payload) }); $("#wall-editor-status").textContent = data.message; strokes = []; redo = []; $("#wall-text").value = ""; try { localStorage.removeItem("parchar_creative_draft_v1"); } catch {} repaint(); } catch (error) { $("#wall-editor-status").textContent = error.message; } finally { submitting = false; syncSession(); } };
   document.addEventListener("click", (event) => { const id = event.target.closest("[data-open]")?.dataset.open; if (!id) return; current = items.find((item) => item.id === id); if (!current) return; const card = renderer.card(current); card.querySelector("button").remove(); $("#wall-detail-content").replaceChildren(card); if (current.text) { const message = document.createElement("p"); message.textContent = current.text; $("#wall-detail-content").append(message); } $("#wall-detail-title").textContent = current.alias; $("#wall-delete").hidden = mode !== "mine"; $("#wall-like").hidden = mode === "mine"; $("#wall-report-open").hidden = mode === "mine"; $("#wall-like").setAttribute("aria-pressed", String(liked.has(id))); $("#wall-like").lastChild.textContent = liked.has(id) ? "Te gusta" : "Me gusta"; $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = mode === "mine" ? current.status : `${current.likes} apoyos`; detail.showModal(); });
   $("#wall-like").onclick = async () => { try { const value = !liked.has(current.id); await api(`/api/creative/${current.id}/like`, { method: "POST", body: JSON.stringify({ liked: value }) }); value ? liked.add(current.id) : liked.delete(current.id); $("#wall-like").setAttribute("aria-pressed", String(value)); $("#wall-detail-status").textContent = value ? "Apoyo registrado." : "Apoyo retirado."; } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-delete").onclick = async () => { if (!confirm("¿Retirar esta creación del muro?")) return; try { await api(`/api/creative/${current.id}/delete`, { method: "POST", body: "{}" }); detail.close(); load(); } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-report-open").onclick = () => { $("#wall-report-form").hidden = false; };
   $("#wall-report-form").onsubmit = async (event) => { event.preventDefault(); try { await api(`/api/creative/${current.id}/report`, { method: "POST", body: JSON.stringify({ reason: $("#wall-report-reason").value }) }); $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = "Reporte enviado al equipo de Parchar."; } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
+  window.addEventListener("focus", syncSession);
+  window.addEventListener("pageshow", syncSession);
+  window.addEventListener("storage", (event) => { if (event.key === "parchar_client_session") syncSession(); });
+  if (new URLSearchParams(location.search).get("editor") === "1") openEditor();
   load();
 })();
