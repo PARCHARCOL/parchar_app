@@ -1,0 +1,258 @@
+{
+  "version": 1,
+  "width": 1536,
+  "height": 1024,
+  "tileSize": 256,
+  "levels": [
+    {
+      "id": 0,
+      "density": 0.125,
+      "width": 192,
+      "height": 128
+    },
+    {
+      "id": 1,
+      "density": 0.25,
+      "width": 384,
+      "height": 256
+    },
+    {
+      "id": 2,
+      "density": 0.5,
+      "width": 768,
+      "height": 512
+    },
+    {
+      "id": 3,
+      "density": 1,
+      "width": 1536,
+      "height": 1024
+    }
+  ],
+  "creatures": [
+    {
+      "id": "dragon",
+      "name": "Dragón esmeralda",
+      "description": "Un guardián de escamas luminosas que sobrevuela los senderos del bosque.",
+      "x": 0.13,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "fenix",
+      "name": "Fénix del amanecer",
+      "description": "Sus plumas doradas iluminan las islas del mundo de Parchar.",
+      "x": 0.275,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "unicornio",
+      "name": "Unicornio de luz",
+      "description": "Camina entre flores brillantes y claros tranquilos.",
+      "x": 0.42,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "pegaso",
+      "name": "Pegaso de las nubes",
+      "description": "Sus alas blancas acompañan las corrientes suaves de aire.",
+      "x": 0.565,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "grifo",
+      "name": "Grifo del valle",
+      "description": "Un majestuoso vigía de las rocas y cascadas.",
+      "x": 0.71,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "serpiente-marina",
+      "name": "Serpiente de la laguna",
+      "description": "Recorre las aguas turquesas entre las islas.",
+      "x": 0.855,
+      "y": 0.18,
+      "size": 155
+    },
+    {
+      "id": "zorro",
+      "name": "Zorro de nueve colas",
+      "description": "Un espíritu curioso de pelaje plateado y destellos rosados.",
+      "x": 0.13,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "ciervo",
+      "name": "Ciervo del bosque",
+      "description": "Sus astas luminosas se confunden con las ramas del jardín.",
+      "x": 0.275,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "kirin",
+      "name": "Kirin de cristal",
+      "description": "Una criatura serena de escamas azules y melena dorada.",
+      "x": 0.42,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "tortuga",
+      "name": "Tortuga ancestral",
+      "description": "Transporta un pequeño jardín de musgo sobre su caparazón.",
+      "x": 0.565,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "mariposa",
+      "name": "Mariposa iridiscente",
+      "description": "Sus alas reflejan los colores del paisaje fantástico.",
+      "x": 0.71,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "koi",
+      "name": "Koi celestial",
+      "description": "Sus aletas dejan destellos suaves sobre el agua.",
+      "x": 0.855,
+      "y": 0.39,
+      "size": 155
+    },
+    {
+      "id": "hada-floral",
+      "name": "Hada de las flores",
+      "description": "Cuida las flores luminosas y los pequeños rincones del jardín.",
+      "x": 0.13,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "elfo",
+      "name": "Elfo del sendero",
+      "description": "Un amable caminante de los bosques y puentes naturales.",
+      "x": 0.275,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "duende",
+      "name": "Duende del jardín",
+      "description": "Un pequeño compañero alegre que se esconde entre las hojas.",
+      "x": 0.42,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "agua",
+      "name": "Guardián del agua",
+      "description": "Un elemental sereno que acompaña las corrientes y cascadas.",
+      "x": 0.565,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "tierra",
+      "name": "Guardiana de la tierra",
+      "description": "Entre musgo y flores protege los claros tranquilos.",
+      "x": 0.71,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "aire",
+      "name": "Espíritu del aire",
+      "description": "Un ser ligero de telas y nubes que recorre las alturas.",
+      "x": 0.855,
+      "y": 0.6,
+      "size": 120
+    },
+    {
+      "id": "fuego",
+      "name": "Guardián del fuego",
+      "description": "Su luz cálida ilumina sin quemar los caminos del mundo.",
+      "x": 0.13,
+      "y": 0.81,
+      "size": 120
+    },
+    {
+      "id": "cristal",
+      "name": "Elemental de cristal",
+      "description": "Sus reflejos cambian de color al acercarse a la luz.",
+      "x": 0.275,
+      "y": 0.81,
+      "size": 120
+    },
+    {
+      "id": "arbol",
+      "name": "Espíritu del árbol",
+      "description": "Un anciano amable de corteza y pequeñas hojas brillantes.",
+      "x": 0.42,
+      "y": 0.81,
+      "size": 120
+    },
+    {
+      "id": "hada-luna",
+      "name": "Hada de la luna",
+      "description": "Sus alas violetas brillan sobre las lagunas nocturnas.",
+      "x": 0.565,
+      "y": 0.81,
+      "size": 120
+    },
+    {
+      "id": "hongo",
+      "name": "Duende de las setas",
+      "description": "Un alegre habitante de los jardines más pequeños.",
+      "x": 0.71,
+      "y": 0.81,
+      "size": 120
+    },
+    {
+      "id": "driade",
+      "name": "Dríade esmeralda",
+      "description": "Una guardiana de los árboles y de los senderos florales.",
+      "x": 0.855,
+      "y": 0.81,
+      "size": 120
+    }
+  ],
+  "zones": [
+    {
+      "id": "laguna",
+      "name": "Laguna",
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": "bosque",
+      "name": "Bosque",
+      "x": -460.79999999999995,
+      "y": -286.72
+    },
+    {
+      "id": "cascadas",
+      "name": "Cascadas",
+      "x": 460.79999999999995,
+      "y": -286.72
+    },
+    {
+      "id": "islas",
+      "name": "Islas",
+      "x": 430.08000000000004,
+      "y": 256
+    },
+    {
+      "id": "jardin",
+      "name": "Jardín",
+      "x": -460.79999999999995,
+      "y": 256
+    }
+  ]
+}

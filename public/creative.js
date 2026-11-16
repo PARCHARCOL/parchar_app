@@ -2,6 +2,7 @@
   const $ = (selector) => document.querySelector(selector);
   const renderer = window.CreativeRender;
   const world = $("#wall-world"), viewport = $("#wall-viewport"), list = $("#wall-list");
+  const postsLayer = document.createElement("div"); postsLayer.className = "wall-posts-layer"; world.append(postsLayer);
   const editor = $("#wall-editor"), detail = $("#wall-detail"), canvas = $("#wall-drawing");
   let session = {}, mode = "canvas", items = [], current, strokes = [], redo = [], drawing, background = renderer.colors[0], color = renderer.colors[2], avatar = renderer.avatars[0], request = 0, timer;
   let liked = new Set(), before = "", submitting = false;
@@ -13,7 +14,30 @@
   }
   syncSession();
   $(".wall-review-note").textContent = "Tu nombre público, texto y dibujo se envían a OpenAI para detectar contenido dañino antes de publicarse. No enviamos tu correo ni teléfono de la cuenta. Los casos dudosos pasan a revisión humana. No publiques datos personales ni contenido ajeno sin permiso.";
-  const panzoom = Panzoom(world, { canvas: true, minScale: 0.2, maxScale: 2.5, origin: "0 0", startScale: 0.8, startX: -160, startY: -165, step: 0.25, overflow: "hidden" });
+  const panzoom = Panzoom(world, { canvas: true, minScale: 0.12, maxScale: 2.5, origin: "0 0", startScale: 0.65, startX: -160, startY: -165, step: 0.25, overflow: "hidden" });
+  let creatureCatalog = [];
+  function showCreature(species) {
+    $("#world-species").value = species.id;
+    $("#world-being-name").textContent = species.name;
+    $("#world-being-image").src = `/assets/creative-world/beings/${species.id}.webp`;
+    $("#world-being-image").alt = species.name;
+    $("#world-being-description").textContent = species.description;
+    if (!$("#world-creature-dialog").open) $("#world-creature-dialog").showModal();
+  }
+  const scenery = CreativeWorld.create(world, viewport, panzoom, showCreature);
+  $("#wall-fauna").onclick = () => { if (creatureCatalog.length) showCreature(creatureCatalog[0]); };
+  $("#world-species").onchange = () => { const species = creatureCatalog.find((item) => item.id === $("#world-species").value); if (species) showCreature(species); };
+  $("#world-find-creature").onclick = () => { $("#world-creature-dialog").close(); scenery.focusCreature($("#world-species").value); };
+  const zoneSelect = $("#wall-zone");
+  scenery.ready.then((map) => {
+    if (!map) return;
+    for (const zone of map.zones) zoneSelect.add(new Option(zone.name, zone.id));
+    zoneSelect.disabled = false;
+    creatureCatalog = map.creatures || [];
+    for (const species of creatureCatalog) $("#world-species").add(new Option(species.name, species.id));
+    $("#wall-fauna").disabled = !creatureCatalog.length;
+    zoneSelect.onchange = () => { const zone = map.zones.find((item) => item.id === zoneSelect.value); if (!zone) return; panzoom.zoom(0.65, { animate: false }); requestAnimationFrame(() => panzoom.pan(-zone.x, -zone.y, { animate: false })); };
+  });
   viewport.addEventListener("wheel", panzoom.zoomWithWheel, { passive: false });
   async function api(path, options = {}) {
     syncSession();
@@ -32,11 +56,11 @@
       if (id !== request) return;
       items = append ? [...items, ...data.items] : data.items;
       before = data.before || "";
-      if (!append) { world.replaceChildren(); list.replaceChildren(); }
+      if (!append) { postsLayer.replaceChildren(); list.replaceChildren(); }
       $("#wall-more").hidden = mode !== "list" || !data.more;
       const fragment = document.createDocumentFragment();
       for (const item of data.items) { const card = renderer.card(item, mode === "mine"); if (mode === "canvas") { card.style.left = `${item.x}px`; card.style.top = `${item.y}px`; } fragment.append(card); }
-      (mode === "canvas" ? world : list).append(fragment);
+      (mode === "canvas" ? postsLayer : list).append(fragment);
       $("#wall-empty").hidden = mode !== "canvas" || items.length > 0;
       $("#wall-status").textContent = data.more && mode === "canvas" ? "Acércate para ver todas las creaciones de esta zona." : items.length ? `${items.length} ${items.length === 1 ? "creación" : "creaciones"}${mode === "canvas" ? " en esta zona" : ""}` : mode === "mine" ? "Todavía no tienes creaciones. Las enviadas aparecerán aquí con su estado." : "Todavía no hay creaciones publicadas en esta zona.";
     } catch (error) { if (id === request) $("#wall-status").textContent = error.message; }
@@ -44,10 +68,10 @@
   function zoomChanged() { $("#wall-scale").value = `${Math.round(panzoom.getScale() * 100)}%`; clearTimeout(timer); timer = setTimeout(load, 250); }
   world.addEventListener("panzoomchange", zoomChanged);
   $("#wall-plus").onclick = () => panzoom.zoomIn(); $("#wall-minus").onclick = () => panzoom.zoomOut();
-  $("#wall-home").onclick = () => panzoom.reset(); $("#wall-refresh").onclick = load;
+  $("#wall-home").onclick = () => { panzoom.reset(); zoneSelect.value = ""; }; $("#wall-refresh").onclick = load;
   $("#wall-more").onclick = () => load(true);
   viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [100, 0], ArrowRight: [-100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); const [x, y] = deltas[event.key]; panzoom.pan(x, y, { relative: true }); });
-  document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => { mode = button.dataset.mode; document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; load(); });
+  document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => { mode = button.dataset.mode; document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; scenery.refresh(); load(); });
   function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, moderationConsent: true }; }
   function repaint() { renderer.draw(canvas, creation(), false); $("#wall-undo").disabled = !strokes.length; $("#wall-redo").disabled = !redo.length; }
   function swatches(target, values, selected, change) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v203";
+const CACHE_NAME = "parchar-shell-v204";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -6,6 +6,10 @@ const CORE_ASSETS = [
   "/creative.css",
   "/creative.js",
   "/creative-render.js",
+  "/creative-world.js",
+  "/assets/creative-world/manifest.json",
+  "/assets/creative-world/preview.webp",
+  "/assets/ui/paw-print.svg",
   "/vendor/panzoom-4.6.2.min.js",
   "/assets/ui/wall-grid.svg",
   "/assets/ui/pencil.svg",
