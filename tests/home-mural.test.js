@@ -11,6 +11,13 @@ test("mural is an optional design and classic remains the default", () => {
   assert.equal(normalizeStandardDesignId("unknown"), "actual");
 });
 
+test("logo header uses its own abstract background, not category photography", () => {
+  const css = fs.readFileSync(require.resolve("../public/styles.css"), "utf8");
+  const headerRule = css.match(/html\[data-standard-design="mural"\]\[data-standard-design\] \.home-body \.top-strip \{([^}]+)\}/)[1];
+  assert.match(headerRule, /mural-logo-abstract\.webp/);
+  assert.doesNotMatch(headerRule, /home-scene-|event-scene-/);
+});
+
 test("mural keeps one header logo and one fixed player, including upgrades from the old mural", () => {
   const node = () => ({
     children: [], parentElement: null,

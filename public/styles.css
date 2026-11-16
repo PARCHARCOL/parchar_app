@@ -5160,7 +5160,7 @@ html[data-standard-design]:not([data-standard-design="actual"]) .home-body .acti
 html[data-standard-design="mural"][data-standard-design] .home-body { padding: 0; margin: 0; }
 html[data-standard-design="mural"][data-standard-design] .home-body .app-shell { display: block; width: 100%; max-width: none; padding: 0 0 calc(var(--ad-height) + env(safe-area-inset-bottom, 0px) + 32px); margin: 0; border: 0; border-radius: 0; }
 html[data-standard-design="mural"][data-standard-design] .home-body .app-shell::before { display: none; }
-html[data-standard-design="mural"][data-standard-design] .home-body .top-strip { display: grid; place-items: center; min-height: 260px; padding: 16px; margin: 0; background: linear-gradient(#02173033, #02173044), url('/assets/ui/home-scene-charcos.webp') center 42% / cover; }
+html[data-standard-design="mural"][data-standard-design] .home-body .top-strip { display: grid; place-items: center; min-height: 260px; padding: 16px; margin: 0; background: #291449 url('/assets/ui/mural-logo-abstract.webp') center / cover; }
 html[data-standard-design="mural"][data-standard-design] .home-body .top-strip > .icon-ghost { display: none; }
 html[data-standard-design="mural"][data-standard-design] .home-body .top-strip > .brand-size-row { display: grid; place-items: center; width: min(100%, 560px); height: auto; margin: 0; padding: 0; background: transparent; border: 0; box-shadow: none; }
 html[data-standard-design="mural"][data-standard-design] .home-body .top-strip .brand-logo { display: block; width: 100%; height: 240px; max-height: none; object-fit: contain; margin: 0; padding: 0; background: transparent; border: 0; filter: none; }
@@ -5196,7 +5196,7 @@ html[data-standard-design="mural"][data-standard-design] .home-body .home-recomm
 html[data-standard-design="mural"][data-standard-design] .home-body .action-btn:focus-visible { outline: 3px solid #ffdc61; outline-offset: -4px; }
 .home-mural-preview { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2px; background: #052638; width: 100%; min-height: 180px; }
 .home-mural-preview > span { min-width: 0; min-height: 75px; display: flex; align-items: flex-end; padding: 6px; background-size: cover; background-position: center; color: #fff; font-size: 12px; text-shadow: 0 1px 4px #000; }
-.home-mural-preview > .home-mural-preview-logo { grid-column: 1 / -1; align-items: center; background: url('/assets/ui/home-scene-charcos.webp') center / cover; }
+.home-mural-preview > .home-mural-preview-logo { grid-column: 1 / -1; align-items: center; background: #291449 url('/assets/ui/mural-logo-abstract.webp') center / cover; }
 .home-mural-preview-logo img { width: 100%; object-fit: contain; }
 @media (min-width: 900px) {
   html[data-standard-design="mural"][data-standard-design] .home-body .button-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
