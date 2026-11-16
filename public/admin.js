@@ -545,6 +545,15 @@ function getLatestReportMarker(items) {
   );
 }
 
+let creativeSummary = { pending: 0, reports: 0, latestPending: "", latestReport: "" };
+async function loadCreativeSummary() {
+  try {
+    const response = await staffFetch("/api/admin/creative/summary");
+    const data = await response.json();
+    if (response.ok) creativeSummary = data;
+  } catch { /* Retain the last counters during transient connection failures. */ }
+}
+
 function getAdminAlertSnapshot() {
   const pendingBusinesses =
     getPendingBusinesses();
@@ -590,9 +599,13 @@ function getAdminAlertSnapshot() {
       sites:
         sitesForReview.length,
       reports: reportCount,
+      creativePending: creativeSummary.pending,
+      creativeReports: creativeSummary.reports,
       ...categoryCounts,
     },
     markers: {
+      creativePending: creativeSummary.latestPending,
+      creativeReports: creativeSummary.latestReport,
       businesses:
         getMaxNumericId(
           pendingBusinesses
@@ -4809,6 +4822,8 @@ async function loadDashboardData({
     );
   }
 
+  if (["admin", "asesor"].includes(currentStaff?.role)) tasks.push(loadCreativeSummary());
+  else creativeSummary = { pending: 0, reports: 0, latestPending: "", latestReport: "" };
   await Promise.all(tasks);
   updateAdminAlertCenter({
     notify,

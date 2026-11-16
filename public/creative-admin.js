@@ -7,12 +7,13 @@
     list.replaceChildren(); feedback.textContent = "Cargando creaciones…";
     if (!token) { feedback.replaceChildren(); const link = document.createElement("a"); link.href = "/admin.html"; link.textContent = "Inicia sesión en Admin para moderar el muro."; link.style.color = "#67ebda"; feedback.append(link); return; }
     try {
-      const data = await api(`/api/admin/creative?status=${document.querySelector("#creative-admin-status").value}`);
-      feedback.textContent = `${data.items.length} creaciones. Aprobar permite ver la obra; no certifica al autor ni su contenido.`;
+      const [data, summary] = await Promise.all([api(`/api/admin/creative?status=${document.querySelector("#creative-admin-status").value}`), api("/api/admin/creative/summary")]);
+      feedback.textContent = `${summary.pending} pendientes · ${summary.reports} reportes abiertos. ${summary.configured ? "IA configurada; los casos dudosos y errores requieren revisión." : "IA sin activar: configura OPENAI_API_KEY en Render. Ninguna creación se aprobará automáticamente sin análisis."}`;
       for (const item of data.items) {
         const card = CreativeRender.card(item, true); card.querySelector("button").remove();
         if (item.text) { const text = document.createElement("p"); text.textContent = item.text; text.style.whiteSpace = "pre-wrap"; card.append(text); }
         if (item.reasons) { const reason = document.createElement("p"); reason.className = "wall-admin-reason"; reason.textContent = item.reasons; card.append(reason); }
+        const analysis = document.createElement("p"); analysis.className = "wall-admin-reason"; analysis.textContent = `Filtros: ${item.moderation?.state || "manual"}. ${(item.moderation?.reasons || []).join(" · ") || "Sin alertas registradas"}`; card.append(analysis);
         const actions = document.createElement("div"); actions.className = "wall-admin-actions";
         for (const [action, label] of [["aprobar", "Publicar"], ["retirar", "Retirar"], ["bloquear", "Bloquear autor"], ["desbloquear", "Desbloquear autor"]]) {
           if (action === "aprobar" && item.status === "activo") continue;

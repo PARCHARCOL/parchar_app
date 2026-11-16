@@ -12,6 +12,7 @@
     $("#wall-publish").disabled = submitting;
   }
   syncSession();
+  $(".wall-review-note").textContent = "Tu nombre público, texto y dibujo se envían a OpenAI para detectar contenido dañino antes de publicarse. No enviamos tu correo ni teléfono de la cuenta. Los casos dudosos pasan a revisión humana. No publiques datos personales ni contenido ajeno sin permiso.";
   const panzoom = Panzoom(world, { canvas: true, minScale: 0.2, maxScale: 2.5, origin: "0 0", startScale: 0.8, startX: -160, startY: -165, step: 0.25, overflow: "hidden" });
   viewport.addEventListener("wheel", panzoom.zoomWithWheel, { passive: false });
   async function api(path, options = {}) {
@@ -47,7 +48,7 @@
   $("#wall-more").onclick = () => load(true);
   viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [100, 0], ArrowRight: [-100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); const [x, y] = deltas[event.key]; panzoom.pan(x, y, { relative: true }); });
   document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => { mode = button.dataset.mode; document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; load(); });
-  function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes }; }
+  function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, moderationConsent: true }; }
   function repaint() { renderer.draw(canvas, creation(), false); $("#wall-undo").disabled = !strokes.length; $("#wall-redo").disabled = !redo.length; }
   function swatches(target, values, selected, change) {
     const container = $(target); container.replaceChildren(); values.forEach((value, i) => { const button = document.createElement("button"); button.type = "button"; button.className = "wall-swatch"; button.style.background = value; const names = ["Morado", "Blanco", "Turquesa", "Dorado", "Rosa", "Azul"]; button.setAttribute("aria-label", names[i]); button.title = names[i]; button.setAttribute("aria-pressed", String(value === selected)); button.onclick = () => { change(value); container.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); repaint(); }; container.append(button); });
