@@ -1,8 +1,8 @@
 (function (root, factory) {
-  const api = factory();
+  const api = factory(typeof module === "object" && module.exports ? require("./creative-terrain") : root.CreativeTerrain);
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.CreativeWorld = api;
-})(typeof window !== "undefined" ? window : globalThis, function () {
+})(typeof window !== "undefined" ? window : globalThis, function (terrainEngine) {
   function planTiles(view, scale, dpr, map) {
     if (![view.x, view.y, view.w, view.h, scale, dpr].every(Number.isFinite) || scale <= 0 || view.w <= 0 || view.h <= 0) return [];
     const target = scale * Math.min(2, Math.max(1, dpr));
@@ -10,8 +10,9 @@
     const density = level.density, size = map.tileSize, result = [];
     const left = Math.floor((view.x + map.width / 2) / map.width), right = Math.floor((view.x + view.w + map.width / 2) / map.width);
     const top = Math.floor((view.y + map.height / 2) / map.height), bottom = Math.floor((view.y + view.h + map.height / 2) / map.height);
-    // Repeat mirrored illustrated regions, not an unbounded collection of DOM nodes.
+    // The authored archipelago exists once. Other coordinates use continuous seeded terrain.
     for (let ry = top; ry <= bottom; ry++) for (let rx = left; rx <= right; rx++) {
+      if (rx !== 0 || ry !== 0) continue;
       const flipX = Math.abs(rx % 2) === 1, flipY = Math.abs(ry % 2) === 1;
       const regionX = rx * map.width - map.width / 2, regionY = ry * map.height - map.height / 2;
       for (let row = 0; row < Math.ceil(level.height / size); row++) for (let col = 0; col < Math.ceil(level.width / size); col++) {
@@ -27,7 +28,9 @@
     return result;
   }
   function creaturePoint(species, rx, ry, map) {
-    return { x: rx * map.width - map.width / 2 + (Math.abs(rx % 2) ? 1 - species.x : species.x) * map.width, y: ry * map.height - map.height / 2 + (Math.abs(ry % 2) ? 1 - species.y : species.y) * map.height };
+    const random = terrainEngine.hash;
+    const seed = [...species.id].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+    return { x: rx * map.width - map.width / 2 + (.12 + random(rx, ry, seed) * .76) * map.width, y: ry * map.height - map.height / 2 + (.12 + random(rx, ry, seed + 9) * .76) * map.height };
   }
   function planCreatures(view, scale, map) {
     if (scale < 0.25 || !map.creatures?.length) return [];
@@ -48,17 +51,37 @@
   }
   function create(world, viewport, panzoom, onCreature) {
     const scene = document.createElement("div"); scene.className = "wall-scenery"; scene.setAttribute("aria-hidden", "true");
-    const fallback = document.createElement("div"); fallback.className = "wall-scenery-preview";
-    scene.append(fallback); world.prepend(scene);
+    const terrain = document.createElement("div"); terrain.className = "world-terrain";
+    const illustration = document.createElement("div"); illustration.className = "world-archipelago";
+    const vegetation = document.createElement("div"); vegetation.className = "world-vegetation";
+    scene.append(terrain, illustration, vegetation); world.prepend(scene);
     let map, frame, destroyed = false;
     const images = new Map();
     const creatures = new Map();
+    const ground = new Map(), plants = new Map();
+    let painting;
+    function paintNext() {
+      painting = null;
+      if (destroyed) return;
+      const next = [...ground.values()].find((entry) => !entry.painted);
+      if (!next) return;
+      terrainEngine.paint(next.canvas, next.tile); next.painted = true; next.canvas.dataset.ready = "true";
+      painting = requestAnimationFrame(paintNext);
+    }
     function draw() {
       frame = null;
       if (!map || viewport.hidden || destroyed) return;
       const scale = panzoom.getScale(), pan = panzoom.getPan();
       const view = { x: -viewport.clientWidth / (2 * scale) - pan.x - 100, y: -viewport.clientHeight / (2 * scale) - pan.y - 100, w: viewport.clientWidth / scale + 200, h: viewport.clientHeight / scale + 200 };
-      Object.assign(fallback.style, { left: `${view.x}px`, top: `${view.y}px`, width: `${view.w}px`, height: `${view.h}px`, backgroundSize: `${map.width}px ${map.height}px`, backgroundPosition: `${-map.width / 2 - view.x}px ${-map.height / 2 - view.y}px` });
+      const groundTiles = terrainEngine.tiles(view, scale), groundKeys = new Set(groundTiles.map((tile) => tile.key));
+      for (const [key, entry] of ground) if (!groundKeys.has(key)) { entry.canvas.remove(); ground.delete(key); }
+      for (const tile of groundTiles) {
+        if (ground.has(tile.key)) continue;
+        const canvas = document.createElement("canvas");
+        Object.assign(canvas.style, { left: `${tile.x}px`, top: `${tile.y}px`, width: `${tile.size + .5}px`, height: `${tile.size + .5}px` });
+        ground.set(tile.key, { canvas, tile, painted: false }); terrain.append(canvas);
+      }
+      if (!painting) painting = requestAnimationFrame(paintNext);
       const tiles = planTiles(view, scale, window.devicePixelRatio || 1, map), keys = new Set(tiles.map((tile) => tile.key));
       for (const [key, image] of images) if (!keys.has(key)) { image.remove(); images.delete(key); }
       for (const tile of tiles) {
@@ -66,7 +89,15 @@
         const image = document.createElement("img"); image.alt = ""; image.draggable = false; image.decoding = "async";
         Object.assign(image.style, { left: `${tile.x}px`, top: `${tile.y}px`, width: `${tile.w + 0.3}px`, height: `${tile.h + 0.3}px`, transform: `scale(${tile.flipX ? -1 : 1},${tile.flipY ? -1 : 1})` });
         image.addEventListener("error", () => { image.remove(); images.delete(tile.key); }, { once: true });
-        image.src = tile.url; images.set(tile.key, image); scene.append(image);
+        image.src = tile.url; images.set(tile.key, image); illustration.append(image);
+      }
+      const landmarks = terrainEngine.landmarks(view, scale), plantKeys = new Set(landmarks.map((item) => item.key));
+      for (const [key, plant] of plants) if (!plantKeys.has(key)) { plant.remove(); plants.delete(key); }
+      for (const item of landmarks) {
+        if (plants.has(item.key)) continue;
+        const plant = document.createElement("img"); plant.alt = ""; plant.draggable = false; plant.src = `/assets/creative-world/discoveries/${item.kind}.webp`;
+        Object.assign(plant.style, { left: `${item.x - item.size / 2}px`, top: `${item.y - item.size / 2}px`, width: `${item.size}px`, height: `${item.size}px` });
+        vegetation.append(plant); plants.set(item.key, plant);
       }
       const fauna = planCreatures(view, scale, map), faunaKeys = new Set(fauna.map((item) => item.key));
       for (const [key, button] of creatures) if (!faunaKeys.has(key)) { button.remove(); creatures.delete(key); }
@@ -84,10 +115,11 @@
     const observer = new ResizeObserver(refresh); observer.observe(viewport);
     const ready = fetch("/assets/creative-world/manifest.json?v=1").then((response) => { if (!response.ok) throw new Error("world_unavailable"); return response.json(); }).then((value) => {
       if (destroyed) return;
-      map = value; fallback.style.backgroundImage = "url('/assets/creative-world/preview.webp')";
+      map = value;
+      map.zones.push({ id: "arboleda-remota", name: "Arboleda remota", x: 17500, y: -12400 }, { id: "costas", name: "Costas de luz", x: -28000, y: 19000 }, { id: "tierras", name: "Tierras lejanas", x: 64000, y: 36000 });
       viewport.classList.add("world-ready"); refresh(); return map;
     }).catch(() => { viewport.classList.add("world-unavailable"); });
-    return { ready, refresh, focusCreature(id) { const index = map?.creatures.findIndex((item) => item.id === id); if (index == null || index < 0) return; const point = creaturePoint(map.creatures[index], index % 3, 0, map); panzoom.zoom(1.15, { animate: false }); requestAnimationFrame(() => panzoom.pan(-point.x, -point.y, { animate: false })); }, destroy() { destroyed = true; observer.disconnect(); world.removeEventListener("panzoomchange", refresh); if (frame) cancelAnimationFrame(frame); scene.remove(); images.clear(); for (const button of creatures.values()) button.remove(); creatures.clear(); } };
+    return { ready, refresh, focusCreature(id) { const index = map?.creatures.findIndex((item) => item.id === id); if (index == null || index < 0) return; const point = creaturePoint(map.creatures[index], index % 3, 0, map); panzoom.zoom(1.15, { animate: false }); requestAnimationFrame(() => panzoom.pan(-point.x, -point.y, { animate: false })); }, destroy() { destroyed = true; observer.disconnect(); world.removeEventListener("panzoomchange", refresh); if (frame) cancelAnimationFrame(frame); if (painting) cancelAnimationFrame(painting); scene.remove(); images.clear(); ground.clear(); plants.clear(); for (const button of creatures.values()) button.remove(); creatures.clear(); } };
   }
   return { planTiles, planCreatures, creaturePoint, create };
 });

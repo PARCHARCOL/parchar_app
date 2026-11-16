@@ -1,10 +1,13 @@
 (() => {
   const colors = ["#18112c", "#ffffff", "#36e5d0", "#ffcc58", "#f252ae", "#57aaff"];
   const avatars = ["turquesa", "rosa", "dorado", "azul", "violeta"];
-  function draw(canvas, item, text = true) {
+  function draw(canvas, item, text = true, transparent = false) {
     const ctx = canvas.getContext("2d");
-    ctx.fillStyle = colors.includes(item.background) ? item.background : colors[0];
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!transparent) {
+      ctx.fillStyle = colors.includes(item.background) ? item.background : colors[0];
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
     for (const stroke of item.strokes || []) {
       if (!stroke.points?.length) continue;
       ctx.strokeStyle = stroke.color; ctx.fillStyle = stroke.color;
@@ -36,5 +39,23 @@
     if (internal) { const status = document.createElement("p"); status.textContent = `${item.status} · ${item.reports || 0} reportes`; article.append(status); }
     article.append(open); return article;
   }
-  window.CreativeRender = { draw, card, colors, avatars };
+  function discovery(item, found = false) {
+    const seed = [...String(item.id)].reduce((value, char) => (Math.imul(value, 31) + char.charCodeAt(0)) >>> 0, 0);
+    const kind = seed % 3;
+    const button = document.createElement("button");
+    button.type = "button"; button.className = `world-discovery discovery-${kind} panzoom-exclude`;
+    button.dataset.open = item.id; button.dataset.found = String(found);
+    button.setAttribute("aria-label", `${found ? "Volver a abrir" : "Descubrir"} la creación de ${item.alias}`);
+    button.title = `Creación de ${item.alias}`;
+    const object = document.createElement("img"); object.src = `/assets/creative-world/discoveries/${kind}.webp`; object.alt = ""; object.draggable = false;
+    button.append(object);
+    if (item.strokes?.length) {
+      const art = document.createElement("canvas"); art.width = 320; art.height = 240; art.setAttribute("aria-hidden", "true");
+      draw(art, item, false, true); button.append(art);
+    }
+    const whisper = document.createElement("span"); whisper.className = "discovery-whisper"; whisper.textContent = item.text ? [...item.text].slice(0, 38).join("") + ([...item.text].length > 38 ? "…" : "") : item.alias;
+    const light = document.createElement("span"); light.className = "discovery-light"; light.setAttribute("aria-hidden", "true");
+    button.append(whisper, light); return button;
+  }
+  window.CreativeRender = { draw, card, discovery, colors, avatars };
 })();

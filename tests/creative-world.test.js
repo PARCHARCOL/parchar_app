@@ -7,13 +7,12 @@ test("world chooses detail by scale and pixel density", () => {
   assert.ok(planTiles(view, 0.12, 1, map).every((tile) => tile.key.startsWith("0/")));
   assert.ok(planTiles(view, 0.3, 2, map).every((tile) => tile.key.startsWith("3/")));
 });
-test("world continues in negative and distant coordinates with bounded visible tiles", () => {
-  for (const x of [-100000, -2500, 0, 20000]) {
-    const tiles = planTiles({ x, y: x, w: 1200, h: 800 }, 0.4, 1, map);
-    assert.ok(tiles.length > 0 && tiles.length <= 96); assert.equal(new Set(tiles.map((t) => t.key)).size, tiles.length);
-    assert.ok(tiles.every((t) => t.w > 0 && t.h > 0 && Number.isFinite(t.x)));
-  }
-  assert.equal(planTiles({ x: 0, y: 0, w: 10000, h: 10000 }, 1, 2, map).length, 96);
+test("authored archipelago exists once and is not mirrored or repeated", () => {
+  assert.ok(planTiles({ x: -300, y: -300, w: 600, h: 600 }, 1, 2, map).length > 0);
+  for (const x of [-100000, -2500, 20000]) assert.deepEqual(planTiles({ x, y: x, w: 1200, h: 800 }, .4, 1, map), []);
+  const tiles = planTiles({ x: -2000, y: -2000, w: 10000, h: 10000 }, 1, 2, map);
+  assert.equal(tiles.length, 24);
+  assert.ok(tiles.every((tile) => !tile.flipX && !tile.flipY));
 });
 test("partial tiles retain region dimensions and invalid views load nothing", () => {
   const tiles = planTiles({ x: -768, y: -512, w: 1535, h: 1023 }, 0.12, 1, map);

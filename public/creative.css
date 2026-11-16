@@ -1,7 +1,7 @@
-.creative-body { --ad-height: 150px; margin: 0; color: #f8f6ff; background: #201039; font-family: system-ui, sans-serif; font-size: 16px; }
+.creative-body { --ad-height: 150px; margin: 0; color: #f8f6ff; background: #201039; font-family: system-ui, sans-serif; font-size: 16px; height: 100dvh; box-sizing: border-box; display: flex; flex-direction: column; padding-bottom: calc(var(--ad-height) + env(safe-area-inset-bottom, 0px)); overflow: hidden; }
 .creative-body * { box-sizing: border-box; }
 .creative-body [hidden] { display: none !important; }
-.creative-header { display: flex; gap: 12px; align-items: center; padding: 8px 12px; min-height: 64px; border-bottom: 1px solid #65448d; }
+.creative-header { display: flex; gap: 12px; align-items: center; padding: 8px 12px; min-height: 64px; flex-shrink: 0; border-bottom: 1px solid #65448d; }
 .creative-header > div { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; flex-wrap: wrap; }
 .creative-header h1 { font-size: 20px; line-height: 1.3; margin: 0; color: #fff; }
 .wall-beta { font-size: 12px; color: #a7eee2; }
@@ -12,22 +12,25 @@
 .creative-body .wall-primary { background: #ffcc58; color: #241331; border-color: #ffcc58; font-weight: 700; display: inline-flex; justify-content: center; align-items: center; gap: 8px; }
 .wall-primary img { filter: brightness(0); }
 .creative-body :focus-visible { outline: 3px solid #42e8d2; outline-offset: 2px; }
-.creative-main { height: calc(100dvh - 64px - var(--ad-height) - env(safe-area-inset-bottom, 0px)); min-height: 280px; display: flex; flex-direction: column; }
-.wall-navigation { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; }
+.creative-main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+.wall-navigation { display: flex; flex-shrink: 0; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 8px; }
 .wall-modes { display: flex; flex-wrap: wrap; gap: 2px; }
 .wall-modes button { padding: 7px 9px; font-size: 14px; }
 .wall-modes button[aria-pressed="true"] { background: #36e5d0; border-color: #36e5d0; color: #111d2e; }
-#wall-status { margin: 0; padding: 3px 12px 7px; font-size: 13px; color: #d9d2e3; min-height: 26px; overflow-wrap: anywhere; }
-#wall-viewport { position: relative; flex: 1; min-height: 100px; overflow: hidden; background: #170e2c url('/assets/ui/wall-grid.svg') 0 0 / 32px 32px; isolation: isolate; }
+#wall-status { margin: 0; padding: 3px 12px 7px; font-size: 13px; color: #d9d2e3; min-height: 26px; flex-shrink: 0; overflow-wrap: anywhere; }
+#wall-viewport { position: relative; flex: 1; min-height: 0; overflow: hidden; background: #170e2c url('/assets/ui/wall-grid.svg') 0 0 / 32px 32px; isolation: isolate; }
 #wall-world { position: absolute; left: 50%; top: 50%; width: 1px; height: 1px; overflow: visible; }
 .wall-scenery { position: absolute; inset: 0; width: 1px; height: 1px; z-index: 0; pointer-events: none; }
-.wall-scenery-preview { position: absolute; background-repeat: repeat; pointer-events: none; }
-.wall-scenery > img { position: absolute; display: block; max-width: none; margin: 0; border: 0; border-radius: 0; pointer-events: none; }
+.world-terrain, .world-archipelago, .world-vegetation { position: absolute; inset: 0; width: 1px; height: 1px; }
+.world-terrain canvas, .world-archipelago img, .world-vegetation img { position: absolute; display: block; max-width: none; margin: 0; border: 0; border-radius: 0; pointer-events: none; }
+.world-archipelago { width: 1536px; height: 1024px; left: -768px; top: -512px; mask-image: radial-gradient(ellipse at center, #000 48%, transparent 72%); -webkit-mask-image: radial-gradient(ellipse at center, #000 48%, transparent 72%); }
+.world-archipelago img { translate: 768px 512px; }
+.world-vegetation img { object-fit: contain; filter: drop-shadow(0 10px 6px #06172b66); }
 .wall-posts-layer { position: absolute; left: 0; top: 0; width: 1px; height: 1px; z-index: 3; }
 .creative-body #wall-world .world-creature { position: absolute; min-height: 0; min-width: 0; padding: 0; background: none; border: 0; border-radius: 0; z-index: 1; cursor: pointer; }
 .world-creature img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 4px 5px #042c5066); }
 .world-creature:focus-visible { outline: 3px solid #ffcc58; outline-offset: 2px; }
-#wall-viewport { background: #075261 url('/assets/creative-world/preview.webp') center / cover; }
+#wall-viewport { background: #092e40; }
 .world-ready #wall-empty { display: none; }
 .world-being-image { display: block; width: min(100%, 480px); height: auto; aspect-ratio: 1; object-fit: contain; margin: auto; }
 .world-being-description { line-height: 1.6; }
@@ -36,6 +39,18 @@
 .wall-zoom output { min-width: 42px; }
 #wall-zone { flex: 1 1 80px; min-width: 45px; max-width: 150px; height: 44px; background: #3e215b; color: #fff; border: 1px solid #8666a6; border-radius: 5px; font: inherit; font-size: 14px; padding: 4px; }
 #wall-world .wall-post { position: absolute; width: 320px; height: 330px; }
+.creative-body #wall-world .world-discovery { position: absolute; width: 220px; height: 220px; min-height: 0; padding: 0; border: 0; border-radius: 0; background: none; transform: scale(var(--discovery-scale, 1)); }
+.world-discovery > img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; filter: drop-shadow(0 6px 8px #051b3c88); }
+.world-discovery > canvas { position: absolute; left: 30%; top: 23%; width: 40%; height: 37%; pointer-events: none; mix-blend-mode: screen; }
+.discovery-1 > canvas { top: 41%; height: 23%; }
+.discovery-2 > canvas { left: 42%; top: 39%; width: 30%; height: 28%; }
+.discovery-whisper { position: absolute; left: 25%; top: 30%; width: 50%; font-size: 15px; line-height: 1.25; font-weight: 700; text-align: center; color: #fff9e9; text-shadow: 0 1px 3px #091422, 0 0 5px #091422; overflow-wrap: anywhere; opacity: 0; pointer-events: none; }
+.discovery-1 .discovery-whisper { top: 42%; }
+.discovery-2 .discovery-whisper { top: 40%; left: 37%; width: 39%; }
+[data-detail="near"] .discovery-whisper, .world-discovery:focus-visible .discovery-whisper, .world-discovery:hover .discovery-whisper { opacity: 1; }
+.discovery-light { position: absolute; left: 49%; top: 18%; width: 7px; height: 7px; border-radius: 50%; background: #fff6bf; box-shadow: 0 0 9px 4px #6fffe9, 0 0 20px #ef80ff; }
+.world-discovery[data-found="true"] .discovery-light { background: #a9c6d3; box-shadow: 0 0 5px #79ddd2; }
+.world-discovery:hover > img, .world-discovery:focus-visible > img { filter: drop-shadow(0 0 14px #58ffdc); }
 .wall-post { background: #32204b; border: 1px solid #805c9b; border-radius: 6px; overflow: hidden; min-width: 0; }
 .wall-post canvas { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; }
 #wall-world .wall-post canvas { height: auto; }
@@ -48,9 +63,9 @@
 #wall-empty { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(280px, 85%); text-align: center; }
 #wall-empty > img { width: 42px; height: 42px; filter: brightness(0) invert(1); }
 #wall-empty h2 { font-size: 20px; color: #fff; }
-.wall-zoom { display: flex; justify-content: center; align-items: center; gap: 6px; padding: 5px; background: #2a1644; }
+.wall-zoom { display: flex; flex-shrink: 0; justify-content: center; align-items: center; gap: 6px; padding: 5px; background: #2a1644; }
 .wall-zoom output { min-width: 55px; text-align: center; color: #fff; font-size: 14px; }
-#wall-list { overflow: auto; flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); align-content: start; gap: 12px; padding: 12px; }
+#wall-list { overflow: auto; flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); align-content: start; gap: 12px; padding: 12px; }
 .creative-body > .ad-banner { left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); width: 100%; height: var(--ad-height); min-height: var(--ad-height); border: 0; border-radius: 0; margin: 0; }
 .wall-dialog { width: min(640px, calc(100% - 16px)); max-height: calc(100dvh - 16px); overflow: auto; margin: auto; padding: 16px; border: 1px solid #8f62b0; border-radius: 8px; background: #29173e; color: #fff; }
 .wall-dialog::backdrop { background: #080310bf; }
