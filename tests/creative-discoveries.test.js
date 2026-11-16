@@ -42,7 +42,8 @@ test("closer zoom reveals additional landscape objects, not only enlarged pixels
   assert.equal(terrain.landmarks(view, .2).length, 0);
   const far = terrain.landmarks(view, .65), near = terrain.landmarks(view, 1.3);
   assert.ok(far.length > 0 && near.length > far.length);
-  assert.ok(near.every((item) => !far.some((old) => old.key === item.key)));
+  assert.ok(far.every((item) => near.some((detail) => detail.key === item.key)));
+  assert.ok(near.some((item) => !far.some((old) => old.key === item.key)));
 });
 test("organic discoveries use safe text, stable objects and keyboard-accessible buttons", () => {
   const createElement = (tag) => ({ tag, dataset: {}, children: [], attrs: {}, setAttribute(k, v) { this.attrs[k] = v; }, append(...children) { this.children.push(...children); } });

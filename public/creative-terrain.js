@@ -34,13 +34,17 @@
   }
   function landmarks(view, scale) {
     if (scale < .35) return [];
-    const size = scale >= 1.1 ? 180 : 420, result = [];
-    for (let iy = Math.floor(view.y / size) - 1; iy <= Math.floor((view.y + view.h) / size) + 1; iy++) {
-      for (let ix = Math.floor(view.x / size) - 1; ix <= Math.floor((view.x + view.w) / size) + 1; ix++) {
-        const x = (ix + .15 + hash(ix, iy, 50) * .7) * size, y = (iy + .15 + hash(ix, iy, 51) * .7) * size;
-        if (sample(x, y).height < .38) continue;
-        result.push({ key: `${size}/${ix}/${iy}`, x, y, kind: 3 + Math.floor(hash(ix, iy, 52) * 3), size: 90 + hash(ix, iy, 53) * (size === 180 ? 65 : 160) });
-        if (result.length >= 100) return result;
+    const result = [];
+    for (const size of scale >= 1.1 ? [420, 180] : [420]) {
+      for (let iy = Math.floor(view.y / size) - 1; iy <= Math.floor((view.y + view.h) / size) + 1; iy++) {
+        for (let ix = Math.floor(view.x / size) - 1; ix <= Math.floor((view.x + view.w) / size) + 1; ix++) {
+          const x = (ix + .15 + hash(ix, iy, 50) * .7) * size, y = (iy + .15 + hash(ix, iy, 51) * .7) * size;
+          if (sample(x, y).height < .38) continue;
+          const extent = 90 + hash(ix, iy, 53) * (size === 180 ? 65 : 160);
+          if (x + extent < view.x || y + extent < view.y || x - extent > view.x + view.w || y - extent > view.y + view.h) continue;
+          result.push({ key: `${size}/${ix}/${iy}`, x, y, kind: 3 + Math.floor(hash(ix, iy, 52) * 3), size: extent });
+          if (result.length >= 100) return result;
+        }
       }
     }
     return result;
