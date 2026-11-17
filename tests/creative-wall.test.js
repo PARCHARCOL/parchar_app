@@ -24,6 +24,17 @@ test("1000 simultaneous public wall reads share one SELECT and moderation invali
   assert.equal((await call("?x=-2048&y=-2048&w=5120&h=5120")).data.items.length, 0);
   assert.equal(publicQueries(), 2);
 });
+test("dense 3D zones preserve nearby older messages instead of only returning newest ones", async (t) => {
+  const { call, db } = await setup(t);
+  const id = (await call("", { method: "POST", body: valid() })).data.id;
+  await call(`/api/admin/creative/${id}/moderate`, { method: "POST", body: { action: "aprobar" } });
+  const insert = db.prepare("INSERT INTO creative_posts (id,author_id,slot,x,y,payload,status,created_at) VALUES (?,?,?,?,?,?,?,?)");
+  for (let i = 1; i <= 80; i++) insert.run(`dense-${i}`, 2, i, 1800 + i, 1800, JSON.stringify(valid()), "activo", "2099-01-01T00:00:00Z");
+  const query = "?x=-2048&y=-2048&w=5120&h=5120";
+  assert.equal((await call(query)).data.items.some((item) => item.id === id), false);
+  const near = (await call(query + "&order=near")).data;
+  assert.equal(near.items[0].id, id); assert.equal(near.items.length, 60); assert.equal(near.more, true);
+});
 test("creative drawings reject invalid payloads and enforce stroke limits", () => {
   assert.deepEqual(normalizeCreation(valid()).strokes[0].points, [[0.1, 0.2], [0.8, 0.9]]);
   for (const data of [null, { ...valid(), strokes: [null] }, { ...valid(), background: "url(evil)" }, { ...valid(), avatar: "arbitrary" }, { ...valid(), alias: "a".repeat(25) }, { ...valid(), text: "a".repeat(281) }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: [[Infinity, 0]] }] }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: [[-1, 0]] }] }, { ...valid(), strokes: Array(121).fill(valid().strokes[0]) }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: Array(3001).fill([0, 0]) }] }, { ...valid(), strokes: [], text: "" }]) assert.throws(() => normalizeCreation(data));

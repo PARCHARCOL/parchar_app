@@ -54,6 +54,9 @@ por proceso y se invalida tras acciones de escritura/moderacion. Mis creaciones,
 moderacion y autenticacion nunca usan esta cache publica. La moderacion automatica
 externa puede tardar hasta ese TTL en aparecer en las lecturas publicas.
 Se mantienen indices por estado/coordenadas y limites de 60 creaciones por consulta.
+El mundo solicita orden por cercania al sector, para que mensajes antiguos cercanos
+no desaparezcan detras de los 60 mas recientes de una zona densa. La lista conserva
+su orden cronologico y su paginacion.
 
 Los ensayos incluyen 1000 lecturas simultaneas del mismo sector que realizan un
 solo SELECT. Es una prueba local de coalescencia, no una certificacion de 1000

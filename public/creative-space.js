@@ -40,7 +40,7 @@
   function queryBounds(x, z) {
     const left = Math.max(-990000, Math.min(990000, Math.floor(x / 1024) * 1024 - 2048));
     const top = Math.max(-990000, Math.min(990000, Math.floor(z / 1024) * 1024 - 2048));
-    return { x: left, y: top, w: 5120, h: 5120 };
+    return { x: left, y: top, w: 5120, h: 5120, order: "near" };
   }
   function observeBudget(state, frameMs, active) {
     if (!active || !Number.isFinite(frameMs) || frameMs > 1000) return state;
