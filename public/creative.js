@@ -16,7 +16,6 @@
   }
   syncSession();
   $(".wall-review-note").textContent = "Tu nombre público, texto y dibujo se envían a OpenAI para detectar contenido dañino antes de publicarse. No enviamos tu correo ni teléfono de la cuenta. Los casos dudosos pasan a revisión humana. No publiques datos personales ni contenido ajeno sin permiso.";
-  const panzoom = Panzoom(world, { canvas: true, minScale: 0.12, maxScale: 2.5, origin: "0 0", startScale: 0.65, startX: -160, startY: -165, step: 0.25, overflow: "hidden" });
   let creatureCatalog = [];
   function showCreature(species) {
     $("#world-species").value = species.id;
@@ -24,9 +23,10 @@
     $("#world-being-image").src = `/assets/creative-world/beings/${species.id}.webp`;
     $("#world-being-image").alt = species.name;
     $("#world-being-description").textContent = species.description;
+    scenery.setActive(false);
     if (!$("#world-creature-dialog").open) $("#world-creature-dialog").showModal();
   }
-  const scenery = CreativeWorld.create(world, viewport, panzoom, showCreature);
+  const scenery = Creative3D.create(viewport, { onCreature: showCreature, onPost: (id) => openCreation(id), onMove: () => { if (mode !== "canvas") return; clearTimeout(timer); timer = setTimeout(load, 450); }, onFallback: (reason) => { switchMode("list"); document.querySelector('[data-mode="canvas"]').disabled = true; const note = $("#world-light-note"); note.hidden = false; note.textContent = reason + " "; const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar 3D"; retry.onclick = () => { try { localStorage.removeItem("parchar_world_light_until_v1"); } catch {} location.reload(); }; note.append(retry); } });
   $("#wall-fauna").onclick = () => { if (creatureCatalog.length) showCreature(creatureCatalog[0]); };
   $("#world-species").onchange = () => { const species = creatureCatalog.find((item) => item.id === $("#world-species").value); if (species) showCreature(species); };
   $("#world-find-creature").onclick = () => { $("#world-creature-dialog").close(); scenery.focusCreature($("#world-species").value); };
@@ -38,9 +38,8 @@
     creatureCatalog = map.creatures || [];
     for (const species of creatureCatalog) $("#world-species").add(new Option(species.name, species.id));
     $("#wall-fauna").disabled = !creatureCatalog.length;
-    zoneSelect.onchange = () => { const zone = map.zones.find((item) => item.id === zoneSelect.value); if (!zone) return; panzoom.zoom(0.65, { animate: false }); requestAnimationFrame(() => panzoom.pan(-zone.x, -zone.y, { animate: false })); };
+    zoneSelect.onchange = () => { const zone = map.zones.find((item) => item.id === zoneSelect.value); if (zone) scenery.focus(zone.x, zone.y); };
   });
-  viewport.addEventListener("wheel", panzoom.zoomWithWheel, { passive: false });
   async function api(path, options = {}) {
     syncSession();
     const response = await fetch(path, { ...options, cache: "no-store", headers: { "Content-Type": "application/json", ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}) } });
@@ -48,32 +47,37 @@
     if (response.status === 401) { try { localStorage.removeItem("parchar_client_session"); } catch {} syncSession(); }
     if (!response.ok) throw new Error(data.error || "No pudimos completar la operación."); return data;
   }
-  function bounds() { const scale = panzoom.getScale(), pan = panzoom.getPan(); return new URLSearchParams({ x: -viewport.clientWidth / (2 * scale) - pan.x - 120, y: -viewport.clientHeight / (2 * scale) - pan.y - 120, w: Math.min(12000, viewport.clientWidth / scale + 240), h: Math.min(12000, viewport.clientHeight / scale + 240) }); }
+  function bounds() { return new URLSearchParams(scenery.bounds()); }
+  const zoneCache = new Map();
+  let controller;
   async function load(append = false) {
     append = append === true;
     const id = ++request; $("#wall-status").textContent = "Cargando muro…";
     try {
       const query = mode === "canvas" ? bounds() : new URLSearchParams({ view: "list", ...(append && before ? { before } : {}) });
-      const data = await api(mode === "mine" ? "/api/creative/mine" : `/api/creative?${query}`);
+      const path = mode === "mine" ? "/api/creative/mine" : `/api/creative?${query}`;
+      const cached = mode === "canvas" ? zoneCache.get(path) : null;
+      controller?.abort(); controller = new AbortController();
+      const data = cached && Date.now() - cached.at < 20000 ? cached.data : await api(path, { signal: controller.signal });
       if (id !== request) return;
+      if (mode === "canvas" && (!cached || Date.now() - cached.at >= 20000)) { const size = JSON.stringify(data).length * 2; if (size <= 256000) { zoneCache.set(path, { at: Date.now(), data }); if (zoneCache.size > 8) zoneCache.delete(zoneCache.keys().next().value); } }
       items = append ? [...items, ...data.items] : data.items;
       before = data.before || "";
       if (!append) { postsLayer.replaceChildren(); list.replaceChildren(); }
       $("#wall-more").hidden = mode !== "list" || !data.more;
       const fragment = document.createDocumentFragment();
-      for (const item of data.items) { const card = mode === "canvas" ? renderer.discovery(item, found.has(item.id)) : renderer.card(item, mode === "mine"); if (mode === "canvas") { card.style.left = `${item.x + 160 - 110}px`; card.style.top = `${item.y + 165 - 110}px`; } fragment.append(card); }
-      (mode === "canvas" ? postsLayer : list).append(fragment);
+      if (mode === "canvas") scenery.setPosts(data.items);
+      else { for (const item of data.items) fragment.append(renderer.card(item, mode === "mine")); list.append(fragment); }
       $("#wall-empty").hidden = mode !== "canvas" || items.length > 0;
       $("#wall-status").textContent = data.more && mode === "canvas" ? "Acércate para ver todas las creaciones de esta zona." : items.length ? `${items.length} ${items.length === 1 ? "creación" : "creaciones"}${mode === "canvas" ? " en esta zona" : ""}` : mode === "mine" ? "Todavía no tienes creaciones. Las enviadas aparecerán aquí con su estado." : "Todavía no hay creaciones publicadas en esta zona.";
-    } catch (error) { if (id === request) $("#wall-status").textContent = error.message; }
+    } catch (error) { if (error.name !== "AbortError" && id === request) $("#wall-status").textContent = error.message; }
   }
-  function zoomChanged() { const scale = panzoom.getScale(); $("#wall-scale").value = `${Math.round(scale * 100)}%`; viewport.dataset.detail = scale >= 1.1 ? "near" : "far"; viewport.style.setProperty("--discovery-scale", Math.max(1, .22 / scale)); clearTimeout(timer); timer = setTimeout(load, 250); }
-  world.addEventListener("panzoomchange", zoomChanged);
-  $("#wall-plus").onclick = () => panzoom.zoomIn(); $("#wall-minus").onclick = () => panzoom.zoomOut();
-  $("#wall-home").onclick = () => { panzoom.reset(); zoneSelect.value = ""; }; $("#wall-refresh").onclick = load;
+  $("#wall-plus").onclick = () => scenery.forward(500); $("#wall-minus").onclick = () => scenery.forward(-500);
+  $("#wall-home").onclick = () => { scenery.reset(); zoneSelect.value = ""; }; $("#wall-refresh").onclick = () => { zoneCache.clear(); load(); };
   $("#wall-more").onclick = () => load(true);
-  viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [100, 0], ArrowRight: [-100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); const [x, y] = deltas[event.key]; panzoom.pan(x, y, { relative: true }); });
-  document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => { mode = button.dataset.mode; document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; scenery.refresh(); load(); });
+  viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [-100, 0], ArrowRight: [100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); scenery.move(...deltas[event.key]); });
+  function switchMode(next) { mode = next; clearTimeout(timer); document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; scenery.setActive(mode === "canvas"); if (mode === "canvas") scenery.refresh(); load(); }
+  document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => switchMode(button.dataset.mode));
   function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, moderationConsent: true }; }
   function repaint() { renderer.draw(canvas, creation(), false); $("#wall-undo").disabled = !strokes.length; $("#wall-redo").disabled = !redo.length; }
   function swatches(target, values, selected, change) {
@@ -84,7 +88,7 @@
   function openEditor() {
     syncSession();
     if (!$("#wall-alias").value) $("#wall-alias").value = (session.client?.fullName || "").split(" ")[0].slice(0, 24);
-    editor.showModal(); repaint();
+    scenery.setActive(false); editor.showModal(); repaint();
   }
   $("#wall-create").onclick = openEditor; $("#wall-empty-create").onclick = openEditor;
   document.querySelectorAll("[data-close]").forEach((b) => b.onclick = () => $("#" + b.dataset.close).close());
@@ -108,7 +112,19 @@
   $("#wall-publish").addEventListener("click", signInWithDraft);
   $("#wall-auth-note a").addEventListener("click", (event) => { syncSession(); if (session.token) { event.preventDefault(); return; } signInWithDraft(event); });
   $("#wall-editor-form").onsubmit = async (event) => { event.preventDefault(); syncSession(); if (!session.token) { signInWithDraft(event); return; } submitting = true; syncSession(); try { const payload = { ...creation(), strokes: strokes.map(({ color, width, points }) => ({ color, width, points })) }; const data = await api("/api/creative", { method: "POST", body: JSON.stringify(payload) }); $("#wall-editor-status").textContent = data.message; strokes = []; redo = []; $("#wall-text").value = ""; try { localStorage.removeItem("parchar_creative_draft_v1"); } catch {} repaint(); } catch (error) { $("#wall-editor-status").textContent = error.message; } finally { submitting = false; syncSession(); } };
-  document.addEventListener("click", (event) => { const trigger = event.target.closest("[data-open]"); const id = trigger?.dataset.open; if (!id) return; current = items.find((item) => item.id === id); if (!current) return; if (mode === "canvas") { found.delete(id); found.add(id); found = new Set([...found].slice(-500)); trigger.dataset.found = "true"; trigger.setAttribute("aria-label", `Volver a abrir la creación de ${current.alias}`); try { localStorage.setItem("parchar_world_found_v1", JSON.stringify([...found])); } catch {} } const card = renderer.card(current); card.querySelector("button").remove(); $("#wall-detail-content").replaceChildren(card); if (current.text) { const message = document.createElement("p"); message.textContent = current.text; $("#wall-detail-content").append(message); } $("#wall-detail-title").textContent = current.alias; $("#wall-delete").hidden = mode !== "mine"; $("#wall-like").hidden = mode === "mine"; $("#wall-report-open").hidden = mode === "mine"; $("#wall-like").setAttribute("aria-pressed", String(liked.has(id))); $("#wall-like").lastChild.textContent = liked.has(id) ? "Te gusta" : "Me gusta"; $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = mode === "mine" ? current.status : `${current.likes} apoyos`; detail.showModal(); });
+  function openCreation(id) {
+    current = items.find((item) => item.id === id); if (!current) return;
+    if (mode === "canvas") { found.delete(id); found.add(id); found = new Set([...found].slice(-500)); try { localStorage.setItem("parchar_world_found_v1", JSON.stringify([...found])); } catch {} }
+    const card = renderer.card(current); card.querySelector("button").remove(); $("#wall-detail-content").replaceChildren(card);
+    if (current.text) { const message = document.createElement("p"); message.textContent = current.text; $("#wall-detail-content").append(message); }
+    $("#wall-detail-title").textContent = current.alias; $("#wall-delete").hidden = mode !== "mine"; $("#wall-like").hidden = mode === "mine"; $("#wall-report-open").hidden = mode === "mine";
+    $("#wall-like").setAttribute("aria-pressed", String(liked.has(id))); $("#wall-like").lastChild.textContent = liked.has(id) ? "Te gusta" : "Me gusta";
+    $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = mode === "mine" ? current.status : `${current.likes} apoyos`; scenery.setActive(false); detail.showModal();
+  }
+  document.addEventListener("click", (event) => { const id = event.target.closest("[data-open]")?.dataset.open; if (id) openCreation(id); });
+  detail.addEventListener("close", () => scenery.setActive(mode === "canvas"));
+  editor.addEventListener("close", () => scenery.setActive(mode === "canvas"));
+  $("#world-creature-dialog").addEventListener("close", () => scenery.setActive(mode === "canvas"));
   $("#wall-like").onclick = async () => { try { const value = !liked.has(current.id); await api(`/api/creative/${current.id}/like`, { method: "POST", body: JSON.stringify({ liked: value }) }); value ? liked.add(current.id) : liked.delete(current.id); $("#wall-like").setAttribute("aria-pressed", String(value)); $("#wall-detail-status").textContent = value ? "Apoyo registrado." : "Apoyo retirado."; } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-delete").onclick = async () => { if (!confirm("¿Retirar esta creación del muro?")) return; try { await api(`/api/creative/${current.id}/delete`, { method: "POST", body: "{}" }); detail.close(); load(); } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-report-open").onclick = () => { $("#wall-report-form").hidden = false; };
@@ -119,4 +135,6 @@
   window.addEventListener("storage", (event) => { if (event.key === "parchar_client_session") syncSession(); });
   if (new URLSearchParams(location.search).get("editor") === "1") openEditor();
   load();
+  window.addEventListener("pagehide", () => scenery.setActive(false));
+  window.addEventListener("pageshow", () => scenery.setActive(mode === "canvas"));
 })();

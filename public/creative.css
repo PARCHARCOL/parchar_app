@@ -32,6 +32,14 @@
 .world-creature:focus-visible { outline: 3px solid #ffcc58; outline-offset: 2px; }
 #wall-viewport { background: #092e40; }
 .world-ready #wall-empty { display: none; }
+.world-webgl { position: absolute; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+.world-webgl:active { cursor: grabbing; }
+.world-loading-logo { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(240px, 70%); height: auto; pointer-events: none; }
+.world-accessible { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.creative-body .world-pick { position: absolute; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; opacity: 0; pointer-events: none; }
+.creative-body .world-pick:focus-visible { opacity: 1; pointer-events: auto; background: #082a4c88; }
+#world-light-note { margin: 0; padding: 4px 12px; font-size: 13px; color: #ffdc8c; }
+.world-is-3d #wall-world { display: none; }
 .world-being-image { display: block; width: min(100%, 480px); height: auto; aspect-ratio: 1; object-fit: contain; margin: auto; }
 .world-being-description { line-height: 1.6; }
 .world-fiction-note { font-size: 12px; color: #d4c5e3; }
@@ -65,7 +73,10 @@
 #wall-empty h2 { font-size: 20px; color: #fff; }
 .wall-zoom { display: flex; flex-shrink: 0; justify-content: center; align-items: center; gap: 6px; padding: 5px; background: #2a1644; }
 .wall-zoom output { min-width: 55px; text-align: center; color: #fff; font-size: 14px; }
-#wall-list { overflow: auto; flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); align-content: start; gap: 12px; padding: 12px; }
+#wall-list { overflow: auto; flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(260px, 100%), 1fr)); grid-auto-rows: max-content; align-content: start; gap: 12px; padding: 12px; }
+#wall-list .wall-post { height: max-content; align-self: start; display: flex; flex-direction: column; }
+#wall-list .wall-post > * { flex-shrink: 0; }
+#wall-list .wall-post > button { align-self: flex-start; }
 .creative-body > .ad-banner { left: 0; right: 0; bottom: env(safe-area-inset-bottom, 0px); width: 100%; height: var(--ad-height); min-height: var(--ad-height); border: 0; border-radius: 0; margin: 0; }
 .wall-dialog { width: min(640px, calc(100% - 16px)); max-height: calc(100dvh - 16px); overflow: auto; margin: auto; padding: 16px; border: 1px solid #8f62b0; border-radius: 8px; background: #29173e; color: #fff; }
 .wall-dialog::backdrop { background: #080310bf; }

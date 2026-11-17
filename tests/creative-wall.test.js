@@ -5,12 +5,25 @@ const { createCreativeWall, normalizeCreation, slotPosition, viewportBounds } = 
 const valid = () => ({ text: "Mi primer parche", alias: "Parcero", avatar: "turquesa", background: "#18112c", strokes: [{ color: "#36e5d0", width: 6, points: [[0.1, 0.2], [0.8, 0.9]] }] });
 async function setup(t) {
   const db = new DatabaseSync(":memory:"); t.after(() => db.close());
-  const pool = { async query(sql, values = []) { const s = db.prepare(sql.replace(/\$\d+/g, "?")); if (/^\s*(SELECT|WITH)/i.test(sql)) return { rows: s.all(...values) }; s.run(...values); return { rows: [] }; } };
+  let publicQueries = 0;
+  const pool = { async query(sql, values = []) { if (sql.includes("p.status=$1 AND p.x")) publicQueries++; const s = db.prepare(sql.replace(/\$\d+/g, "?")); if (/^\s*(SELECT|WITH)/i.test(sql)) return { rows: s.all(...values) }; s.run(...values); return { rows: [] }; } };
   const wall = createCreativeWall({ pool, sendJson: (res, status, data) => { res.status = status; res.data = data; }, parseJsonBody: async (req) => req.body, requireClientAuth: async (req, res) => { if (!req.author) { res.status = 401; res.data = {}; return null; } return { client: { id: req.author, fullName: "Private name" } }; } });
   await wall.init();
   const call = async (path = "", { method = "GET", body = {}, author = 1, role = "admin" } = {}) => { const res = {}; await wall.handle({ method, body, author }, res, new URL(`http://localhost${path.startsWith("/api") ? path : `/api/creative${path}`}`), { staff: { role, username: "moderador" } }); return res; };
-  return { db, call };
+  return { db, call, publicQueries: () => publicQueries };
 }
+
+test("1000 simultaneous public wall reads share one SELECT and moderation invalidates it", async (t) => {
+  const { call, publicQueries } = await setup(t);
+  const id = (await call("", { method: "POST", body: valid() })).data.id;
+  await call(`/api/admin/creative/${id}/moderate`, { method: "POST", body: { action: "aprobar" } });
+  const responses = await Promise.all(Array.from({ length: 1000 }, () => call("?x=-2048&y=-2048&w=5120&h=5120")));
+  assert.equal(publicQueries(), 1); assert.ok(responses.every((response) => response.data.items[0].id === id));
+  assert.ok(responses.every((response) => response.data.items[0].author_id === undefined));
+  await call(`/api/admin/creative/${id}/moderate`, { method: "POST", body: { action: "retirar" } });
+  assert.equal((await call("?x=-2048&y=-2048&w=5120&h=5120")).data.items.length, 0);
+  assert.equal(publicQueries(), 2);
+});
 test("creative drawings reject invalid payloads and enforce stroke limits", () => {
   assert.deepEqual(normalizeCreation(valid()).strokes[0].points, [[0.1, 0.2], [0.8, 0.9]]);
   for (const data of [null, { ...valid(), strokes: [null] }, { ...valid(), background: "url(evil)" }, { ...valid(), avatar: "arbitrary" }, { ...valid(), alias: "a".repeat(25) }, { ...valid(), text: "a".repeat(281) }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: [[Infinity, 0]] }] }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: [[-1, 0]] }] }, { ...valid(), strokes: Array(121).fill(valid().strokes[0]) }, { ...valid(), strokes: [{ color: "#ffffff", width: 4, points: Array(3001).fill([0, 0]) }] }, { ...valid(), strokes: [], text: "" }]) assert.throws(() => normalizeCreation(data));

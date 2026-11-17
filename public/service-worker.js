@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v206";
+const CACHE_NAME = "parchar-shell-v207";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -6,14 +6,9 @@ const CORE_ASSETS = [
   "/creative.css",
   "/creative.js",
   "/creative-render.js",
-  "/creative-world.js",
+  "/creative-3d.js",
+  "/creative-space.js",
   "/creative-terrain.js",
-  "/assets/creative-world/discoveries/0.webp",
-  "/assets/creative-world/discoveries/1.webp",
-  "/assets/creative-world/discoveries/2.webp",
-  "/assets/creative-world/discoveries/3.webp",
-  "/assets/creative-world/discoveries/4.webp",
-  "/assets/creative-world/discoveries/5.webp",
   "/assets/creative-world/manifest.json",
   "/assets/creative-world/preview.webp",
   "/assets/ui/paw-print.svg",

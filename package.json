@@ -16,7 +16,8 @@
     "cloudinary": "^2.10.0",
     "multer": "^2.5.0",
     "pg": "^8.13.1",
-    "sharp": "0.35.5"
+    "sharp": "0.35.5",
+    "three": "0.187.0"
   },
   "license": "MIT",
   "repository": {
@@ -29,5 +30,8 @@
   "bugs": {
     "url": "https://github.com/PARCHARCOL/parchar_app/issues"
   },
-  "homepage": "https://github.com/PARCHARCOL/parchar_app#readme"
+  "homepage": "https://github.com/PARCHARCOL/parchar_app#readme",
+  "devDependencies": {
+    "esbuild": "0.28.2"
+  }
 }

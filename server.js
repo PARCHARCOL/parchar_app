@@ -11594,6 +11594,10 @@ const server =
             readPublicPath(
               pathname
             );
+          if (pathname === "/creative-world-3d.module.js") {
+            require("./lib/creative-bundle").sendCreativeBundle(req, res, publicPath);
+            return;
+          }
           sendFile(
             res,
             publicPath
