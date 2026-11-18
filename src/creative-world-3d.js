@@ -15,6 +15,24 @@ export function createWorld(viewport, map, callbacks) {
   viewport.prepend(renderer.domElement);
   const scene = new THREE.Scene(); scene.background = new THREE.Color("#08152b"); scene.fog = new THREE.Fog("#08152b", small ? 350 : 600, small ? 1000 : 1500);
   const camera = new THREE.PerspectiveCamera(62, 1, 2, 7000);
+  const skyCanvas = document.createElement("canvas"); skyCanvas.width = 512; skyCanvas.height = 256;
+  const skyMap = new THREE.CanvasTexture(skyCanvas); skyMap.colorSpace = THREE.SRGBColorSpace;
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(5000, 24, 12), new THREE.MeshBasicMaterial({ map: skyMap, side: THREE.BackSide, fog: false, depthWrite: false }));
+  sky.renderOrder = -10; sky.userData.sky = true; scene.add(sky);
+  let skyPhase = "";
+  function updateSky() {
+    const now = new Date(), palette = space.daylight(now.getHours() + now.getMinutes() / 60);
+    if (palette.phase === skyPhase) return;
+    skyPhase = palette.phase; viewport.dataset.skyPhase = skyPhase;
+    const ctx = skyCanvas.getContext("2d"), gradient = ctx.createLinearGradient(0,0,0,256);
+    gradient.addColorStop(0,palette.top); gradient.addColorStop(.53,palette.horizon); gradient.addColorStop(1,palette.fog);
+    ctx.fillStyle=gradient; ctx.fillRect(0,0,512,256);
+    if (skyPhase === "noche") {
+      for (let i=0;i<130;i++) { ctx.fillStyle=i%4 ? "#cadbff" : "#fff4be"; ctx.fillRect(window.CreativeTerrain.hash(i,0,401)*512,window.CreativeTerrain.hash(i,0,402)*110,1,1); }
+      ctx.fillStyle="#e7edff"; ctx.beginPath(); ctx.arc(355,55,9,0,Math.PI*2); ctx.fill();
+    } else { ctx.fillStyle=skyPhase==="dia" ? "#fff6cb" : "#ffe2ad"; ctx.beginPath(); ctx.arc(355,skyPhase==="dia"?65:120,12,0,Math.PI*2); ctx.fill(); }
+    skyMap.needsUpdate=true; scene.fog.color.set(palette.fog); groundMaterial.color.setScalar(palette.light); dirty=true; request();
+  }
   const controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = !matchMedia("(prefers-reduced-motion: reduce)").matches;
   controls.dampingFactor = .09; controls.screenSpacePanning = false; controls.panSpeed = .8;
@@ -49,6 +67,15 @@ export function createWorld(viewport, map, callbacks) {
   const textureLoader = new THREE.TextureLoader();
   const kitOptions = { keep, batch, material, materials, set: setInstance, random: window.CreativeTerrain.hash, changed: () => { dirty = true; request(); } };
   const forest = createForestKit(kitOptions), waterfalls = createWaterfallKit(kitOptions);
+  const bladePositions=[];
+  for (let i=0;i<5;i++) { const a=i*Math.PI*.4, x=Math.cos(a)*.35,z=Math.sin(a)*.35; bladePositions.push(x-.07,0,z,x+.07,0,z,x*.6,.65+i*.07,z*.6); }
+  const grassGeo=new THREE.BufferGeometry(); grassGeo.setAttribute("position",new THREE.Float32BufferAttribute(bladePositions,3)); grassGeo.computeVertexNormals();
+  const grassMaterial=material("#4b9e6e"); grassMaterial.side=THREE.DoubleSide;
+  const grass=batch(keep(grassGeo),grassMaterial,1400);
+  const riverPositions=[], riverUv=[], riverIndex=[];
+  for (let i=0;i<=80;i++) { const z=-15+i*2415/80,r=space.river(z); riverPositions.push(r.x-r.width,r.y,z,r.x+r.width,r.y,z); riverUv.push(0,i/6,1,i/6); if(i<80){const n=i*2;riverIndex.push(n,n+2,n+1,n+1,n+2,n+3);} }
+  const riverGeo=keep(new THREE.BufferGeometry()); riverGeo.setAttribute("position",new THREE.Float32BufferAttribute(riverPositions,3)); riverGeo.setAttribute("uv",new THREE.Float32BufferAttribute(riverUv,2)); riverGeo.setIndex(riverIndex); riverGeo.computeVertexNormals();
+  const stream=new THREE.Mesh(riverGeo,waterfalls.waterMaterial); scene.add(stream);
   const assetsReady = Promise.all([forest.ready, waterfalls.ready]).then(() => { readyAt = performance.now(); dirty = true; request(); });
   const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(), pickups = [];
   let alphaCache = new WeakMap();
@@ -87,6 +114,11 @@ export function createWorld(viewport, map, callbacks) {
     const plants = space.plants(x, z, posts, budget.low ? 1 : 2);
     forest.update(plants, budget.low); waterfalls.update(space.waterfalls(x, z), space.height);
     viewport.dataset.plantCount = String(plants.length);
+    const cover=space.groundCover(x,z,posts,budget.low);
+    cover.grass.forEach((p,i)=>setInstance(grass,i,p.x,p.y,p.z,p.size,p.size,p.size,p.hue*6));
+    grass.count=cover.grass.length; grass.instanceMatrix.needsUpdate=true; grass.boundingSphere=null;
+    waterfalls.groundRocks(cover.rocks); viewport.dataset.grassCount=String(cover.grass.length); viewport.dataset.rockCount=String(cover.rocks.length);
+    stream.position.set(-origin.x,0,-origin.z);
   }
   function rebuildDistantLandscape(x, z) {
     const cx = Math.floor(x / space.CHUNK) * space.CHUNK + space.CHUNK / 2, cz = Math.floor(z / space.CHUNK) * space.CHUNK + space.CHUNK / 2;
@@ -190,6 +222,7 @@ export function createWorld(viewport, map, callbacks) {
     const next = [...chunks.values()].find((entry) => !entry.mesh);
     if (next) { next.mesh = makeChunk(next.tile); dirty = true; }
     water.position.x = camera.position.x; water.position.z = camera.position.z;
+    sky.position.copy(camera.position);
     const query = JSON.stringify(space.queryBounds(x, z));
     if (reportedCell !== query) { reportedCell = query; callbacks.onMove(); }
     return !!next;
@@ -207,6 +240,7 @@ export function createWorld(viewport, map, callbacks) {
   function tick(now) {
     frame = null;
     if (destroyed || !active || document.hidden) { last = now; return; }
+    updateSky();
     const frameMs = now - last, elapsed = Math.min(60, frameMs), dt = Math.max(.001, elapsed / 1000); last = now;
     const wasMoving = !!flight || Math.abs(velocity) > 1 || now < animationUntil;
     if (flight) {
@@ -283,10 +317,19 @@ export function createWorld(viewport, map, callbacks) {
     const rect = renderer.domElement.getBoundingClientRect(); pointer.set((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1); raycaster.setFromCamera(pointer, camera);
     pickups.length = 0; for (const node of creatureNodes.values()) pickups.push(node.sprite); for (const node of postNodes.values()) pickups.push(node.group);
     const hit = raycaster.intersectObjects(scene.children, true).find(visibleHit)?.object.userData;
-    if (hit?.type === "post") callbacks.onPost(hit.id); else if (hit?.type === "creature") callbacks.onCreature(hit.species);
+    if (placing) {
+      const groundHit=raycaster.intersectObjects([...chunks.values()].map((c)=>c.mesh).filter(Boolean))[0];
+      if (groundHit) { const x=groundHit.point.x+origin.x,z=groundHit.point.z+origin.z,r=space.river(z); if ((!r || Math.abs(x-r.x)>r.width+10) && !space.nearPost(x,z,posts,180)) { placing=false; viewport.classList.remove("world-placing"); callbacks.onPlace?.({x:Math.round(x-160),y:Math.round(z-165)}); } else callbacks.onPlaceError?.("Elige tierra firme, separada de los otros mensajes."); }
+    } else if (hit?.type === "post") callbacks.onPost(hit.id); else if (hit?.type === "creature") callbacks.onCreature(hit.species);
     press = null;
   }
   renderer.domElement.addEventListener("pointerdown", down); renderer.domElement.addEventListener("pointerup", up);
+  function placeKey(event) {
+    if(!placing || !["Enter"," "].includes(event.key) || event.target!==viewport)return;
+    event.preventDefault();const rect=renderer.domElement.getBoundingClientRect();
+    const point={pointerId:-1,clientX:rect.x+rect.width/2,clientY:rect.y+rect.height*.8};down(point);up(point);
+  }
+  viewport.addEventListener("keydown",placeKey);
   renderer.domElement.addEventListener("pointercancel", (event) => { pointers.delete(event.pointerId); press = null; });
   controls.addEventListener("start", () => { flight = null; referenceDistance = camera.position.distanceTo(controls.target); animationUntil = performance.now() + 60000; request(); });
   controls.addEventListener("end", () => { animationUntil = performance.now() + 700; request(); });
@@ -300,21 +343,24 @@ export function createWorld(viewport, map, callbacks) {
     }
     dirty = true; request();
   });
-  function resize() { const w = Math.max(1, viewport.clientWidth), h = Math.max(1, viewport.clientHeight); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, budget.low ? 1 : 1.25, Math.sqrt((budget.low ? 260000 : 900000) / (w * h)))); renderer.setSize(w, h, false); dirty = true; request(); }
+  function resize() { const w = Math.max(1, viewport.clientWidth), h = Math.max(1, viewport.clientHeight); camera.aspect = w / h; camera.updateProjectionMatrix(); renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, budget.low ? .85 : 1.25, Math.sqrt((budget.low ? 160000 : 900000) / (w * h)))); renderer.setSize(w, h, false); dirty = true; request(); }
   const observer = new ResizeObserver(resize); observer.observe(viewport);
   const onVisibility = () => { last = performance.now(); readyAt = last; if (!document.hidden) request(); };
+  let placing=false;
+  const skyTimer=setInterval(()=>{ if(active && !document.hidden) updateSky(); },60000);
   document.addEventListener("visibilitychange", onVisibility);
   const onContextLoss = (event) => { event.preventDefault(); callbacks.onFallback("El dispositivo interrumpió el mundo 3D. Puedes continuar en la vista ligera."); };
   renderer.domElement.addEventListener("webglcontextlost", onContextLoss);
   camera.position.set(160, space.eyeLevel(160, 505), 505); controls.target.set(160, Math.max(12, space.height(160, 165)) + 55, 165); referenceDistance = camera.position.distanceTo(controls.target); navigationSync = true; controls.update(); navigationSync = false; walkEye.copy(camera.position); resize(); request();
   return {
     ready: assetsReady, setPosts, focus, forward, bounds() { return space.queryBounds(camera.position.x + origin.x, camera.position.z + origin.z); },
+    place(value=true) { placing=value; viewport.classList.toggle("world-placing",value); velocity=0; flight=null; return true; },
     move(x, z) { flight = null; camera.getWorldDirection(direction); direction.y = 0; direction.normalize(); delta.set(-direction.z * x + direction.x * z, 0, direction.x * x + direction.z * z); camera.position.add(delta); controls.target.add(delta); walkEye.copy(camera.position); dirty = true; request(); },
     focusCreature(id) { const index = map.creatures.findIndex((item) => item.id === id); if (index < 0) return; const point = space.beings((index % 6 + .5) * space.CHUNK, (Math.floor(index / 6) + .5) * space.CHUNK, posts).find((item) => item.species === index); if (point) focus(point.x, point.z); },
     refresh() { resize(); }, setActive(value) { active = value; controls.enabled = value; last = performance.now(); if (value) { dirty = true; request(); } },
     destroy() {
       if (destroyed) return; destroyed = true;
-      if (frame) cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener("visibilitychange", onVisibility); controls.dispose(); renderer.domElement.removeEventListener("webglcontextlost", onContextLoss);
+      viewport.removeEventListener("keydown",placeKey); clearInterval(skyTimer); if (frame) cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener("visibilitychange", onVisibility); controls.dispose(); renderer.domElement.removeEventListener("webglcontextlost", onContextLoss);
       scene.traverse((obj) => { obj.geometry?.dispose(); if (obj.material?.map && !textureCache.has(obj.userData.species?.id)) obj.material.map.dispose(); if (obj.material && !Array.isArray(obj.material)) obj.material.dispose(); });
       forest.dispose(); waterfalls.dispose(); groundMap.dispose(); groundMap.image = null;
       for (const texture of textureCache.values()) texture.dispose(); for (const geo of geometries) geo.dispose(); groundMaterial.dispose(); waterMaterial.dispose(); for (const mat of materials) mat.dispose();

@@ -17,7 +17,31 @@
   syncSession();
   $(".wall-review-note").textContent = "Tu nombre público, texto y dibujo se envían a OpenAI para detectar contenido dañino antes de publicarse. No enviamos tu correo ni teléfono de la cuenta. Los casos dudosos pasan a revisión humana. No publiques datos personales ni contenido ajeno sin permiso.";
   let creatureCatalog = [];
+  let creatureAvatar = "", position = null;
+  try { creatureAvatar = localStorage.getItem("parchar_world_avatar_v1") || ""; } catch {}
+  const avatarPreview = document.createElement("img"); avatarPreview.className = "world-avatar-preview"; avatarPreview.hidden = true;
+  const avatarName = document.createElement("span"); avatarName.setAttribute("role","status");
+  const chooseAvatar = document.createElement("button"); chooseAvatar.type="button"; chooseAvatar.textContent="Elegir personaje";
+  $(".wall-avatar").append(avatarPreview,avatarName,chooseAvatar);
+  chooseAvatar.onclick=()=>{ if(creatureCatalog.length) showCreature(creatureCatalog.find((s)=>s.id===creatureAvatar)||creatureCatalog[0]); };
+  const useAvatar=document.createElement("button"); useAvatar.type="button"; useAvatar.className="wall-primary"; useAvatar.textContent="Usar como mi avatar"; $("#world-creature-dialog").append(useAvatar);
+  function syncAvatar() {
+    const species=creatureCatalog.find((s)=>s.id===creatureAvatar);
+    avatarPreview.hidden=!species; avatarName.textContent=species ? species.name : "";
+    if(species){ avatarPreview.src=`/assets/creative-world/beings/${species.id}.webp`; avatarPreview.alt=species.name; const icon=$("#wall-fauna img"); icon.src=avatarPreview.src;icon.style.filter="none"; $("#wall-fauna").title=`Mi avatar: ${species.name}`;$("#wall-fauna").setAttribute("aria-label",`Mi avatar: ${species.name}`); }
+  }
+  useAvatar.onclick=()=>{ creatureAvatar=$("#world-species").value; try{localStorage.setItem("parchar_world_avatar_v1",creatureAvatar);}catch{} syncAvatar(); $("#world-creature-dialog").close(); };
+  const placement=document.createElement("button"); placement.type="button"; placement.textContent="Elegir lugar en el mundo";
+  const placementNote=document.createElement("p"); placementNote.setAttribute("role","status");
+  $("#wall-editor-form").insertBefore(placement,$(".wall-review-note")); placement.after(placementNote);
+  const placementBar=document.createElement("div"); placementBar.className="world-placement-bar"; placementBar.hidden=true;
+  const placementStatus=document.createElement("span"); placementStatus.setAttribute("role","status");
+  const cancelPlacement=document.createElement("button"); cancelPlacement.type="button"; cancelPlacement.textContent="Cancelar"; placementBar.append(placementStatus,cancelPlacement); viewport.append(placementBar);
+  placement.onclick=()=>{ if(mode!=="canvas"){placementNote.textContent="Abre Mundo 3D para elegir un lugar. En vista ligera se asigna automáticamente.";return;} if(!scenery.place(true))return; editor.close(); viewport.focus(); placementBar.hidden=false; placementStatus.textContent="Toca tierra firme donde quieras dejar tu mensaje."; };
+  cancelPlacement.onclick=()=>{scenery.place(false);placementBar.hidden=true;openEditor();};
+  viewport.addEventListener("keydown",(event)=>{if(event.key==="Escape" && !placementBar.hidden)cancelPlacement.click();});
   function showCreature(species) {
+    $("#world-find-creature").disabled=mode!=="canvas";
     $("#world-species").value = species.id;
     $("#world-being-name").textContent = species.name;
     $("#world-being-image").src = `/assets/creative-world/beings/${species.id}.webp`;
@@ -26,16 +50,21 @@
     scenery.setActive(false);
     if (!$("#world-creature-dialog").open) $("#world-creature-dialog").showModal();
   }
-  const scenery = Creative3D.create(viewport, { onCreature: showCreature, onPost: (id) => openCreation(id), onMove: () => { if (mode !== "canvas") return; clearTimeout(timer); timer = setTimeout(load, 450); }, onFallback: (reason) => { switchMode("list"); document.querySelector('[data-mode="canvas"]').disabled = true; const note = $("#world-light-note"); note.hidden = false; note.textContent = reason + " "; const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar 3D"; retry.onclick = () => { try { localStorage.removeItem("parchar_world_light_until_v1"); } catch {} location.reload(); }; note.append(retry); } });
-  $("#wall-fauna").onclick = () => { if (creatureCatalog.length) showCreature(creatureCatalog[0]); };
+  const scenery = Creative3D.create(viewport, { onPlace: (point)=>{position=point;placementNote.textContent="Lugar elegido. Tu mensaje aparecerá allí cuando sea aprobado.";placementBar.hidden=true;openEditor();}, onPlaceError:(message)=>{placementStatus.textContent=message;}, onCreature: showCreature, onPost: (id) => openCreation(id), onMove: () => { if (mode !== "canvas") return; clearTimeout(timer); timer = setTimeout(load, 450); }, onFallback: (reason) => { placementBar.hidden=true; switchMode("list"); document.querySelector('[data-mode="canvas"]').disabled = true; const note = $("#world-light-note"); note.hidden = false; note.textContent = reason + " "; const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar 3D"; retry.onclick = () => { try { localStorage.removeItem("parchar_world_light_until_v1"); } catch {} location.reload(); }; note.append(retry); } });
+  $("#wall-fauna").onclick = () => { if (creatureCatalog.length) showCreature(creatureCatalog.find((s)=>s.id===creatureAvatar)||creatureCatalog[0]); };
   $("#world-species").onchange = () => { const species = creatureCatalog.find((item) => item.id === $("#world-species").value); if (species) showCreature(species); };
   $("#world-find-creature").onclick = () => { $("#world-creature-dialog").close(); scenery.focusCreature($("#world-species").value); };
   const zoneSelect = $("#wall-zone");
-  scenery.ready.then((map) => {
-    if (!map) return;
+  scenery.ready.then(async (map) => {
+    if (!map) {
+      try { const response=await fetch("/assets/creative-world/manifest.json?v=1"); if(!response.ok)return; const catalog=await response.json(); creatureCatalog=catalog.creatures||[]; for(const species of creatureCatalog)$("#world-species").add(new Option(species.name,species.id)); syncAvatar(); } catch {}
+      return;
+    }
     for (const zone of map.zones) zoneSelect.add(new Option(zone.name, zone.id));
     zoneSelect.disabled = false;
     creatureCatalog = map.creatures || [];
+    if(!creatureCatalog.some((s)=>s.id===creatureAvatar))creatureAvatar="";
+    syncAvatar();
     for (const species of creatureCatalog) $("#world-species").add(new Option(species.name, species.id));
     $("#wall-fauna").disabled = !creatureCatalog.length;
     zoneSelect.onchange = () => { const zone = map.zones.find((item) => item.id === zoneSelect.value); if (zone) scenery.focus(zone.x, zone.y); };
@@ -45,7 +74,9 @@
     const response = await fetch(path, { ...options, cache: "no-store", headers: { "Content-Type": "application/json", ...(session.token ? { Authorization: `Bearer ${session.token}` } : {}) } });
     const data = await response.json();
     if (response.status === 401) { try { localStorage.removeItem("parchar_client_session"); } catch {} syncSession(); }
-    if (!response.ok) throw new Error(data.error || "No pudimos completar la operación."); return data;
+    if (!response.ok) throw new Error(data.error || "No pudimos completar la operación.");
+    if(path==="/api/creative" && options.method==="POST"){position=null;placementNote.textContent="";}
+    return data;
   }
   function bounds() { return new URLSearchParams(scenery.bounds()); }
   const zoneCache = new Map();
@@ -78,7 +109,7 @@
   viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [-100, 0], ArrowRight: [100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); scenery.move(...deltas[event.key]); });
   function switchMode(next) { mode = next; clearTimeout(timer); document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; scenery.setActive(mode === "canvas"); if (mode === "canvas") scenery.refresh(); load(); }
   document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => switchMode(button.dataset.mode));
-  function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, moderationConsent: true }; }
+  function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, ...(creatureAvatar ? {creatureAvatar} : {}), ...(position ? {position} : {}), moderationConsent: true }; }
   function repaint() { renderer.draw(canvas, creation(), false); $("#wall-undo").disabled = !strokes.length; $("#wall-redo").disabled = !redo.length; }
   function swatches(target, values, selected, change) {
     const container = $(target); container.replaceChildren(); values.forEach((value, i) => { const button = document.createElement("button"); button.type = "button"; button.className = "wall-swatch"; button.style.background = value; const names = ["Morado", "Blanco", "Turquesa", "Dorado", "Rosa", "Azul"]; button.setAttribute("aria-label", names[i]); button.title = names[i]; button.setAttribute("aria-pressed", String(value === selected)); button.onclick = () => { change(value); container.querySelectorAll("button").forEach((b) => b.setAttribute("aria-pressed", String(b === button))); repaint(); }; container.append(button); });
@@ -103,6 +134,7 @@
   $("#wall-clear").onclick = () => { if (strokes.length && confirm("¿Borrar los trazos del dibujo?")) { strokes = []; redo = []; repaint(); } };
   $("#wall-draft").onclick = () => { try { localStorage.setItem("parchar_creative_draft_v1", JSON.stringify(creation())); $("#wall-editor-status").textContent = "Borrador guardado en este dispositivo."; } catch { $("#wall-editor-status").textContent = "No se pudo guardar el borrador en este dispositivo."; } };
   try { const draft = JSON.parse(localStorage.getItem("parchar_creative_draft_v1") || "null"); if (draft) { $("#wall-text").value = String(draft.text || "").slice(0, 280); $("#wall-alias").value = String(draft.alias || "").slice(0, 24); strokes = Array.isArray(draft.strokes) ? draft.strokes.slice(0, 120) : []; background = renderer.colors.includes(draft.background) ? draft.background : background; avatar = renderer.avatars.includes(draft.avatar) ? draft.avatar : avatar; swatches("#wall-backgrounds", renderer.colors, background, (v) => { background = v; }); $("#wall-avatars").querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", String(renderer.avatars[i] === avatar))); } } catch {}
+  try { const draft=JSON.parse(localStorage.getItem("parchar_creative_draft_v1")||"null"); if(draft){if(/^[a-z-]{2,24}$/.test(draft.creatureAvatar||""))creatureAvatar=draft.creatureAvatar; if(draft.position && [draft.position.x,draft.position.y].every((v)=>Number.isFinite(v)&&Math.abs(v)<=980000)){position=draft.position;placementNote.textContent="Lugar elegido en el borrador.";}} } catch {}
   function signInWithDraft(event) {
     syncSession(); if (session.token) return;
     event.preventDefault();
@@ -124,7 +156,7 @@
   document.addEventListener("click", (event) => { const id = event.target.closest("[data-open]")?.dataset.open; if (id) openCreation(id); });
   detail.addEventListener("close", () => scenery.setActive(mode === "canvas"));
   editor.addEventListener("close", () => scenery.setActive(mode === "canvas"));
-  $("#world-creature-dialog").addEventListener("close", () => scenery.setActive(mode === "canvas"));
+  $("#world-creature-dialog").addEventListener("close", () => scenery.setActive(mode === "canvas" && !editor.open && !detail.open));
   $("#wall-like").onclick = async () => { try { const value = !liked.has(current.id); await api(`/api/creative/${current.id}/like`, { method: "POST", body: JSON.stringify({ liked: value }) }); value ? liked.add(current.id) : liked.delete(current.id); $("#wall-like").setAttribute("aria-pressed", String(value)); $("#wall-detail-status").textContent = value ? "Apoyo registrado." : "Apoyo retirado."; } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-delete").onclick = async () => { if (!confirm("¿Retirar esta creación del muro?")) return; try { await api(`/api/creative/${current.id}/delete`, { method: "POST", body: "{}" }); detail.close(); load(); } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-report-open").onclick = () => { $("#wall-report-form").hidden = false; };

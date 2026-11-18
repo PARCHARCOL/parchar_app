@@ -1,5 +1,14 @@
 const test = require("node:test"), assert = require("node:assert/strict"), fs = require("node:fs");
 const space = require("../public/creative-space");
+test("forest scale, bounded ground cover and a carved river remain coherent", () => {
+  for(const p of space.plants(160,505)) { const d=space.dimensions(p); assert.ok(d.leaf<=d.tree*.26); assert.ok(d.fern<space.EYE_HEIGHT); assert.ok(d.flower<d.fern); }
+  for(const low of [true,false]) {const cover=space.groundCover(160,505,[],low); assert.ok(cover.grass.length>300);assert.ok(cover.grass.length<=(low?600:1400));assert.ok(cover.rocks.length<=(low?24:60));assert.ok(cover.grass.every((p)=>p.size<=10));}
+  for(let z=0;z<2400;z+=50){const r=space.river(z);assert.ok(space.height(r.x,z)<r.y);assert.ok(space.height(r.x+r.width+45,z)>r.y);}
+  assert.equal(space.river(3000),null);
+});
+test("local time selects readable daytime, twilight and night skies",()=>{
+  assert.equal(space.daylight(12).phase,"dia");assert.equal(space.daylight(18).phase,"crepusculo");assert.equal(space.daylight(23).phase,"noche");assert.equal(space.daylight(3).phase,"noche");assert.notEqual(space.daylight(12).horizon,space.daylight(23).horizon);
+});
 
 test("3D sectors stream a bounded neighborhood at negative and distant positions", () => {
   for (const coordinate of [-1000000, -32000, 0, 32000, 1000000]) {

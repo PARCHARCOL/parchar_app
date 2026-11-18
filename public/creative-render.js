@@ -33,6 +33,7 @@
     const author = document.createElement("div"); author.className = "wall-author";
     const avatar = document.createElement("span"); avatar.className = `wall-avatar-icon avatar-${avatars.includes(item.avatar) ? item.avatar : avatars[0]}`; avatar.textContent = [...item.alias][0]?.toUpperCase() || "P"; avatar.setAttribute("aria-hidden", "true");
     const name = document.createElement("strong"); name.textContent = item.alias;
+    if (/^[a-z-]{2,24}$/.test(item.creatureAvatar || "")) { const image=document.createElement("img"); image.src=`/assets/creative-world/beings/${item.creatureAvatar}.webp`; image.alt=""; image.className="world-avatar-preview"; avatar.replaceChildren(image); }
     author.append(avatar, name);
     const open = document.createElement("button"); open.type = "button"; open.className = "panzoom-exclude"; open.textContent = "Ver creación"; open.dataset.open = item.id;
     article.append(art, author);

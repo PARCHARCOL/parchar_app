@@ -8,7 +8,7 @@ window.Creative3D = {
         await Promise.resolve();
         try { if (Number(localStorage.getItem("parchar_world_light_until_v1")) > Date.now()) { fallback("Vista ligera activada para mantener la fluidez en este dispositivo."); return; } } catch {}
         if (navigator.connection?.saveData || navigator.deviceMemory && navigator.deviceMemory < 2) { fallback("Modo de ahorro del dispositivo: vista ligera."); return; }
-        const [{ createWorld }, response] = await Promise.all([import("/creative-world-3d.module.js?v=2"), fetch("/assets/creative-world/manifest.json?v=1")]);
+        const [{ createWorld }, response] = await Promise.all([import("/creative-world-3d.module.js?v=3"), fetch("/assets/creative-world/manifest.json?v=1")]);
         if (!response.ok) throw new Error("world_unavailable");
         const map = await response.json();
         map.zones = [{ id: "centro", name: "El encuentro", x: 160, y: 165 }, { id: "cascadas", name: "Cascadas", x: -20, y: -15 }, { id: "bosque", name: "Bosque de luz", x: -3600, y: -2500 }, { id: "valle", name: "Valle de cristal", x: 4200, y: -3100 }, { id: "horizonte", name: "Tierras lejanas", x: 32000, y: 15000 }];
@@ -23,6 +23,6 @@ window.Creative3D = {
         return map;
       } catch { fallback("Este dispositivo no pudo abrir el mundo 3D. Puedes usar la vista ligera."); }
     })();
-    return { ready, refresh() { engine?.refresh(); }, bounds() { return engine?.bounds() || CreativeSpace.queryBounds(160, 165); }, forward(n) { engine?.forward(n); }, move(x, z) { engine?.move(x, z); }, focus(x, z) { engine?.focus(x, z); }, reset() { engine?.focus(160, 165); }, focusCreature(id) { engine?.focusCreature(id); }, setPosts(posts) { pending = posts; engine?.setPosts(posts); }, setActive(value) { active = value; engine?.setActive(value); }, destroy() { failed = true; engine?.destroy(); loading.remove(); } };
+    return { ready, place(value) { return engine?.place(value) || false; }, refresh() { engine?.refresh(); }, bounds() { return engine?.bounds() || CreativeSpace.queryBounds(160, 165); }, forward(n) { engine?.forward(n); }, move(x, z) { engine?.move(x, z); }, focus(x, z) { engine?.focus(x, z); }, reset() { engine?.focus(160, 165); }, focusCreature(id) { engine?.focusCreature(id); }, setPosts(posts) { pending = posts; engine?.setPosts(posts); }, setActive(value) { active = value; engine?.setActive(value); }, destroy() { failed = true; engine?.destroy(); loading.remove(); } };
   }
 };

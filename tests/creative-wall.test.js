@@ -3,6 +3,21 @@ const assert = require("node:assert/strict");
 const { DatabaseSync } = require("node:sqlite");
 const { createCreativeWall, normalizeCreation, slotPosition, viewportBounds } = require("../lib/creative-wall");
 const valid = () => ({ text: "Mi primer parche", alias: "Parcero", avatar: "turquesa", background: "#18112c", strokes: [{ color: "#36e5d0", width: 6, points: [[0.1, 0.2], [0.8, 0.9]] }] });
+test("mythical avatars are allowlisted and message positions are bounded dry land",()=>{
+  assert.equal(normalizeCreation({...valid(),creatureAvatar:"dragon"}).creatureAvatar,"dragon");
+  assert.throws(()=>normalizeCreation({...valid(),creatureAvatar:"../../private"}));
+  for(const position of [{x:Infinity,y:0},{x:1e7,y:0},{x:"2",y:0},[]])assert.throws(()=>normalizeCreation({...valid(),position}));
+  const r=require("../public/creative-space").river(500);
+  assert.throws(()=>normalizeCreation({...valid(),position:{x:r.x-160,y:335}}));
+});
+test("chosen position and creature persist behind moderation and occupied places are rejected",async(t)=>{
+  const {call,db}=await setup(t),space=require("../public/creative-space");
+  let position;for(let x=1000;x<5000;x+=300)if(space.height(x+160,1165)>3){position={x,y:1000};break;}
+  const made=await call("",{method:"POST",body:{...valid(),position,creatureAvatar:"fenix"}});
+  assert.equal(made.status,201);const row=db.prepare("SELECT * FROM creative_posts").get();assert.equal(row.x,position.x);assert.equal(row.y,position.y);assert.equal(row.status,"pendiente");assert.equal(JSON.parse(row.payload).creatureAvatar,"fenix");
+  assert.equal((await call("",{method:"POST",author:2,body:{...valid(),position}})).status,409);
+  assert.equal((await call()).data.items.length,0);
+});
 async function setup(t) {
   const db = new DatabaseSync(":memory:"); t.after(() => db.close());
   let publicQueries = 0;
