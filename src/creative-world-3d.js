@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { createForestKit, createWaterfallKit } from "./creative-botany.js";
+import { createFaunaKit, FAUNA_IDS } from "./creative-fauna.js";
 
 export function createWorld(viewport, map, callbacks) {
   const space = window.CreativeSpace;
@@ -65,6 +66,7 @@ export function createWorld(viewport, map, callbacks) {
   const dummy = new THREE.Object3D(), tint = new THREE.Color();
   const chunks = new Map(), creatureNodes = new Map(), textureCache = new Map(), postNodes = new Map();
   const textureLoader = new THREE.TextureLoader();
+  const fauna=createFaunaKit(()=>{dirty=true;request();});
   const kitOptions = { keep, batch, material, materials, set: setInstance, random: window.CreativeTerrain.hash, changed: () => { dirty = true; request(); } };
   const forest = createForestKit(kitOptions), waterfalls = createWaterfallKit(kitOptions);
   const bladePositions=[];
@@ -112,9 +114,11 @@ export function createWorld(viewport, map, callbacks) {
   }
   function rebuildPlants(x, z) {
     const plants = space.plants(x, z, posts, budget.low ? 1 : 2);
-    forest.update(plants, budget.low); waterfalls.update(space.waterfalls(x, z), space.height);
+    const features=space.waterfalls(x,z);waterfalls.update(features, space.height);
     viewport.dataset.plantCount = String(plants.length);
     const cover=space.groundCover(x,z,posts,budget.low);
+    const shrubs=cover.grass.filter((p)=>!space.nearPost(p.x,p.z,posts,150)&&features.every(f=>Math.hypot(p.x-f.x,p.z-f.z)>115)).slice(0,budget.low?45:90).map((p,i)=>({...p,kind:i%7===0?2:1,size:1}));
+    forest.update([...plants,...shrubs],budget.low);
     cover.grass.forEach((p,i)=>setInstance(grass,i,p.x,p.y,p.z,p.size*2.5,p.size,p.size*2.5,p.hue*6));
     grass.count=cover.grass.length; grass.instanceMatrix.needsUpdate=true; grass.boundingSphere=null;
     waterfalls.groundRocks(cover.rocks); viewport.dataset.grassCount=String(cover.grass.length); viewport.dataset.rockCount=String(cover.rocks.length);
@@ -144,15 +148,15 @@ export function createWorld(viewport, map, callbacks) {
     accessible.append(button); return button;
   }
   function rebuildBeings(x, z) {
-    const desired = space.beings(x, z, posts), keepKeys = new Set(desired.map((item) => item.key));
-    for (const [key, node] of creatureNodes) if (!keepKeys.has(key)) { scene.remove(node.sprite); node.sprite.material.dispose(); node.button.remove(); creatureNodes.delete(key); }
+    const desired = space.beings(x, z, posts).slice(0,budget.low?2:3).map(item=>({...item,species:map.creatures.findIndex(s=>s.id===FAUNA_IDS[item.species%3])})), keepKeys = new Set(desired.map((item) => item.key));
+    for (const [key, node] of creatureNodes) if (!keepKeys.has(key)) { node.sprite.traverse(obj=>{if(obj.isFaunaOrnament){obj.geometry.dispose();obj.material.dispose();}});scene.remove(node.sprite); node.button.remove(); creatureNodes.delete(key); }
     for (const item of desired) {
-      if (creatureNodes.has(item.key)) { creatureNodes.get(item.key).sprite.position.set(item.x - origin.x, item.y + 54, item.z - origin.z); continue; }
+      if (creatureNodes.has(item.key)) { creatureNodes.get(item.key).sprite.position.set(item.x - origin.x, item.y + 26, item.z - origin.z); continue; }
       const species = map.creatures[item.species];
-      const mat = new THREE.SpriteMaterial({ map: imageTexture(species.id), transparent: true, alphaTest: .16, depthTest: true });
-      const sprite = new THREE.Sprite(mat); sprite.visible = !!mat.map.userData.loaded; sprite.scale.set(110, 110, 1); sprite.position.set(item.x - origin.x, item.y + 54, item.z - origin.z); sprite.userData = { type: "creature", species };
+      const sprite = new THREE.Group(); sprite.visible=false;sprite.position.set(item.x-origin.x,item.y+26,item.z-origin.z);sprite.userData={type:"creature",species};
       const button = pickButton(species.name, () => callbacks.onCreature(species));
       scene.add(sprite); creatureNodes.set(item.key, { sprite, button, species });
+      fauna.create(species.id).then((model)=>{if(!model)return;if(destroyed||creatureNodes.get(item.key)?.sprite!==sprite){model.traverse(obj=>{if(obj.isFaunaOrnament){obj.geometry.dispose();obj.material.dispose();}});return;}sprite.add(model);sprite.traverse((obj)=>{obj.userData=sprite.userData;});sprite.visible=true;dirty=true;request();});
     }
     const used = new Set([...creatureNodes.values()].map((node) => node.species.id));
     for (const [id, texture] of textureCache) if (!used.has(id)) { texture.dispose(); textureCache.delete(id); }
@@ -216,7 +220,7 @@ export function createWorld(viewport, map, callbacks) {
       const wanted = space.chunks(x, z, budget.low ? 1 : 2), keys = new Set(wanted.map((tile) => tile.key));
       for (const [key, entry] of chunks) if (!keys.has(key)) { if (entry.mesh) { scene.remove(entry.mesh); entry.mesh.geometry.dispose(); } chunks.delete(key); }
       for (const tile of wanted) if (!chunks.has(tile.key)) chunks.set(tile.key, { tile, mesh: null });
-      rebuildPlants(x, z);
+      rebuildBeings(x, z); rebuildPlants(x, z);
       rebuildDistantLandscape(x, z);
     }
     const next = [...chunks.values()].find((entry) => !entry.mesh);
@@ -356,13 +360,13 @@ export function createWorld(viewport, map, callbacks) {
     ready: assetsReady, setPosts, focus, forward, bounds() { return space.queryBounds(camera.position.x + origin.x, camera.position.z + origin.z); },
     place(value=true) { placing=value; viewport.classList.toggle("world-placing",value); velocity=0; flight=null; return true; },
     move(x, z) { flight = null; camera.getWorldDirection(direction); direction.y = 0; direction.normalize(); delta.set(-direction.z * x + direction.x * z, 0, direction.x * x + direction.z * z); camera.position.add(delta); controls.target.add(delta); walkEye.copy(camera.position); dirty = true; request(); },
-    focusCreature(id) { const index = map.creatures.findIndex((item) => item.id === id); if (index < 0) return; const point = space.beings((index % 6 + .5) * space.CHUNK, (Math.floor(index / 6) + .5) * space.CHUNK, posts).find((item) => item.species === index); if (point) focus(point.x, point.z); },
+    focusCreature(id) { const point=space.beings(camera.position.x+origin.x,camera.position.z+origin.z,posts).find(item=>FAUNA_IDS[item.species%3]===id);if(point)focus(point.x,point.z); },
     refresh() { resize(); }, setActive(value) { active = value; controls.enabled = value; last = performance.now(); if (value) { dirty = true; request(); } },
     destroy() {
       if (destroyed) return; destroyed = true;
       viewport.removeEventListener("keydown",placeKey); clearInterval(skyTimer); if (frame) cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener("visibilitychange", onVisibility); controls.dispose(); renderer.domElement.removeEventListener("webglcontextlost", onContextLoss);
       scene.traverse((obj) => { obj.geometry?.dispose(); if (obj.material?.map && !textureCache.has(obj.userData.species?.id)) obj.material.map.dispose(); if (obj.material && !Array.isArray(obj.material)) obj.material.dispose(); });
-      forest.dispose(); waterfalls.dispose(); groundMap.dispose(); groundMap.image = null;
+      fauna.dispose(); forest.dispose(); waterfalls.dispose(); groundMap.dispose(); groundMap.image = null;
       for (const texture of textureCache.values()) texture.dispose(); for (const geo of geometries) geo.dispose(); groundMaterial.dispose(); waterMaterial.dispose(); for (const mat of materials) mat.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); accessible.remove(); textureCache.clear(); chunks.clear(); postNodes.clear(); creatureNodes.clear(); scene.clear(); geometries.length = 0; materials.length = 0; batches.length = 0; pickups.length = 0; posts = []; flight = null; alphaCache = new WeakMap();
     }

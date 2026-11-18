@@ -22,7 +22,7 @@
     return (r.y + 8) * (1 - smooth) + h * smooth;
   }
   function dimensions(p) {
-    const tree = (200 + p.hue * 65) * (.9 + (p.size - .8) * .25);
+    const tree = (155 + p.hue * 65) * (.9 + (p.size - .8) * .25);
     return { tree, leaf: tree * .25, fern: 18 + p.hue * 10, flower: 12 + p.hue * 6 };
   }
   function daylight(hour) {
@@ -89,7 +89,7 @@
       if (lane < 38) continue;
       result.push({ x: px, z: pz, y, kind: kind < .62 && lane >= 75 ? 0 : kind < .9 ? 1 : 2, size: .8 + terrain.hash(ix, iz, 8) * .6, hue: terrain.hash(ix, iz, 9) });
     }
-    return result.sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, radius === 1 ? 140 : 320);
+    return result.sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, radius === 1 ? 100 : 260);
   }
   function queryBounds(x, z) {
     const left = Math.max(-990000, Math.min(990000, Math.floor(x / 1024) * 1024 - 2048));

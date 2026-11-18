@@ -2,13 +2,13 @@ window.Creative3D = {
   create(viewport, callbacks) {
     let engine, failed = false, active = true, pending = [];
     const loading = document.createElement("img"); loading.className = "world-loading-logo"; loading.alt = "Parchar"; loading.src = "/assets/parchar-logo-home.png"; viewport.append(loading);
-    const fallback = (reason, remember = false) => { if (failed) return; failed = true; if (remember) { try { localStorage.setItem("parchar_world_light_until_v1", String(Date.now() + 3600000)); localStorage.setItem("parchar_world_light_version", "211"); } catch {} } engine?.destroy(); loading.remove(); callbacks.onFallback(reason); };
+    const fallback = (reason, remember = false) => { if (failed) return; failed = true; if (remember) { try { localStorage.setItem("parchar_world_light_until_v1", String(Date.now() + 3600000)); localStorage.setItem("parchar_world_light_version", "212"); } catch {} } engine?.destroy(); loading.remove(); callbacks.onFallback(reason); };
     const ready = (async () => {
       try {
         await Promise.resolve();
-        try { if (localStorage.getItem("parchar_world_light_version") === "211" && Number(localStorage.getItem("parchar_world_light_until_v1")) > Date.now()) { fallback("Vista ligera activada temporalmente tras un intento anterior. Puedes reintentar el 3D."); return; } } catch {}
+        try { if (localStorage.getItem("parchar_world_light_version") === "212" && Number(localStorage.getItem("parchar_world_light_until_v1")) > Date.now()) { fallback("Vista ligera activada temporalmente tras un intento anterior. Puedes reintentar el 3D."); return; } } catch {}
         if (navigator.connection?.saveData || navigator.deviceMemory && navigator.deviceMemory < 2) { fallback("Modo de ahorro del dispositivo: vista ligera."); return; }
-        const [{ createWorld }, response] = await Promise.all([import("/creative-world-3d.module.js?v=4"), fetch("/assets/creative-world/manifest.json?v=1")]);
+        const [{ createWorld }, response] = await Promise.all([import("/creative-world-3d.module.js?v=5"), fetch("/assets/creative-world/manifest.json?v=1")]);
         if (!response.ok) throw new Error("world_unavailable");
         const map = await response.json();
         map.zones = [{ id: "centro", name: "El encuentro", x: 160, y: 165 }, { id: "cascadas", name: "Cascadas", x: -20, y: -15 }, { id: "bosque", name: "Bosque de luz", x: -3600, y: -2500 }, { id: "valle", name: "Valle de cristal", x: 4200, y: -3100 }, { id: "horizonte", name: "Tierras lejanas", x: 32000, y: 15000 }];

@@ -41,7 +41,7 @@
   cancelPlacement.onclick=()=>{scenery.place(false);placementBar.hidden=true;openEditor();};
   viewport.addEventListener("keydown",(event)=>{if(event.key==="Escape" && !placementBar.hidden)cancelPlacement.click();});
   function showCreature(species) {
-    $("#world-find-creature").hidden=true;
+    $("#world-find-creature").hidden=mode!=="canvas"||!["ciervo","zorro","unicornio"].includes(species.id);
     $("#world-species").value = species.id;
     $("#world-being-name").textContent = species.name;
     $("#world-being-image").src = `/assets/creative-world/beings/${species.id}.webp`;

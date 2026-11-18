@@ -39,12 +39,20 @@ export function createForestKit({ keep, batch, material, materials, set, random,
   const trunks = batch(trunkGeo, bark, 320), roots = batch(rootGeo, bark, 960);
   const crowns = batch(leaf(0, .44), foliage, 1600), palms = batch(leaf(2, .38), foliage, 1600), ferns = batch(leaf(1, .28), foliage, 1600), purple = batch(leaf(5, .32), foliage, 960), blooms = batch(leaf(3, .2), foliage, 320);
   const color = new THREE.Color();
+  const canopyCanvas=document.createElement("canvas");canopyCanvas.width=canopyCanvas.height=256;
+  const canopyMap=new THREE.CanvasTexture(canopyCanvas);canopyMap.colorSpace=THREE.SRGBColorSpace;
+  const canopyMaterial=material("#d0ffdc");canopyMaterial.map=canopyMap;canopyMaterial.alphaTest=.4;
+  const lobes=[new THREE.SphereGeometry(1,8,5).scale(.34,.2,.3),new THREE.SphereGeometry(1,8,5).scale(.28,.2,.27).translate(-.25,.02,.02),new THREE.SphereGeometry(1,8,5).scale(.27,.24,.28).translate(.23,.04,-.03)];
+  const canopyGeo=keep(mergeGeometries(lobes));lobes.forEach((geo)=>geo.dispose());const canopies=batch(canopyGeo,canopyMaterial,320);
+  const paintCanopy=()=>{const ctx=canopyCanvas.getContext("2d");ctx.clearRect(0,0,256,256);if(atlas.image)for(let i=0;i<260;i++){ctx.save();ctx.translate(random(i,0,611)*256,random(i,0,612)*256);ctx.rotate(random(i,0,613)*6.28);const size=18+random(i,0,614)*26;ctx.drawImage(atlas.image,0,0,atlas.image.width/3,atlas.image.height/2,-size/2,-size/2,size,size);ctx.restore();}canopyMap.needsUpdate=true;changed();};
+  canopyCanvas.getContext("2d").fillStyle="#28735b";canopyCanvas.getContext("2d").fillRect(0,0,256,256);atlasAsset.ready.then(paintCanopy);
   function update(plants, low) {
     let tree = 0, root = 0, crown = 0, palm = 0, fern = 0, violet = 0, flower = 0;
     for (const p of plants) {
       const sizes = window.CreativeSpace.dimensions(p), h = sizes.tree, leafSize = sizes.leaf;
       color.setHSL(.47 + p.hue * .08, .1, .9);
       if (p.kind === 0) {
+        set(canopies,tree,p.x,p.y+h*.78,p.z,h,h,h,p.hue*6);
         set(trunks, tree++, p.x, p.y, p.z, h, h, h, p.hue * 6);
         for (let j = 0; j < 3; j++) set(roots, root++, p.x, p.y, p.z, h * .65, h * .4, h * .65, j * 2.094 + p.hue);
         const count = low ? 8 : 12;
@@ -64,9 +72,9 @@ export function createForestKit({ keep, batch, material, materials, set, random,
         for (let j = 0; j < 2; j++) set(blooms, flower++, p.x + j * 12, p.y + 2, p.z, sizes.flower, sizes.flower, sizes.flower * .7, p.hue * 6 + j * 2, color, .65);
       }
     }
-    for (const [mesh, count] of [[trunks,tree],[roots,root],[crowns,crown],[palms,palm],[ferns,fern],[purple,violet],[blooms,flower]]) { mesh.count = count; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.boundingSphere = null; }
+    for (const [mesh, count] of [[canopies,tree],[trunks,tree],[roots,root],[crowns,crown],[palms,palm],[ferns,fern],[purple,violet],[blooms,flower]]) { mesh.count = count; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.boundingSphere = null; }
   }
-  return { bark, ready: Promise.all([atlasAsset.ready,barkAsset.ready]), update, dispose() { atlas.dispose(); atlas.image = null; barkMap.dispose(); barkMap.image = null; } };
+  return { bark, ready: Promise.all([atlasAsset.ready,barkAsset.ready]), update, dispose() { canopyMap.dispose();canopyMap.image=null;atlas.dispose(); atlas.image = null; barkMap.dispose(); barkMap.image = null; } };
 }
 
 export function createWaterfallKit({ keep, batch, material, materials, set, changed }) {
