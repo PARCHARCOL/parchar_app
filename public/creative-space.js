@@ -4,7 +4,22 @@
   else root.CreativeSpace = api;
 })(typeof window !== "undefined" ? window : globalThis, function (terrain) {
   const CHUNK = 640;
-  function height(x, z) { return (terrain.sample(x * 3, z * 3).height - .34) * 180; }
+  function height(x, z) {
+    const ridge = Math.max(0, .55 - terrain.noise(x, z, 1900, 112)) / .55;
+    return (terrain.sample(x * 3, z * 3).height - .34) * 180 + ridge ** 2.4 * 1250;
+  }
+  const EYE_HEIGHT = 34, MIN_POLAR = Math.PI * .44, MAX_POLAR = Math.PI * .64;
+  function eyeLevel(x, z) { return Math.max(12, height(x, z)) + EYE_HEIGHT; }
+  function waterfalls(x, z) {
+    const result = [{ key: "encuentro", x: -20, z: -15, height: 190, width: 110 }];
+    const cell = 1600;
+    for (let iz = Math.floor(z / cell) - 1; iz <= Math.floor(z / cell) + 1; iz++) for (let ix = Math.floor(x / cell) - 1; ix <= Math.floor(x / cell) + 1; ix++) {
+      const px = (ix + .5) * cell - 20, pz = (iz + .5) * cell - 15;
+      if (Math.hypot(px + 20, pz + 15) < 1000) continue;
+      result.push({ key: `${ix}/${iz}`, x: px, z: pz, height: 150 + terrain.hash(ix, iz, 92) * 120, width: 90 + terrain.hash(ix, iz, 93) * 55 });
+    }
+    return result.sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, 3);
+  }
   function chunks(x, z, radius = 2) {
     const cx = Math.floor(x / CHUNK), cz = Math.floor(z / CHUNK), list = [];
     for (let iz = cz - radius; iz <= cz + radius; iz++) for (let ix = cx - radius; ix <= cx + radius; ix++) list.push({ key: `${ix}/${iz}`, x: ix * CHUNK, z: iz * CHUNK, ix, iz });
@@ -26,14 +41,17 @@
     }).filter(Boolean).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, 10);
   }
   function plants(x, z, posts = [], radius = 2) {
-    const result = [], creatures = beings(x, z, posts), step = 155;
+    const result = [], creatures = beings(x, z, posts), falls = waterfalls(x, z), step = 105;
     const reach = CHUNK * (radius + .5);
     for (let iz = Math.floor((z - reach) / step); iz <= Math.floor((z + reach) / step); iz++) for (let ix = Math.floor((x - reach) / step); ix <= Math.floor((x + reach) / step); ix++) {
       const px = (ix + .5 + (terrain.hash(ix, iz, 5) - .5) * .28) * step;
       const pz = (iz + .5 + (terrain.hash(ix, iz, 6) - .5) * .28) * step;
       const y = height(px, pz);
-      if (y < 3 || nearPost(px, pz, posts) || creatures.some((c) => Math.hypot(c.x - px, c.z - pz) < 115)) continue;
-      result.push({ x: px, z: pz, y, kind: Math.floor(terrain.hash(ix, iz, 7) * 3), size: .65 + terrain.hash(ix, iz, 8) * .65, hue: terrain.hash(ix, iz, 9) });
+      if (y < 3 || nearPost(px, pz, posts) || creatures.some((c) => Math.hypot(c.x - px, c.z - pz) < 115) || falls.some((f) => Math.hypot(f.x - px, f.z - pz) < 115)) continue;
+      const kind = terrain.hash(ix, iz, 7);
+      const lane = Math.abs(((px - 160 + CHUNK / 2) % CHUNK + CHUNK) % CHUNK - CHUNK / 2);
+      if (lane < 38) continue;
+      result.push({ x: px, z: pz, y, kind: kind < .62 && lane >= 75 ? 0 : kind < .9 ? 1 : 2, size: .8 + terrain.hash(ix, iz, 8) * .6, hue: terrain.hash(ix, iz, 9) });
     }
     return result.sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, radius === 1 ? 140 : 320);
   }
@@ -42,12 +60,18 @@
     const top = Math.max(-990000, Math.min(990000, Math.floor(z / 1024) * 1024 - 2048));
     return { x: left, y: top, w: 5120, h: 5120, order: "near" };
   }
+  function viewpoint(x, z, posts = []) {
+    const nearby = plants(x, z, posts, 1);
+    const choices = [[0,340],[-65,340],[65,340],[-130,340],[130,340],[0,270],[0,410]];
+    const [dx,dz] = choices.find(([dx,dz]) => nearby.every((plant) => Math.hypot(plant.x - x - dx, plant.z - z - dz) > (plant.kind === 0 ? 65 : 24))) || choices[0];
+    return { x: x + dx, z: z + dz };
+  }
   function observeBudget(state, frameMs, active) {
     if (!active || !Number.isFinite(frameMs) || frameMs > 1000) return state;
     const bad = frameMs > (state.low ? 45 : 34);
-    state.slow = bad ? state.slow + 1 : Math.max(0, state.slow - 3);
+    state.slow = bad ? state.slow + Math.min(10, Math.max(1, Math.floor(frameMs / 80))) : Math.max(0, state.slow - 3);
     if (state.slow >= (state.low ? 60 : 30)) { if (state.low) state.fallback = true; else state.low = true; state.slow = 0; }
     return state;
   }
-  return { CHUNK, height, chunks, beings, plants, nearPost, queryBounds, observeBudget };
+  return { CHUNK, height, EYE_HEIGHT, MIN_POLAR, MAX_POLAR, eyeLevel, viewpoint, waterfalls, chunks, beings, plants, nearPost, queryBounds, observeBudget };
 });

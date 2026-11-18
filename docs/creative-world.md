@@ -1,5 +1,41 @@
 # Mundo del Muro creativo
 
+## Bosque y recorrido a nivel del suelo
+
+La version 209 sustituye las copas geometricas lisas por hojas curvas texturizadas,
+ramas y raices tubulares, helechos y flores. Se conserva un unico atlas WebP de
+seis especies, 1152x768, aproximadamente 373 KB y compartido entre instancias.
+build-forest-foliage.js lo prepara desde .runtime/world-artwork/forest-foliage.png
+y .runtime/world-artwork/forest-materials.png.
+La imagen se creo con la herramienta integrada: atlas transparente 3x2 de hojas
+tropicales jade con venas cyan, helechos emerald/cyan, abanico de palma azul,
+flor violeta translucidada, roseta de musgo y fronda magenta, detalle botanico
+natural y atmosfera de selva alienigena bioluminiscente; sin logos ni personajes.
+No se emplean capturas de la pelicula ni un fondo que reemplace la geometria.
+Un segundo atlas original contiene agua turbulenta con espuma, corteza con
+fisuras y liquenes y roca basaltica humeda con musgo; se generan tres texturas
+WebP de superficie pequenas para las mallas, no paneles de un paisaje completo.
+La escena espera a sus texturas mostrando el logo, para evitar flashes blancos
+de hojas, rocas o personajes. Si fallan o tardan mas de 20 segundos, usa vista ligera.
+
+Hay mayor proporcion de arboles, sotobosque y corredores despejados. Las cascadas
+son superficies curvas de agua delante de volumenes de roca, con estanques; el
+relieve incluye crestas y una malla distante de montanas de menor detalle, en una
+sola llamada de dibujo adicional. El muestreo del clic ignora las partes
+transparentes de hojas y personajes para no bloquear mensajes detras de huecos.
+
+La camara usa altura de ojo de 34 unidades sobre el relieve, con seguimiento tanto
+al subir como al bajar. El giro se ancla en la posicion del observador, tambien en
+las actualizaciones sincronas de OrbitControls. El angulo vertical se limita a
+aproximadamente 11 grados hacia abajo y 25 hacia arriba; no permite orbitar hasta
+una vista cenital. El pellizco desplaza sobre el plano horizontal y no acumula
+altura. Los puntos de enfoque buscan una posicion de llegada libre de troncos.
+La opcion Cascadas enfoca el salto de agua cercano al encuentro.
+
+Se mantienen los limites de sectores, plantas, seres, letreros y resolucion, la
+pausa en reposo, la carga diferida y el apagado ante lentitud. Las nuevas texturas
+son estaticas y no requieren llamadas a IA ni al servidor durante el recorrido.
+
 ## Escena 3D actual
 
 creative.html carga creative-3d.js y creative-space.js. El motor Three.js 0.187.0

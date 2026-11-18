@@ -1,0 +1,94 @@
+import * as THREE from "three";
+import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
+
+function loadTexture(url, changed) {
+  let resolve, reject;
+  const ready = new Promise((yes, no) => { resolve = yes; reject = no; });
+  const texture = new THREE.TextureLoader().load(url, () => { resolve(); changed(); }, undefined, reject);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return { texture, ready };
+}
+
+export function createForestKit({ keep, batch, material, materials, set, random, changed }) {
+  const atlasAsset = loadTexture("/assets/creative-world/forest-foliage-v1.webp", changed), atlas = atlasAsset.texture;
+  atlas.colorSpace = THREE.SRGBColorSpace; atlas.anisotropy = 2;
+  const foliage = new THREE.MeshBasicMaterial({ map: atlas, color: "#ffffff", alphaTest: .38, side: THREE.DoubleSide, vertexColors: true }); materials.push(foliage);
+  function leaf(tile, curl = .32) {
+    const positions = [], uv = [], indices = [], columns = 2, rows = 8;
+    for (let row = 0; row <= rows; row++) for (let col = 0; col <= columns; col++) {
+      const u = col / columns, v = row / rows;
+      positions.push((u - .5) * (1 + .1 * Math.sin(v * Math.PI)), v, curl * v * v + .08 * Math.sin(u * Math.PI) * Math.sin(v * Math.PI));
+      uv.push((tile % 3 + .035 + u * .93) / 3, 1 - (Math.floor(tile / 3) + 1) / 2 + (.035 + v * .93) / 2);
+      if (row < rows && col < columns) { const i = row * (columns + 1) + col; indices.push(i, i + 1, i + columns + 1, i + 1, i + columns + 2, i + columns + 1); }
+    }
+    const geometry = new THREE.BufferGeometry(); geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3)); geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geometry.setAttribute("color", new THREE.Float32BufferAttribute(Array(positions.length).fill(1), 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.userData.fullLight = true; return keep(geometry);
+  }
+  function curve(points, radius, segments = 8) { return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))), segments, radius, 5, false); }
+  const parts = [curve([[0,0,0],[.1,.3,-.05],[-.03,.65,.08],[.04,1,0]], .035), curve([[.02,.5,0],[-.1,.67,.02],[-.24,.85,.04]], .018, 4), curve([[.02,.65,0],[.14,.8,-.04],[.23,.94,-.06]], .016, 4)];
+  const trunkGeo = keep(mergeGeometries(parts)); parts.forEach((part) => part.dispose());
+  const rootGeo = keep(curve([[0,.045,0],[.12,.02,.06],[.3,.01,.08],[.48,-.015,.06]], .018, 5));
+  for (const geometry of [trunkGeo, rootGeo]) { const uv = geometry.attributes.uv; for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, uv.getY(i), u); } }
+  const barkAsset = loadTexture("/assets/creative-world/forest-bark-v1.webp", changed), barkMap = barkAsset.texture;
+  const bark = material("#ffffff"); bark.map = barkMap;
+  const trunks = batch(trunkGeo, bark, 320), roots = batch(rootGeo, bark, 960);
+  const crowns = batch(leaf(0, .44), foliage, 1600), palms = batch(leaf(2, .38), foliage, 960), ferns = batch(leaf(1, .28), foliage, 1600), purple = batch(leaf(5, .32), foliage, 960), blooms = batch(leaf(3, .2), foliage, 320);
+  const color = new THREE.Color();
+  function update(plants, low) {
+    let tree = 0, root = 0, crown = 0, palm = 0, fern = 0, violet = 0, flower = 0;
+    for (const p of plants) {
+      const h = (125 + p.hue * 80) * p.size;
+      color.setHSL(.47 + p.hue * .08, .1, .9);
+      if (p.kind === 0) {
+        set(trunks, tree++, p.x, p.y, p.z, h, h, h, p.hue * 6);
+        for (let j = 0; j < 3; j++) set(roots, root++, p.x, p.y, p.z, h, h, h, j * 2.094 + p.hue);
+        const count = low ? 3 : 5;
+        for (let j = 0; j < count; j++) {
+          const angle = j * Math.PI * 2 / count + p.hue * 4;
+          const y = p.y + h * (.76 + j % 2 * .14);
+          if (j % 2) set(palms, palm++, p.x, y, p.z, h * .7, h * .77, h * .5, angle, color, .8 + p.hue * .3);
+          else set(crowns, crown++, p.x, y, p.z, h * .55, h * .72, h * .5, angle, color, .8 + p.hue * .3);
+        }
+        for (let j = 0; j < 2; j++) set(ferns, fern++, p.x + 20 * Math.cos(j * 3), p.y + 2, p.z + 20 * Math.sin(j * 3), h * .23, h * .27, h * .23, j * 3 + p.hue, color, .65);
+      } else if (p.kind === 1) {
+        for (let j = 0; j < (low ? 3 : 4); j++) {
+          const angle = j * 1.57 + p.hue * 6;
+          if (p.hue > .65) set(purple, violet++, p.x, p.y, p.z, 45 * p.size, 62 * p.size, 35 * p.size, angle, color, .65);
+          else set(ferns, fern++, p.x, p.y, p.z, 48 * p.size, 65 * p.size, 40 * p.size, angle, color, .65);
+        }
+      } else {
+        for (let j = 0; j < 2; j++) set(blooms, flower++, p.x + j * 22, p.y + 4, p.z, 48 * p.size, 46 * p.size, 32 * p.size, p.hue * 6 + j * 2, color, 1.15);
+      }
+    }
+    for (const [mesh, count] of [[trunks,tree],[roots,root],[crowns,crown],[palms,palm],[ferns,fern],[purple,violet],[blooms,flower]]) { mesh.count = count; mesh.instanceMatrix.needsUpdate = true; if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true; mesh.boundingSphere = null; }
+  }
+  return { bark, ready: Promise.all([atlasAsset.ready,barkAsset.ready]), update, dispose() { atlas.dispose(); atlas.image = null; barkMap.dispose(); barkMap.image = null; } };
+}
+
+export function createWaterfallKit({ keep, batch, material, materials, set, changed }) {
+  const rockAsset = loadTexture("/assets/creative-world/forest-rock-v1.webp", changed), rockMap = rockAsset.texture;
+  const rockMaterial = material("#ffffff"); rockMaterial.map = rockMap;
+  const rockGeo = new THREE.IcosahedronGeometry(1, 2), rockPositions = rockGeo.attributes.position;
+  for (let i = 0; i < rockPositions.count; i++) { const x = rockPositions.getX(i), y = rockPositions.getY(i), z = rockPositions.getZ(i), factor = 1 + Math.sin(x * 12 + y * 7 + z * 11) * .08; rockPositions.setXYZ(i, x * factor, y * factor, z * factor); }
+  rockGeo.computeVertexNormals();
+  const rocks = batch(keep(rockGeo), rockMaterial, 15);
+  const waterAsset = loadTexture("/assets/creative-world/waterfall-flow-v1.webp", changed), map = waterAsset.texture;
+  const waterMaterial = new THREE.MeshBasicMaterial({ map, side: THREE.DoubleSide }); materials.push(waterMaterial);
+  const geometry = new THREE.PlaneGeometry(1, 1, 4, 8);
+  const positions = geometry.attributes.position;
+  for (let i = 0; i < positions.count; i++) { const y = positions.getY(i); positions.setX(i, positions.getX(i) * (.75 + .2 * Math.cos(y * 7))); positions.setZ(i, Math.sin(y * 4) * .08); }
+  geometry.computeVertexNormals();
+  const poolMaterial = material("#ffffff"); poolMaterial.map = map;
+  const falls = batch(keep(geometry), waterMaterial, 3), pools = batch(keep(new THREE.SphereGeometry(1, 12, 5)), poolMaterial, 3);
+  function update(features, height) {
+    let count = 0;
+    for (const f of features) {
+      const y = Math.max(3, height(f.x, f.z));
+      for (let i = 0; i < 4; i++) set(rocks, count * 4 + i, f.x + (i % 2 ? 1 : -1) * f.width * .46, y + f.height * (.3 + i / 8), f.z - 20 - i * 7, f.width * .65, f.height * (.4 + i / 11), 50 + i * 8, i * .65);
+      set(falls, count, f.x, y + f.height * .49, f.z + 30, f.width * .68, f.height * .94, 40, 0);
+      set(pools, count, f.x, y + 3, f.z + 60, f.width * .85, 5, 85, 0);
+      count++;
+    }
+    for (const [mesh, n] of [[rocks,count*4],[falls,count],[pools,count]]) { mesh.count = n; mesh.instanceMatrix.needsUpdate = true; mesh.boundingSphere = null; }
+  }
+  return { ready: Promise.all([rockAsset.ready,waterAsset.ready]), update, dispose() { map.dispose(); map.image = null; rockMap.dispose(); rockMap.image = null; } };
+}
