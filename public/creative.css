@@ -100,6 +100,9 @@
 #wall-detail-content > p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 #wall-detail-content .wall-post { border: 0; }
 .wall-moderation h1 { color: #fff; font-size: 24px; }
+.creative-body.wall-moderation { display: block; height: auto; min-height: 100dvh; padding-bottom: 0; overflow: auto; }
+.wall-moderation .wall-admin-list { align-items: start; }
+.wall-moderation .wall-post > p { font-size: 15px; line-height: 1.5; overflow-wrap: anywhere; }
 .wall-moderation header { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px; }
 .wall-moderation select { padding: 10px; font: inherit; min-height: 44px; background: #28123c; color: #fff; }
 .wall-admin-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px, 100%), 1fr)); gap: 12px; padding: 12px; }

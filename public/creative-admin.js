@@ -7,8 +7,9 @@
     list.replaceChildren(); feedback.textContent = "Cargando creaciones…";
     if (!token) { feedback.replaceChildren(); const link = document.createElement("a"); link.href = "/admin.html"; link.textContent = "Inicia sesión en Admin para moderar el muro."; link.style.color = "#67ebda"; feedback.append(link); return; }
     try {
-      const [data, summary] = await Promise.all([api(`/api/admin/creative?status=${document.querySelector("#creative-admin-status").value}`), api("/api/admin/creative/summary")]);
-      feedback.textContent = `${summary.pending} pendientes · ${summary.reports} reportes abiertos. ${summary.configured ? "IA configurada; los casos dudosos y errores requieren revisión." : "IA sin activar: configura OPENAI_API_KEY en Render. Ninguna creación se aprobará automáticamente sin análisis."}`;
+      const [data, summary] = await Promise.all([api(`/api/admin/creative?status=${document.querySelector("#creative-admin-status").value}`), api("/api/admin/creative/summary").catch(() => null)]);
+      feedback.textContent = summary ? `${summary.pending} pendientes · ${summary.reports} reportes abiertos. ${summary.configured ? "IA configurada; los casos dudosos y errores requieren revisión." : "IA sin activar: configura OPENAI_API_KEY en Render. Ninguna creación se aprobará automáticamente sin análisis."}` : "Resumen no disponible. Puedes revisar las publicaciones de la lista.";
+      if (!data.items.length) feedback.textContent += " No hay publicaciones en este estado.";
       for (const item of data.items) {
         const card = CreativeRender.card(item, true); card.querySelector("button").remove();
         if (item.text) { const text = document.createElement("p"); text.textContent = item.text; text.style.whiteSpace = "pre-wrap"; card.append(text); }

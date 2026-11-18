@@ -2,9 +2,15 @@ import * as THREE from "three";
 import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 
 function loadTexture(url, changed) {
-  let resolve, reject;
-  const ready = new Promise((yes, no) => { resolve = yes; reject = no; });
-  const texture = new THREE.TextureLoader().load(url, () => { resolve(); changed(); }, undefined, reject);
+  let resolve;
+  const ready = new Promise((yes) => { resolve = yes; });
+  const texture = new THREE.TextureLoader().load(url, () => { resolve(); changed(); }, undefined, () => {
+    // A decorative image failure must not discard a working 3D scene.
+    const canvas=document.createElement("canvas");canvas.width=192;canvas.height=128;const ctx=canvas.getContext("2d");
+    if(url.includes("foliage")){for(let i=0;i<6;i++){ctx.fillStyle=["#57cba3","#72e7ba","#48c8dc","#e39bea","#82d8b0","#c788e2"][i];ctx.beginPath();ctx.ellipse(i%3*64+32,Math.floor(i/3)*64+32,19,29,.25,0,Math.PI*2);ctx.fill();}}
+    else{ctx.fillStyle=url.includes("waterfall")?"#7adee9":url.includes("rock")?"#568579":"#628b70";ctx.fillRect(0,0,192,128);}
+    texture.image=canvas;texture.needsUpdate=true;resolve();changed();
+  });
   texture.colorSpace = THREE.SRGBColorSpace;
   return { texture, ready };
 }
@@ -24,14 +30,14 @@ export function createForestKit({ keep, batch, material, materials, set, random,
     const geometry = new THREE.BufferGeometry(); geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3)); geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2)); geometry.setAttribute("color", new THREE.Float32BufferAttribute(Array(positions.length).fill(1), 3)); geometry.setIndex(indices); geometry.computeVertexNormals(); geometry.userData.fullLight = true; return keep(geometry);
   }
   function curve(points, radius, segments = 8) { return new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map((p) => new THREE.Vector3(...p))), segments, radius, 5, false); }
-  const parts = [curve([[0,0,0],[.1,.3,-.05],[-.03,.65,.08],[.04,1,0]], .035), curve([[.02,.5,0],[-.1,.67,.02],[-.24,.85,.04]], .018, 4), curve([[.02,.65,0],[.14,.8,-.04],[.23,.94,-.06]], .016, 4)];
+  const parts = [curve([[0,0,0],[.025,.3,-.02],[-.02,.65,.03],[.02,1,0]], .035), curve([[0,.73,0],[-.1,.83,.02],[-.18,.94,.04]], .018, 4), curve([[.01,.8,0],[.12,.89,-.02],[.18,1,-.04]], .016, 4)];
   const trunkGeo = keep(mergeGeometries(parts)); parts.forEach((part) => part.dispose());
   const rootGeo = keep(curve([[0,.045,0],[.12,.02,.06],[.3,.01,.08],[.48,-.015,.06]], .018, 5));
   for (const geometry of [trunkGeo, rootGeo]) { const uv = geometry.attributes.uv; for (let i = 0; i < uv.count; i++) { const u = uv.getX(i); uv.setXY(i, uv.getY(i), u); } }
   const barkAsset = loadTexture("/assets/creative-world/forest-bark-v1.webp", changed), barkMap = barkAsset.texture;
   const bark = material("#ffffff"); bark.map = barkMap;
   const trunks = batch(trunkGeo, bark, 320), roots = batch(rootGeo, bark, 960);
-  const crowns = batch(leaf(0, .44), foliage, 1600), palms = batch(leaf(2, .38), foliage, 960), ferns = batch(leaf(1, .28), foliage, 1600), purple = batch(leaf(5, .32), foliage, 960), blooms = batch(leaf(3, .2), foliage, 320);
+  const crowns = batch(leaf(0, .44), foliage, 1600), palms = batch(leaf(2, .38), foliage, 1600), ferns = batch(leaf(1, .28), foliage, 1600), purple = batch(leaf(5, .32), foliage, 960), blooms = batch(leaf(3, .2), foliage, 320);
   const color = new THREE.Color();
   function update(plants, low) {
     let tree = 0, root = 0, crown = 0, palm = 0, fern = 0, violet = 0, flower = 0;
@@ -41,12 +47,12 @@ export function createForestKit({ keep, batch, material, materials, set, random,
       if (p.kind === 0) {
         set(trunks, tree++, p.x, p.y, p.z, h, h, h, p.hue * 6);
         for (let j = 0; j < 3; j++) set(roots, root++, p.x, p.y, p.z, h * .65, h * .4, h * .65, j * 2.094 + p.hue);
-        const count = low ? 3 : 5;
+        const count = low ? 8 : 12;
         for (let j = 0; j < count; j++) {
-          const angle = j * Math.PI * 2 / count + p.hue * 4;
-          const y = p.y + h * (.76 + j % 2 * .14);
-          if (j % 2) set(palms, palm++, p.x, y, p.z, leafSize, leafSize, leafSize * .6, angle, color, 1.05);
-          else set(crowns, crown++, p.x, y, p.z, leafSize * .85, leafSize, leafSize * .6, angle, color, 1.05);
+          const angle = j * 2.399 + p.hue * 4;
+          const y = p.y + h * (.74 + j % 3 * .095), x=p.x+Math.cos(angle)*h*.12,z=p.z+Math.sin(angle)*h*.12;
+          if (j % 2) set(palms, palm++, x, y, z, leafSize, leafSize, leafSize * .6, angle, color, 1.05);
+          else set(crowns, crown++, x, y, z, leafSize * .95, leafSize, leafSize * .6, angle, color, 1.05);
         }
         for (let j = 0; j < 2; j++) set(ferns, fern++, p.x + 20 * Math.cos(j * 3), p.y + 2, p.z + 20 * Math.sin(j * 3), sizes.fern, sizes.fern, sizes.fern * .6, j * 3 + p.hue, color, .65);
       } else if (p.kind === 1) {

@@ -27,8 +27,8 @@
   }
   function daylight(hour) {
     if (hour >= 7 && hour < 17) return { phase: "dia", top: "#247fb2", horizon: "#b8e4de", fog: "#6aabb5", light: 1 };
-    if (hour >= 5 && hour < 7 || hour >= 17 && hour < 19) return { phase: "crepusculo", top: "#483f94", horizon: "#f0ad88", fog: "#9c8baa", light: .85 };
-    return { phase: "noche", top: "#101f50", horizon: "#426789", fog: "#263e5a", light: .68 };
+    if (hour >= 5 && hour < 7 || hour >= 17 && hour < 19) return { phase: "crepusculo", top: "#6151ac", horizon: "#c8c2ef", fog: "#72aaa9", light: 1 };
+    return { phase: "noche", top: "#182d61", horizon: "#527e9f", fog: "#315774", light: .9 };
   }
   function groundCover(x, z, posts = [], low = false) {
     const grass = [], rocks = [], step = 28, reach = low ? 460 : 650;

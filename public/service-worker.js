@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v210";
+const CACHE_NAME = "parchar-shell-v211";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -201,7 +201,8 @@ self.addEventListener("fetch", (event) => {
     event.waitUntil(refresh.catch(() => {}));
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
-        const cached = await cache.match(request, { ignoreSearch: true });
+        const worldAsset = /^\/creative[a-z0-9.-]*\.(?:js|css)$/i.test(url.pathname);
+        const cached = await cache.match(request, { ignoreSearch: !worldAsset });
         if (cached) return cached;
         return refresh;
       })

@@ -70,7 +70,7 @@ export function createWorld(viewport, map, callbacks) {
   const bladePositions=[];
   for (let i=0;i<5;i++) { const a=i*Math.PI*.4, x=Math.cos(a)*.35,z=Math.sin(a)*.35; bladePositions.push(x-.07,0,z,x+.07,0,z,x*.6,.65+i*.07,z*.6); }
   const grassGeo=new THREE.BufferGeometry(); grassGeo.setAttribute("position",new THREE.Float32BufferAttribute(bladePositions,3)); grassGeo.computeVertexNormals();
-  const grassMaterial=material("#4b9e6e"); grassMaterial.side=THREE.DoubleSide;
+  const grassMaterial=material("#68c9a2"); grassMaterial.side=THREE.DoubleSide;
   const grass=batch(keep(grassGeo),grassMaterial,1400);
   const riverPositions=[], riverUv=[], riverIndex=[];
   for (let i=0;i<=80;i++) { const z=-15+i*2415/80,r=space.river(z); riverPositions.push(r.x-r.width,r.y,z,r.x+r.width,r.y,z); riverUv.push(0,i/6,1,i/6); if(i<80){const n=i*2;riverIndex.push(n,n+2,n+1,n+1,n+2,n+3);} }
@@ -88,7 +88,7 @@ export function createWorld(viewport, map, callbacks) {
   const budget = { low: small || (navigator.deviceMemory && navigator.deviceMemory < 4), slow: 0, fallback: false };
   const frameTimes = [];
   let readyAt = performance.now();
-  const terrainPalette = [new THREE.Color("#173b47"), new THREE.Color("#295958"), new THREE.Color("#4d3370"), new THREE.Color("#386c65")];
+  const terrainPalette = [new THREE.Color("#225e4c"), new THREE.Color("#287a64"), new THREE.Color("#305c70"), new THREE.Color("#4b8b62")];
 
   function makeChunk(tile) {
     const divisions = budget.low ? 12 : 20;
@@ -115,7 +115,7 @@ export function createWorld(viewport, map, callbacks) {
     forest.update(plants, budget.low); waterfalls.update(space.waterfalls(x, z), space.height);
     viewport.dataset.plantCount = String(plants.length);
     const cover=space.groundCover(x,z,posts,budget.low);
-    cover.grass.forEach((p,i)=>setInstance(grass,i,p.x,p.y,p.z,p.size,p.size,p.size,p.hue*6));
+    cover.grass.forEach((p,i)=>setInstance(grass,i,p.x,p.y,p.z,p.size*2.5,p.size,p.size*2.5,p.hue*6));
     grass.count=cover.grass.length; grass.instanceMatrix.needsUpdate=true; grass.boundingSphere=null;
     waterfalls.groundRocks(cover.rocks); viewport.dataset.grassCount=String(cover.grass.length); viewport.dataset.rockCount=String(cover.rocks.length);
     stream.position.set(-origin.x,0,-origin.z);
@@ -216,7 +216,7 @@ export function createWorld(viewport, map, callbacks) {
       const wanted = space.chunks(x, z, budget.low ? 1 : 2), keys = new Set(wanted.map((tile) => tile.key));
       for (const [key, entry] of chunks) if (!keys.has(key)) { if (entry.mesh) { scene.remove(entry.mesh); entry.mesh.geometry.dispose(); } chunks.delete(key); }
       for (const tile of wanted) if (!chunks.has(tile.key)) chunks.set(tile.key, { tile, mesh: null });
-      rebuildBeings(x, z); rebuildPlants(x, z);
+      rebuildPlants(x, z);
       rebuildDistantLandscape(x, z);
     }
     const next = [...chunks.values()].find((entry) => !entry.mesh);

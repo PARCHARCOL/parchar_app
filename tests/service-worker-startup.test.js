@@ -8,7 +8,7 @@ function workerWithCache(entries, fetchResponse) {
   const handlers = {};
   const writes = [];
   const cache = {
-    match: async (request) => entries[new URL(typeof request === "string" ? request : request.url, "https://parchar.test").pathname]?.clone(),
+    match: async (request, options) => { const url=new URL(typeof request === "string" ? request : request.url,"https://parchar.test"); return entries[url.pathname+(options?.ignoreSearch ? "" : url.search)]?.clone(); },
     put: async (request, response) => writes.push({ request, response }),
   };
   const context = {
@@ -64,4 +64,12 @@ test("home navigation keeps its destination and refreshes valid Parchar HTML", a
   assert.equal(await (await event.response).text(), "cached home");
   await Promise.all(event.background);
   assert.equal(worker.writes.length, 1);
+});
+test("world scripts never mix an older cached version with a newer scene",async()=>{
+  const worker=workerWithCache({"/creative-space.js":new Response("old"),"/creative-space.js?v=4":new Response("also old")},async()=>new Response("new",{headers:{"content-type":"text/javascript"}}));
+  const event=worker.request("/creative-space.js?v=5","cors");assert.equal(await(await event.response).text(),"new");await Promise.all(event.background);assert.equal(worker.writes.length,1);
+});
+test("matching world versions remain usable without waiting for network refresh",async()=>{
+  const worker=workerWithCache({"/creative-space.js?v=5":new Response("matching")},async()=>new Response("refresh",{headers:{"content-type":"text/javascript"}}));
+  const event=worker.request("/creative-space.js?v=5","cors");assert.equal(await(await event.response).text(),"matching");await Promise.all(event.background);
 });
