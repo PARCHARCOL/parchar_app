@@ -4,6 +4,9 @@
   const world = $("#wall-world"), viewport = $("#wall-viewport"), list = $("#wall-list");
   const postsLayer = document.createElement("div"); postsLayer.className = "wall-posts-layer"; world.append(postsLayer);
   const editor = $("#wall-editor"), detail = $("#wall-detail"), canvas = $("#wall-drawing");
+  const readNearby = document.createElement("button");readNearby.type="button";readNearby.id="wall-read-nearby";readNearby.className="wall-icon";readNearby.title="Leer mensaje cercano";readNearby.setAttribute("aria-label","Leer mensaje cercano");readNearby.disabled=true;
+  const readIcon=document.createElement("img");readIcon.src="/assets/ui/message-circle.svg";readIcon.alt="";readNearby.append(readIcon);$("#wall-scale").replaceWith(readNearby);
+  const nextMessage=document.createElement("button");nextMessage.type="button";nextMessage.id="wall-read-next";nextMessage.textContent="Leer siguiente";nextMessage.hidden=true;$(".wall-detail-actions").prepend(nextMessage);
   let session = {}, mode = "canvas", items = [], current, strokes = [], redo = [], drawing, background = renderer.colors[0], color = renderer.colors[2], avatar = renderer.avatars[0], request = 0, timer;
   let liked = new Set(), before = "", submitting = false;
   let found = new Set();
@@ -37,8 +40,8 @@
   const placementBar=document.createElement("div"); placementBar.className="world-placement-bar"; placementBar.hidden=true;
   const placementStatus=document.createElement("span"); placementStatus.setAttribute("role","status");
   const cancelPlacement=document.createElement("button"); cancelPlacement.type="button"; cancelPlacement.textContent="Cancelar"; placementBar.append(placementStatus,cancelPlacement); viewport.append(placementBar);
-  placement.onclick=()=>{ if(mode!=="canvas"){placementNote.textContent="Abre Mundo 3D para elegir un lugar. En vista ligera se asigna automáticamente.";return;} if(!scenery.place(true))return; editor.close(); viewport.focus(); placementBar.hidden=false; placementStatus.textContent="Toca tierra firme donde quieras dejar tu mensaje."; };
-  cancelPlacement.onclick=()=>{scenery.place(false);placementBar.hidden=true;openEditor();};
+  placement.onclick=()=>{ if(mode!=="canvas"){placementNote.textContent="Abre Mundo 3D para elegir un lugar. En vista ligera se asigna automáticamente.";return;} if(!scenery.place(true))return; editor.close(); viewport.focus(); placementBar.hidden=false;readNearby.disabled=true; placementStatus.textContent="Toca tierra firme donde quieras dejar tu mensaje."; };
+  cancelPlacement.onclick=()=>{scenery.place(false);placementBar.hidden=true;readNearby.disabled=!items.length;openEditor();};
   viewport.addEventListener("keydown",(event)=>{if(event.key==="Escape" && !placementBar.hidden)cancelPlacement.click();});
   function showCreature(species) {
     $("#world-find-creature").hidden=mode!=="canvas"||!["ciervo","zorro","unicornio"].includes(species.id);
@@ -50,8 +53,17 @@
     scenery.setActive(false);
     if (!$("#world-creature-dialog").open) $("#world-creature-dialog").showModal();
   }
-  const scenery = Creative3D.create(viewport, { onPlace: (point)=>{position=point;placementNote.textContent="Lugar elegido. Tu mensaje aparecerá allí cuando sea aprobado.";placementBar.hidden=true;openEditor();}, onPlaceError:(message)=>{placementStatus.textContent=message;}, onCreature: showCreature, onPost: (id) => openCreation(id), onMove: () => { if (mode !== "canvas") return; clearTimeout(timer); timer = setTimeout(load, 450); }, onFallback: (reason) => { placementBar.hidden=true; switchMode("list"); document.querySelector('[data-mode="canvas"]').disabled = true; const note = $("#world-light-note"); note.hidden = false; note.textContent = reason + " "; const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar 3D"; retry.onclick = () => { try { localStorage.removeItem("parchar_world_light_until_v1"); } catch {} location.reload(); }; note.append(retry); } });
+  const scenery = Creative3D.create(viewport, {
+    onPlace: (point)=>{position=point;placementNote.textContent="Lugar elegido. Tu mensaje aparecerá allí cuando sea aprobado.";placementBar.hidden=true;readNearby.disabled=!items.length;openEditor();},
+    onPlaceError:(message)=>{placementStatus.textContent=message;},
+    onCreature: showCreature, onPost: (id) => openCreation(id),
+    onMove: () => { if (mode !== "canvas") return; clearTimeout(timer); timer = setTimeout(load, 450); },
+    onFallback: (reason) => { placementBar.hidden=true; switchMode("list"); document.querySelector('[data-mode="canvas"]').disabled = true; const note = $("#world-light-note"); note.hidden = false; note.textContent = reason + " "; const retry = document.createElement("button"); retry.type = "button"; retry.textContent = "Reintentar 3D"; retry.onclick = () => { try { localStorage.removeItem("parchar_world_light_until_v1"); } catch {} location.reload(); }; note.append(retry); },
+  });
   $("#wall-fauna").onclick = () => { if (creatureCatalog.length) showCreature(creatureCatalog.find((s)=>s.id===creatureAvatar)||creatureCatalog[0]); };
+  function nearbyMessages(exclude="") { const point=scenery.position();return CreativeSpace.readablePosts(items,point.x,point.z,found,exclude); }
+  readNearby.onclick=()=>{const post=nearbyMessages()[0];if(post)openCreation(post.id);else $("#wall-status").textContent="No hay mensajes a tu alcance en este punto.";};
+  nextMessage.onclick=()=>{const nearby=nearbyMessages(),index=nearby.findIndex(post=>post.id===current?.id);if(nearby.length>1)openCreation(nearby[(index+1)%nearby.length].id);};
   $("#world-species").onchange = () => { const species = creatureCatalog.find((item) => item.id === $("#world-species").value); if (species) showCreature(species); };
   $("#world-find-creature").onclick = () => { $("#world-creature-dialog").close(); scenery.focusCreature($("#world-species").value); };
   const zoneSelect = $("#wall-zone");
@@ -93,6 +105,8 @@
       if (id !== request) return;
       if (mode === "canvas" && (!cached || Date.now() - cached.at >= 20000)) { const size = JSON.stringify(data).length * 2; if (size <= 256000) { zoneCache.set(path, { at: Date.now(), data }); if (zoneCache.size > 8) zoneCache.delete(zoneCache.keys().next().value); } }
       items = append ? [...items, ...data.items] : data.items;
+      readNearby.disabled=mode!=="canvas"||!items.length||!placementBar.hidden;
+      if(detail.open)nextMessage.hidden=mode!=="canvas"||!nearbyMessages(current?.id).length;
       before = data.before || "";
       if (!append) { postsLayer.replaceChildren(); list.replaceChildren(); }
       $("#wall-more").hidden = mode !== "list" || !data.more;
@@ -107,7 +121,7 @@
   $("#wall-home").onclick = () => { scenery.reset(); zoneSelect.value = ""; }; $("#wall-refresh").onclick = () => { zoneCache.clear(); load(); };
   $("#wall-more").onclick = () => load(true);
   viewport.addEventListener("keydown", (event) => { const deltas = { ArrowLeft: [-100, 0], ArrowRight: [100, 0], ArrowUp: [0, 100], ArrowDown: [0, -100] }; if (event.target !== viewport || !deltas[event.key]) return; event.preventDefault(); scenery.move(...deltas[event.key]); });
-  function switchMode(next) { mode = next; clearTimeout(timer); document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; scenery.setActive(mode === "canvas"); if (mode === "canvas") scenery.refresh(); load(); }
+  function switchMode(next) { mode = next; clearTimeout(timer);if(mode!=="canvas"){scenery.place(false);placementBar.hidden=true;} document.querySelectorAll("[data-mode]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode))); viewport.hidden = mode !== "canvas"; list.hidden = mode === "canvas"; $(".wall-zoom").hidden = mode !== "canvas"; resumeWorld(); if (mode === "canvas") scenery.refresh(); load(); }
   document.querySelectorAll("[data-mode]").forEach((button) => button.onclick = () => switchMode(button.dataset.mode));
   function creation() { return { alias: $("#wall-alias").value.trim(), text: $("#wall-text").value.trim(), avatar, background, strokes, ...(creatureAvatar ? {creatureAvatar} : {}), ...(position ? {position} : {}), moderationConsent: true }; }
   function repaint() { renderer.draw(canvas, creation(), false); $("#wall-undo").disabled = !strokes.length; $("#wall-redo").disabled = !redo.length; }
@@ -147,16 +161,17 @@
   function openCreation(id) {
     current = items.find((item) => item.id === id); if (!current) return;
     if (mode === "canvas") { found.delete(id); found.add(id); found = new Set([...found].slice(-500)); try { localStorage.setItem("parchar_world_found_v1", JSON.stringify([...found])); } catch {} }
-    const card = renderer.card(current); card.querySelector("button").remove(); $("#wall-detail-content").replaceChildren(card);
+    const card = renderer.card(current,false,false); card.querySelector("button").remove();if(!current.strokes?.length)card.querySelector("canvas").remove(); $("#wall-detail-content").replaceChildren(card);
     if (current.text) { const message = document.createElement("p"); message.textContent = current.text; $("#wall-detail-content").append(message); }
-    $("#wall-detail-title").textContent = current.alias; $("#wall-delete").hidden = mode !== "mine"; $("#wall-like").hidden = mode === "mine"; $("#wall-report-open").hidden = mode === "mine";
+    $("#wall-detail-title").textContent = mode==="mine"?"Mi publicación":"Mensaje descubierto"; nextMessage.hidden=mode!=="canvas"||!nearbyMessages(current.id).length; $("#wall-delete").hidden = mode !== "mine"; $("#wall-like").hidden = mode === "mine"; $("#wall-report-open").hidden = mode === "mine";
     $("#wall-like").setAttribute("aria-pressed", String(liked.has(id))); $("#wall-like").lastChild.textContent = liked.has(id) ? "Te gusta" : "Me gusta";
-    $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = mode === "mine" ? current.status : `${current.likes} apoyos`; scenery.setActive(false); detail.showModal();
+    $("#wall-report-form").hidden = true; $("#wall-detail-status").textContent = mode === "mine" ? current.status : `${current.likes} apoyos`; scenery.setActive(false); if(!detail.open)detail.showModal();
   }
   document.addEventListener("click", (event) => { const id = event.target.closest("[data-open]")?.dataset.open; if (id) openCreation(id); });
-  detail.addEventListener("close", () => scenery.setActive(mode === "canvas"));
-  editor.addEventListener("close", () => scenery.setActive(mode === "canvas"));
-  $("#world-creature-dialog").addEventListener("close", () => scenery.setActive(mode === "canvas" && !editor.open && !detail.open));
+  function resumeWorld() { scenery.setActive(mode==="canvas"&&!document.hidden&&!editor.open&&!detail.open&&!$("#world-creature-dialog").open); }
+  detail.addEventListener("close", resumeWorld);
+  editor.addEventListener("close", resumeWorld);
+  $("#world-creature-dialog").addEventListener("close", resumeWorld);
   $("#wall-like").onclick = async () => { try { const value = !liked.has(current.id); await api(`/api/creative/${current.id}/like`, { method: "POST", body: JSON.stringify({ liked: value }) }); value ? liked.add(current.id) : liked.delete(current.id); $("#wall-like").setAttribute("aria-pressed", String(value)); $("#wall-detail-status").textContent = value ? "Apoyo registrado." : "Apoyo retirado."; } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-delete").onclick = async () => { if (!confirm("¿Retirar esta creación del muro?")) return; try { await api(`/api/creative/${current.id}/delete`, { method: "POST", body: "{}" }); detail.close(); load(); } catch (error) { $("#wall-detail-status").textContent = error.message; } };
   $("#wall-report-open").onclick = () => { $("#wall-report-form").hidden = false; };
@@ -168,5 +183,5 @@
   if (new URLSearchParams(location.search).get("editor") === "1") openEditor();
   load();
   window.addEventListener("pagehide", () => scenery.setActive(false));
-  window.addEventListener("pageshow", () => scenery.setActive(mode === "canvas"));
+  window.addEventListener("pageshow", resumeWorld);
 })();

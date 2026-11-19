@@ -96,6 +96,10 @@
     const top = Math.max(-990000, Math.min(990000, Math.floor(z / 1024) * 1024 - 2048));
     return { x: left, y: top, w: 5120, h: 5120, order: "near" };
   }
+  function readablePosts(posts, x, z, found = new Set(), exclude = "") {
+    return posts.filter((post) => post.id !== exclude && Math.hypot(post.x + 160 - x, post.y + 165 - z) <= 650)
+      .sort((a, b) => Number(found.has(a.id)) - Number(found.has(b.id)) || Math.hypot(a.x + 160 - x, a.y + 165 - z) - Math.hypot(b.x + 160 - x, b.y + 165 - z));
+  }
   function viewpoint(x, z, posts = []) {
     const nearby = plants(x, z, posts, 1);
     const choices = [[0,340],[-65,340],[65,340],[-130,340],[130,340],[0,270],[0,410]];
@@ -109,5 +113,5 @@
     if (state.slow >= (state.low ? 60 : 30)) { if (state.low) state.fallback = true; else state.low = true; state.slow = 0; }
     return state;
   }
-  return { CHUNK, height, river, dimensions, daylight, groundCover, EYE_HEIGHT, MIN_POLAR, MAX_POLAR, eyeLevel, viewpoint, waterfalls, chunks, beings, plants, nearPost, queryBounds, observeBudget };
+  return { CHUNK, height, river, dimensions, daylight, groundCover, readablePosts, EYE_HEIGHT, MIN_POLAR, MAX_POLAR, eyeLevel, viewpoint, waterfalls, chunks, beings, plants, nearPost, queryBounds, observeBudget };
 });

@@ -27,9 +27,9 @@
       ctx.fillStyle = "#fff"; lines.slice(0, Math.floor((canvas.height - 40) / size)).forEach((value, i) => ctx.fillText(value, 20, 20 + i * size));
     }
   }
-  function card(item, internal = false) {
+  function card(item, internal = false, previewText = true) {
     const article = document.createElement("article"); article.className = "wall-post"; article.dataset.id = item.id;
-    const art = document.createElement("canvas"); art.width = 320; art.height = 240; art.setAttribute("role", "img"); art.setAttribute("aria-label", item.text || `Dibujo de ${item.alias}`); draw(art, item);
+    const art = document.createElement("canvas"); art.width = 320; art.height = 240; art.setAttribute("role", "img"); art.setAttribute("aria-label", previewText && item.text ? item.text : `Dibujo de ${item.alias}`); draw(art, item, previewText);
     const author = document.createElement("div"); author.className = "wall-author";
     const avatar = document.createElement("span"); avatar.className = `wall-avatar-icon avatar-${avatars.includes(item.avatar) ? item.avatar : avatars[0]}`; avatar.textContent = [...item.alias][0]?.toUpperCase() || "P"; avatar.setAttribute("aria-hidden", "true");
     const name = document.createElement("strong"); name.textContent = item.alias;

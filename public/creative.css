@@ -38,6 +38,9 @@
 .world-accessible { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
 .creative-body .world-pick { position: absolute; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; opacity: 0; pointer-events: none; }
 .creative-body .world-pick:focus-visible { opacity: 1; pointer-events: auto; background: #082a4c88; }
+.creative-body .world-post-pick { display: grid; place-items: center; opacity: 1; pointer-events: auto; border: 1px solid #96e6d5; border-radius: 50%; background: #153b46e8; will-change: transform; }
+.world-post-pick img { width: 22px; height: 22px; filter: brightness(0) invert(1); }
+.world-placing .world-post-pick { visibility: hidden; }
 #world-light-note { margin: 0; padding: 4px 12px; font-size: 13px; color: #ffdc8c; }
 .world-is-3d #wall-world { display: none; }
 .world-being-image { display: block; width: min(100%, 480px); height: auto; aspect-ratio: 1; object-fit: contain; margin: auto; }
@@ -98,6 +101,11 @@
 .wall-dialog a { color: #67ebda; }
 .wall-dialog footer, .wall-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
 #wall-detail-content > p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+#wall-detail-content > p { font-size: 20px; line-height: 1.65; margin: 16px 0 24px; }
+#wall-detail-content .wall-author { padding-left: 0; padding-right: 0; }
+#wall-detail-content .wall-author strong { font-size: 17px; }
+#wall-detail-content canvas { max-height: 45dvh; object-fit: contain; }
+#wall-detail header { position: sticky; top: -16px; padding: 8px 0; background: #29173e; z-index: 1; }
 #wall-detail-content .wall-post { border: 0; }
 .wall-moderation h1 { color: #fff; font-size: 24px; }
 .creative-body.wall-moderation { display: block; height: auto; min-height: 100dvh; padding-bottom: 0; overflow: auto; }

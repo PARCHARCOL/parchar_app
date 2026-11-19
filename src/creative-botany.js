@@ -108,5 +108,5 @@ export function createWaterfallKit({ keep, batch, material, materials, set, chan
     points.forEach((p,i) => set(stones,i,p.x,p.y+2,p.z,p.size*1.4,p.size*.7,p.size,p.hue*6));
     stones.count=points.length; stones.instanceMatrix.needsUpdate=true; stones.boundingSphere=null;
   }
-  return { waterMaterial, groundRocks, ready: Promise.all([rockAsset.ready,waterAsset.ready]), update, dispose() { map.dispose(); map.image = null; rockMap.dispose(); rockMap.image = null; } };
+  return { rockMaterial, waterMaterial, groundRocks, ready: Promise.all([rockAsset.ready,waterAsset.ready]), update, dispose() { map.dispose(); map.image = null; rockMap.dispose(); rockMap.image = null; } };
 }

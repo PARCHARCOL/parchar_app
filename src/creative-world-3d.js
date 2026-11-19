@@ -1,8 +1,9 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { mergeGeometries } from "three/addons/utils/BufferGeometryUtils.js";
 import { createForestKit, createWaterfallKit } from "./creative-botany.js";
 import { createFaunaKit, FAUNA_IDS } from "./creative-fauna.js";
+import { createDiscoveryKit } from "./creative-discoveries.js";
+import { createRiver } from "./creative-river.js";
 
 export function createWorld(viewport, map, callbacks) {
   const space = window.CreativeSpace;
@@ -69,15 +70,13 @@ export function createWorld(viewport, map, callbacks) {
   const fauna=createFaunaKit(()=>{dirty=true;request();});
   const kitOptions = { keep, batch, material, materials, set: setInstance, random: window.CreativeTerrain.hash, changed: () => { dirty = true; request(); } };
   const forest = createForestKit(kitOptions), waterfalls = createWaterfallKit(kitOptions);
+  const discoveries = createDiscoveryKit({ keep, rockMaterial: waterfalls.rockMaterial, materials });
   const bladePositions=[];
   for (let i=0;i<5;i++) { const a=i*Math.PI*.4, x=Math.cos(a)*.35,z=Math.sin(a)*.35; bladePositions.push(x-.07,0,z,x+.07,0,z,x*.6,.65+i*.07,z*.6); }
   const grassGeo=new THREE.BufferGeometry(); grassGeo.setAttribute("position",new THREE.Float32BufferAttribute(bladePositions,3)); grassGeo.computeVertexNormals();
   const grassMaterial=material("#68c9a2"); grassMaterial.side=THREE.DoubleSide;
   const grass=batch(keep(grassGeo),grassMaterial,1400);
-  const riverPositions=[], riverUv=[], riverIndex=[];
-  for (let i=0;i<=80;i++) { const z=-15+i*2415/80,r=space.river(z); riverPositions.push(r.x-r.width,r.y,z,r.x+r.width,r.y,z); riverUv.push(0,i/6,1,i/6); if(i<80){const n=i*2;riverIndex.push(n,n+2,n+1,n+1,n+2,n+3);} }
-  const riverGeo=keep(new THREE.BufferGeometry()); riverGeo.setAttribute("position",new THREE.Float32BufferAttribute(riverPositions,3)); riverGeo.setAttribute("uv",new THREE.Float32BufferAttribute(riverUv,2)); riverGeo.setIndex(riverIndex); riverGeo.computeVertexNormals();
-  const stream=new THREE.Mesh(riverGeo,waterfalls.waterMaterial); scene.add(stream);
+  const river = createRiver(space), stream = river.mesh; scene.add(stream);
   const assetsReady = Promise.all([forest.ready, waterfalls.ready]).then(() => { readyAt = performance.now(); dirty = true; request(); });
   const raycaster = new THREE.Raycaster(), pointer = new THREE.Vector2(), pickups = [];
   let alphaCache = new WeakMap();
@@ -121,7 +120,10 @@ export function createWorld(viewport, map, callbacks) {
     forest.update([...plants,...shrubs],budget.low);
     cover.grass.forEach((p,i)=>setInstance(grass,i,p.x,p.y,p.z,p.size*2.5,p.size,p.size*2.5,p.hue*6));
     grass.count=cover.grass.length; grass.instanceMatrix.needsUpdate=true; grass.boundingSphere=null;
-    waterfalls.groundRocks(cover.rocks); viewport.dataset.grassCount=String(cover.grass.length); viewport.dataset.rockCount=String(cover.rocks.length);
+    const banks=[];
+    for(let pz=Math.max(-10,Math.floor((z-420)/65)*65);pz<=Math.min(2390,z+420);pz+=65){const channel=space.river(pz);for(const side of [-1,1]){const px=channel.x+side*(channel.width+22);if(Math.hypot(px-x,pz-z)>600)continue;banks.push({x:px,z:pz,y:space.height(px,pz),size:7+window.CreativeTerrain.hash(Math.floor(pz),side,812)*4,hue:Math.abs(Math.sin(pz))});}}
+    const rocks=[...banks.slice(0,budget.low?12:20),...cover.rocks].slice(0,budget.low?24:60);
+    waterfalls.groundRocks(rocks); viewport.dataset.grassCount=String(cover.grass.length); viewport.dataset.rockCount=String(rocks.length);
     stream.position.set(-origin.x,0,-origin.z);
   }
   function rebuildDistantLandscape(x, z) {
@@ -145,6 +147,7 @@ export function createWorld(viewport, map, callbacks) {
   }
   function pickButton(label, action) {
     const button = document.createElement("button"); button.type = "button"; button.className = "world-pick"; button.setAttribute("aria-label", label); button.title = label; button.onclick = action;
+    button.style.left="0";button.style.top="0";
     accessible.append(button); return button;
   }
   function rebuildBeings(x, z) {
@@ -161,35 +164,15 @@ export function createWorld(viewport, map, callbacks) {
     const used = new Set([...creatureNodes.values()].map((node) => node.species.id));
     for (const [id, texture] of textureCache) if (!used.has(id)) { texture.dispose(); textureCache.delete(id); }
   }
-  function signTexture(post) {
-    const canvas = document.createElement("canvas"); canvas.width = 512; canvas.height = 384;
-    const ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#251729"; ctx.beginPath(); ctx.moveTo(30, 18); ctx.lineTo(470, 7); ctx.lineTo(505, 95); ctx.lineTo(487, 362); ctx.lineTo(42, 378); ctx.lineTo(8, 275); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle = "#ae8d66"; ctx.lineWidth = 12; ctx.stroke();
-    for (let i = 0; i < 17; i++) { ctx.strokeStyle = i % 3 ? "#63463445" : "#a7956045"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(20, 15 + i * 22); ctx.bezierCurveTo(160, i * 22 + 45, 350, i * 22 - 20, 498, i * 22 + 10); ctx.stroke(); }
-    const art = document.createElement("canvas"); art.width = 400; art.height = 300;
-    window.CreativeRender.draw(art, post, false, true); ctx.drawImage(art, 40, 38, 420, 290);
-    ctx.font = "600 27px Georgia, serif"; ctx.fillStyle = "#fff0c4"; ctx.shadowColor = "#10091d"; ctx.shadowBlur = 4;
-    let line = "", lines = [];
-    for (const char of String(post.text || "Una creación por descubrir")) { if (char === "\n" || ctx.measureText(line + char).width > 410) { lines.push(line); line = char === "\n" ? "" : char; } else line += char; }
-    if (line) lines.push(line);
-    lines.slice(0, 7).forEach((value, i) => ctx.fillText(value + (i === 6 && lines.length > 7 ? "…" : ""), 48, 58 + i * 35));
-    ctx.font = "italic 22px Georgia, serif"; ctx.fillStyle = "#84f3d9"; ctx.fillText(String(post.alias).slice(0, 24), 48, 346);
-    const texture = new THREE.CanvasTexture(canvas); texture.colorSpace = THREE.SRGBColorSpace; return texture;
-  }
   function syncPosts(values) {
     const ids = new Set(values.map((post) => post.id));
     for (const [id, node] of postNodes) if (!ids.has(id)) { scene.remove(node.group); node.group.traverse((obj) => { if (obj.material && !materials.includes(obj.material)) { obj.material.map?.dispose(); obj.material.dispose(); } if (obj.geometry && !geometries.includes(obj.geometry)) obj.geometry.dispose(); }); node.button.remove(); postNodes.delete(id); }
     for (const post of values) {
       if (postNodes.has(post.id)) continue;
       const x = post.x + 160, z = post.y + 165, y = Math.max(10, space.height(x, z));
-      const group = new THREE.Group(); group.position.set(x - origin.x, y, z - origin.z);
-      const pieces = [new THREE.DodecahedronGeometry(1, 0).scale(78, 47, 16).translate(0, 70, 0), new THREE.CylinderGeometry(5, 9, 48, 7).toNonIndexed().translate(-35, 24, 0), new THREE.CylinderGeometry(5, 9, 48, 7).toNonIndexed().translate(35, 24, 0), new THREE.DodecahedronGeometry(1, 0).scale(100, 12, 65)];
-      const slab = new THREE.Mesh(shadeGeometry(mergeGeometries(pieces)), forest.bark); pieces.forEach((part) => part.dispose());
-      const face = new THREE.Mesh(new THREE.PlaneGeometry(124, 91), new THREE.MeshBasicMaterial({ map: signTexture(post), transparent: true, alphaTest: .12, side: THREE.DoubleSide })); face.position.set(0, 70, 16.2);
-      group.add(slab, face);
-      group.userData = { type: "post", id: post.id }; group.traverse((obj) => { obj.userData = group.userData; }); scene.add(group);
-      const button = pickButton(`Descubrir la creación de ${post.alias}`, () => callbacks.onPost(post.id));
+      const group = discoveries.create(post); group.position.set(x - origin.x, y, z - origin.z); scene.add(group);
+      const button = pickButton(`Leer mensaje de ${post.alias}`, () => callbacks.onPost(post.id));
+      button.classList.add("world-post-pick");const icon=document.createElement("img");icon.src="/assets/ui/message-circle.svg";icon.alt="";button.append(icon);
       postNodes.set(post.id, { group, button, x, z });
     }
     dirty = true;
@@ -237,7 +220,7 @@ export function createWorld(viewport, map, callbacks) {
     projection.copy(position); projection.project(camera);
     const visible = projection.z > -1 && projection.z < 1 && Math.abs(projection.x) < 1 && Math.abs(projection.y) < 1;
     node.button.hidden = !visible;
-    if (visible) { node.button.style.left = `${(projection.x + 1) * viewport.clientWidth / 2 - 22}px`; node.button.style.top = `${(1 - projection.y) * viewport.clientHeight / 2 - 22}px`; }
+    if (visible) { node.screenX=(projection.x+1)*viewport.clientWidth/2-22;node.screenY=(1-projection.y)*viewport.clientHeight/2-22;node.button.style.transform=`translate3d(${node.screenX}px,${node.screenY}px,0)`; }
   }
   function safeTick(now) { try { tick(now); } catch { callbacks.onFallback("El mundo 3D no pudo continuar. Puedes seguir en la vista ligera."); } }
   function request() { if (!destroyed && !frame) frame = requestAnimationFrame(safeTick); }
@@ -268,7 +251,12 @@ export function createWorld(viewport, map, callbacks) {
     if (dirty || wasMoving || streaming) {
       renderer.render(scene, camera); dirty = false; renderCount++;
       for (const node of creatureNodes.values()) projectButton(node, node.sprite.position);
-      for (const node of postNodes.values()) { projection.copy(node.group.position); projection.y += 70; projectButton(node, projection); }
+      const buttons=[];
+      for (const node of postNodes.values()) {
+        projection.copy(node.group.position); projection.y += 30; projectButton(node, projection);
+        if(Math.hypot(node.x-camera.position.x-origin.x,node.z-camera.position.z-origin.z)>650)node.button.hidden=true;
+        if(!node.button.hidden){const x=node.screenX,y=node.screenY;if(buttons.some(p=>Math.abs(p.x-x)<48&&Math.abs(p.y-y)<48))node.button.hidden=true;else buttons.push({x,y});}
+      }
       if (wasMoving && previousActive && now - readyAt > 3500) {
         const ms = frameMs; frameTimes.push(ms); if (frameTimes.length > 180) frameTimes.shift();
         const oldLow = budget.low; space.observeBudget(budget, Math.min(ms, 800), true);
@@ -278,6 +266,7 @@ export function createWorld(viewport, map, callbacks) {
       lastRender = now;
       viewport.dataset.frames = String(renderCount); viewport.dataset.drawCalls = String(renderer.info.render.calls); viewport.dataset.triangles = String(renderer.info.render.triangles); viewport.dataset.quality = budget.low ? "light" : "normal";
       viewport.dataset.worldX = (camera.position.x + origin.x).toFixed(1); viewport.dataset.worldZ = (camera.position.z + origin.z).toFixed(1);
+      viewport.dataset.yaw = controls.getAzimuthalAngle().toFixed(3);
       viewport.dataset.eyeAboveGround = (camera.position.y - Math.max(12, space.height(camera.position.x + origin.x, camera.position.z + origin.z))).toFixed(1); viewport.dataset.pitch = controls.getPolarAngle().toFixed(3);
       viewport.dataset.geometries = String(renderer.info.memory.geometries); viewport.dataset.textures = String(renderer.info.memory.textures); viewport.dataset.postCount = String(postNodes.size); viewport.dataset.beingCount = String(creatureNodes.size);
       if (frameTimes.length) viewport.dataset.frameMs = (frameTimes.reduce((sum, v) => sum + v, 0) / frameTimes.length).toFixed(1);
@@ -358,15 +347,25 @@ export function createWorld(viewport, map, callbacks) {
   camera.position.set(160, space.eyeLevel(160, 505), 505); controls.target.set(160, Math.max(12, space.height(160, 165)) + 55, 165); referenceDistance = camera.position.distanceTo(controls.target); navigationSync = true; controls.update(); navigationSync = false; walkEye.copy(camera.position); resize(); request();
   return {
     ready: assetsReady, setPosts, focus, forward, bounds() { return space.queryBounds(camera.position.x + origin.x, camera.position.z + origin.z); },
+    position() { return { x: camera.position.x + origin.x, z: camera.position.z + origin.z }; },
     place(value=true) { placing=value; viewport.classList.toggle("world-placing",value); velocity=0; flight=null; return true; },
     move(x, z) { flight = null; camera.getWorldDirection(direction); direction.y = 0; direction.normalize(); delta.set(-direction.z * x + direction.x * z, 0, direction.x * x + direction.z * z); camera.position.add(delta); controls.target.add(delta); walkEye.copy(camera.position); dirty = true; request(); },
     focusCreature(id) { const point=space.beings(camera.position.x+origin.x,camera.position.z+origin.z,posts).find(item=>FAUNA_IDS[item.species%3]===id);if(point)focus(point.x,point.z); },
-    refresh() { resize(); }, setActive(value) { active = value; controls.enabled = value; last = performance.now(); if (value) { dirty = true; request(); } },
+    refresh() { resize(); }, setActive(value) {
+      active = value; controls.enabled = value; last = performance.now();
+      if (!value) {
+        velocity=0;flight=null;animationUntil=0;
+        const eye=camera.position.clone(),target=controls.target.clone(),damping=controls.enableDamping;
+        navigationSync=true;controls.enableDamping=false;controls.update();camera.position.copy(eye);controls.target.copy(target);controls.update();controls.enableDamping=damping;navigationSync=false;
+        walkEye.copy(camera.position);referenceDistance=camera.position.distanceTo(controls.target);
+        viewport.dataset.yaw=controls.getAzimuthalAngle().toFixed(3);viewport.dataset.pitch=controls.getPolarAngle().toFixed(3);
+      } else { dirty = true; request(); }
+    },
     destroy() {
       if (destroyed) return; destroyed = true;
       viewport.removeEventListener("keydown",placeKey); clearInterval(skyTimer); if (frame) cancelAnimationFrame(frame); observer.disconnect(); document.removeEventListener("visibilitychange", onVisibility); controls.dispose(); renderer.domElement.removeEventListener("webglcontextlost", onContextLoss);
       scene.traverse((obj) => { obj.geometry?.dispose(); if (obj.material?.map && !textureCache.has(obj.userData.species?.id)) obj.material.map.dispose(); if (obj.material && !Array.isArray(obj.material)) obj.material.dispose(); });
-      fauna.dispose(); forest.dispose(); waterfalls.dispose(); groundMap.dispose(); groundMap.image = null;
+      river.dispose(); fauna.dispose(); forest.dispose(); waterfalls.dispose(); groundMap.dispose(); groundMap.image = null;
       for (const texture of textureCache.values()) texture.dispose(); for (const geo of geometries) geo.dispose(); groundMaterial.dispose(); waterMaterial.dispose(); for (const mat of materials) mat.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove(); accessible.remove(); textureCache.clear(); chunks.clear(); postNodes.clear(); creatureNodes.clear(); scene.clear(); geometries.length = 0; materials.length = 0; batches.length = 0; pickups.length = 0; posts = []; flight = null; alphaCache = new WeakMap();
     }
