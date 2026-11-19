@@ -65,6 +65,10 @@ test("home navigation keeps its destination and refreshes valid Parchar HTML", a
   await Promise.all(event.background);
   assert.equal(worker.writes.length, 1);
 });
+test("moderation navigation uses current HTML instead of an old cached fullscreen page",async()=>{
+ const worker=workerWithCache({"/creative-admin.html":new Response("outdated fullscreen")},async()=>new Response('<body class="wall-moderation">current moderation</body>'));
+ const event=worker.request("/creative-admin.html");assert.match(await(await event.response).text(),/current moderation/);await Promise.all(event.background);
+});
 test("world scripts never mix an older cached version with a newer scene",async()=>{
   const worker=workerWithCache({"/creative-space.js":new Response("old"),"/creative-space.js?v=4":new Response("also old")},async()=>new Response("new",{headers:{"content-type":"text/javascript"}}));
   const event=worker.request("/creative-space.js?v=5","cors");assert.equal(await(await event.response).text(),"new");await Promise.all(event.background);assert.equal(worker.writes.length,1);

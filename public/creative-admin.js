@@ -18,11 +18,11 @@
         const actions = document.createElement("div"); actions.className = "wall-admin-actions";
         for (const [action, label] of [["aprobar", "Publicar"], ["retirar", "Retirar"], ["bloquear", "Bloquear autor"], ["desbloquear", "Desbloquear autor"]]) {
           if (action === "aprobar" && item.status === "activo") continue;
-          const button = document.createElement("button"); button.textContent = label;
+          const button = document.createElement("button"); button.type = "button"; button.dataset.action = action; button.textContent = label;
           button.onclick = async () => { if (!confirm(`${label}: ¿confirmas esta acción?${action === "bloquear" ? " Se retirarán todas las creaciones del autor y no podrá enviar nuevas." : ""}`)) return; button.disabled = true; try { await api(`/api/admin/creative/${item.id}/moderate`, { method: "POST", body: JSON.stringify({ action }) }); await load(); } catch (error) { feedback.textContent = error.message; button.disabled = false; } };
           actions.append(button);
         }
-        card.append(actions); list.append(card);
+        card.prepend(actions); list.append(card);
       }
     } catch (error) { feedback.textContent = error.message; }
   }

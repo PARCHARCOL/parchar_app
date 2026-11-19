@@ -1,4 +1,4 @@
-const CACHE_NAME = "parchar-shell-v212";
+const CACHE_NAME = "parchar-shell-v213";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
@@ -153,6 +153,8 @@ self.addEventListener("fetch", (event) => {
     event.waitUntil(refresh.catch(() => {}));
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
+        // Moderation must not reopen an outdated fullscreen layout from the PWA cache.
+        if (url.pathname === "/creative-admin.html") return refresh;
         const cached = await cache.match(
           url.pathname === "/" ||
           (url.pathname === "/index.html" && url.searchParams.get("source") === "pwa")
