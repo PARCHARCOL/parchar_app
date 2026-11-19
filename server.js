@@ -11594,7 +11594,7 @@ const server =
             readPublicPath(
               pathname
             );
-          if (pathname === "/creative-world-3d.module.js") {
+          if (pathname === "/creative-world-3d.module.js" || pathname === "/spatial-wall.bundle.js") {
             require("./lib/creative-bundle").sendCreativeBundle(req, res, publicPath);
             return;
           }

@@ -77,3 +77,10 @@ test("matching world versions remain usable without waiting for network refresh"
   const worker=workerWithCache({"/creative-space.js?v=5":new Response("matching")},async()=>new Response("refresh",{headers:{"content-type":"text/javascript"}}));
   const event=worker.request("/creative-space.js?v=5","cors");assert.equal(await(await event.response).text(),"matching");await Promise.all(event.background);
 });
+
+test("the spatial wall caches valid HTML and never mixes mismatched bundle versions",async()=>{
+ const htmlWorker=workerWithCache({},async()=>new Response('<body class="spatial-body">Muro</body>'));
+ const htmlEvent=htmlWorker.request("/creative.html");await htmlEvent.response;await Promise.all(htmlEvent.background);assert.equal(htmlWorker.writes.length,1);
+ const scriptWorker=workerWithCache({"/spatial-wall.bundle.js?v=0":new Response("old")},async()=>new Response("current",{headers:{"content-type":"text/javascript"}}));
+ const scriptEvent=scriptWorker.request("/spatial-wall.bundle.js?v=1","cors");assert.equal(await(await scriptEvent.response).text(),"current");await Promise.all(scriptEvent.background);
+});

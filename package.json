@@ -4,7 +4,9 @@
   "description": "App para descubrir planes y registrar negocios con video obligatorio de 15 a 20 segundos.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:wall": "node scripts/build-spatial-wall.js",
+    "test": "node --test tests/*.test.js"
   },
   "engines": {
     "node": ">=22.5"
@@ -32,6 +34,11 @@
   },
   "homepage": "https://github.com/PARCHARCOL/parchar_app#readme",
   "devDependencies": {
-    "esbuild": "0.28.2"
+    "@tailwindcss/cli": "4.3.5",
+    "esbuild": "0.28.2",
+    "lucide-react": "1.76.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwindcss": "4.3.5"
   }
 }

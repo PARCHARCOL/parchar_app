@@ -1,18 +1,11 @@
-const CACHE_NAME = "parchar-shell-v214";
+const CACHE_NAME = "parchar-shell-v215";
 const OFFLINE_URL = "/offline.html";
 
 const CORE_ASSETS = [
   "/creative.html",
-  "/creative.css",
-  "/creative.js",
   "/creative-render.js",
-  "/creative-3d.js",
-  "/creative-space.js",
-  "/creative-terrain.js",
-  "/assets/creative-world/manifest.json",
-  "/assets/creative-world/preview.webp",
-  "/assets/ui/paw-print.svg",
-  "/vendor/panzoom-4.6.2.min.js",
+  "/spatial-wall.bundle.js?v=1",
+  "/spatial-wall.css?v=1",
   "/assets/ui/wall-grid.svg",
   "/assets/ui/pencil.svg",
   "/assets/ui/plus.svg",
@@ -143,7 +136,7 @@ self.addEventListener("fetch", (event) => {
       if (response.status === 200) {
         const html = await response.clone().text();
         // Do not replace the installed app with a hosting-provider waiting page.
-        if (html.includes('class="splash"') || html.includes('class="theme-body')) {
+        if (html.includes('class="splash"') || html.includes('class="theme-body') || html.includes('class="spatial-body"')) {
           const cache = await caches.open(CACHE_NAME);
           await cache.put(request, response.clone());
         }
@@ -203,7 +196,7 @@ self.addEventListener("fetch", (event) => {
     event.waitUntil(refresh.catch(() => {}));
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
-        const worldAsset = /^\/creative[a-z0-9.-]*\.(?:js|css)$/i.test(url.pathname);
+        const worldAsset = /^\/(?:creative[a-z0-9.-]*|spatial-wall[a-z0-9.-]*)\.(?:js|css)$/i.test(url.pathname);
         const cached = await cache.match(request, { ignoreSearch: !worldAsset });
         if (cached) return cached;
         return refresh;

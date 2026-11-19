@@ -13,6 +13,7 @@
       for (const item of data.items) {
         const card = CreativeRender.card(item, true); card.querySelector("button").remove();
         if (item.text) { const text = document.createElement("p"); text.textContent = item.text; text.style.whiteSpace = "pre-wrap"; card.append(text); }
+        if(item.title){const title=document.createElement("p");const strong=document.createElement("strong");strong.textContent=(item.kind==="note"?"Nota contextual · ":"")+item.title;title.append(strong);card.querySelector("canvas").after(title);}
         if (item.reasons) { const reason = document.createElement("p"); reason.className = "wall-admin-reason"; reason.textContent = item.reasons; card.append(reason); }
         const analysis = document.createElement("p"); analysis.className = "wall-admin-reason"; analysis.textContent = `Filtros: ${item.moderation?.state || "manual"}. ${(item.moderation?.reasons || []).join(" · ") || "Sin alertas registradas"}`; card.append(analysis);
         const actions = document.createElement("div"); actions.className = "wall-admin-actions";
